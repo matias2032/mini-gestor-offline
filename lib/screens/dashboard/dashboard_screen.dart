@@ -51,6 +51,16 @@ class DashboardScreen extends StatelessWidget {
                   crossAxisSpacing: 16,
                   children: [
                     _ModuleCard(
+                      icon: Icons.point_of_sale_outlined,
+                      label: 'Sales',
+                      onTap: () => Navigator.of(context).pushNamed('/sale'),
+                    ),
+                    _ModuleCard(
+                      icon: Icons.category_outlined,
+                      label: 'Sales Categories',
+                      onTap: () => Navigator.of(context).pushNamed('/sale-category'),
+                    ),
+                    _ModuleCard(
                       icon: Icons.people_outline,
                       label: 'Customers',
                       onTap: () => Navigator.of(context).pushNamed('/customer'),

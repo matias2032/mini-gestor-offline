@@ -223,6 +223,7 @@ Future<void> close() async {
         paid_at                         TEXT,
         installment_status               TEXT NOT NULL DEFAULT 'PENDING'
             CHECK (installment_status IN ('PENDING','PARTIAL','PAID','OVERDUE','CANCELLED')),
+        cancelled_by_sale_cancellation    INTEGER NOT NULL DEFAULT 0,
         notes                              TEXT,
         UNIQUE (sale_id, installment_number)
     )

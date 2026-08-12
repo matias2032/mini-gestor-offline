@@ -21,12 +21,20 @@ import 'daos/supplier_dao.dart';
 import 'repositories/supplier_repository.dart';
 import 'providers/supplier_provider.dart';
 import 'screens/supplier/supplier_list_screen.dart';
+import 'daos/sale_dao.dart';
+import 'daos/sale_installment_dao.dart';
+import 'daos/sale_payment_dao.dart';
+import 'daos/sale_category_dao.dart';
+import 'repositories/sale_repository.dart';
+import 'providers/sale_provider.dart';
 import 'daos/expense_dao.dart';
 import 'daos/expense_category_dao.dart';
 import 'repositories/expense_repository.dart';
 import 'providers/expense_provider.dart';
 import 'screens/expense/expense_list_screen.dart';
 import 'screens/expense/expense_category_list_screen.dart';
+import 'screens/sale/sale_list_screen.dart';
+import 'screens/sale/sale_category_list_screen.dart';
 
 /// Debug switch: set to `true` to wipe the local database on every app
 /// start, simulating a fresh install (onboarding screen shows again
@@ -74,12 +82,19 @@ class MyApp extends StatelessWidget {
     final expenseCategoryDao = ExpenseCategoryDao(localDatabase);
     final expenseRepository = ExpenseRepository(localDatabase, expenseDao, expenseCategoryDao);
 
+    final saleDao = SaleDao(localDatabase);
+    final saleCategoryDao = SaleCategoryDao(localDatabase);
+    final saleInstallmentDao = SaleInstallmentDao(localDatabase);
+    final salePaymentDao = SalePaymentDao(localDatabase);
+    final saleRepository = SaleRepository(localDatabase, saleDao, saleCategoryDao, saleInstallmentDao, salePaymentDao);
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider(userRepository)),
         ChangeNotifierProvider(create: (_) => CustomerProvider(customerRepository)),
         ChangeNotifierProvider(create: (_) => SupplierProvider(supplierRepository)),
         ChangeNotifierProvider(create: (_) => ExpenseProvider(expenseRepository)),
+        ChangeNotifierProvider(create: (_) => SaleProvider(saleRepository)),
       ],
       child: MaterialApp(
         title: 'Mini',
@@ -95,6 +110,8 @@ class MyApp extends StatelessWidget {
           '/supplier': (_) => const SupplierListScreen(),
           '/expense': (_) => const ExpenseListScreen(),
           '/expense-category': (_) => const ExpenseCategoryListScreen(),
+          '/sale': (_) => const SaleListScreen(),
+          '/sale-category': (_) => const SaleCategoryListScreen(),
         },
         home: const _StartupGate(),
       ),
