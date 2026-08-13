@@ -80,6 +80,11 @@ class _AppSidebarState extends State<AppSidebar>
           title: 'Sale Categories',
           route: '/sale-category',
         ),
+        _MenuItem(
+          icon: Icons.summarize_outlined,
+          title: 'Financial Statements',
+          route: '/sale/financial-statement',
+        ),
       ],
     ),
     _MenuGroup(

@@ -17,7 +17,7 @@ class LocalDatabase {
   static const String _databaseName = 'business_manager.db';
 
   /// Bump this and add a branch in [_onUpgrade] whenever the schema changes.
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 2;
 
   Database? _database;
 
@@ -59,11 +59,14 @@ class LocalDatabase {
   /// only the incremental change (ALTER TABLE, new CREATE TABLE, data
   /// backfill, etc.). Never rewrite older blocks — that breaks upgrades
   /// for users stuck on older versions.
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Example for the future:
-    // if (oldVersion < 2) {
-    //   await db.execute('ALTER TABLE sale ADD COLUMN discount_cents INTEGER NOT NULL DEFAULT 0');
-    // }
+Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      final batch = db.batch();
+      for (final statement in _financialStatementSchemaStatements) {
+        batch.execute(statement);
+      }
+      await batch.commit(noResult: true);
+    }
   }
 
   /// Runs [action] inside a single SQLite transaction.
@@ -297,5 +300,89 @@ Future<void> close() async {
         UPDATE expense SET updated_at = datetime('now') WHERE id_expense = NEW.id_expense;
     END
     ''',
+    ..._financialStatementSchemaStatements,
+  ];
+
+  // ============================================================
+  // FINANCIAL STATEMENT ("extracto") — added in schema version 2.
+  // Kept as its own list so it can be reused both by [_onCreate]
+  // (fresh installs, appended above) and by [_onUpgrade] (existing
+  // installs upgrading from version 1).
+  //
+  // Statements are snapshotted at generation time into the two child
+  // tables below, so a statement's numbers never change even if the
+  // underlying sale/expense rows are later edited or cancelled.
+  // ============================================================
+  static const List<String> _financialStatementSchemaStatements = [
+    // ---------- financial_statement ----------
+    '''
+    CREATE TABLE financial_statement (
+        id_financial_statement INTEGER PRIMARY KEY AUTOINCREMENT,
+        reference               TEXT NOT NULL UNIQUE,
+        period_type              TEXT NOT NULL
+            CHECK (period_type IN (
+                'TODAY','LAST_24_HOURS','ONE_WEEK','ONE_MONTH',
+                'THREE_MONTHS','SIX_MONTHS','ONE_YEAR','CUSTOM'
+            )),
+        start_date                 TEXT NOT NULL,
+        end_date                    TEXT NOT NULL,
+        total_sales_cents            INTEGER NOT NULL DEFAULT 0,
+        total_expenses_cents          INTEGER NOT NULL DEFAULT 0,
+        balance_cents                  INTEGER NOT NULL DEFAULT 0,
+        sales_count                      INTEGER NOT NULL DEFAULT 0,
+        expenses_count                    INTEGER NOT NULL DEFAULT 0,
+        notes                               TEXT,
+        deleted                              INTEGER NOT NULL DEFAULT 0,
+        generated_at                          TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at                             TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at                              TEXT
+    )
+    ''',
+    'CREATE INDEX idx_statement_period ON financial_statement(start_date, end_date)',
+    'CREATE INDEX idx_statement_generated_at ON financial_statement(generated_at)',
+    '''
+    CREATE TRIGGER trg_financial_statement_updated
+    AFTER UPDATE ON financial_statement
+    BEGIN
+        UPDATE financial_statement SET updated_at = datetime('now')
+        WHERE id_financial_statement = NEW.id_financial_statement;
+    END
+    ''',
+
+    // ---------- financial_statement_sale_item ----------
+    // Snapshot of each finalized sale included in a statement. Fields are
+    // duplicated from `sale` on purpose (reference, description, date) so
+    // the statement/PDF stays accurate even if the sale row changes later.
+    '''
+    CREATE TABLE financial_statement_sale_item (
+        id_financial_statement_sale_item INTEGER PRIMARY KEY AUTOINCREMENT,
+        financial_statement_id            INTEGER NOT NULL
+            REFERENCES financial_statement(id_financial_statement) ON DELETE CASCADE,
+        sale_id                             INTEGER NOT NULL
+            REFERENCES sale(id_sale),
+        sale_reference                        TEXT NOT NULL,
+        sale_description                       TEXT NOT NULL,
+        sale_date                               TEXT NOT NULL,
+        amount_cents                             INTEGER NOT NULL CHECK (amount_cents >= 0)
+    )
+    ''',
+    'CREATE INDEX idx_statement_sale_item_statement '
+        'ON financial_statement_sale_item(financial_statement_id)',
+
+    // ---------- financial_statement_expense_item ----------
+    '''
+    CREATE TABLE financial_statement_expense_item (
+        id_financial_statement_expense_item INTEGER PRIMARY KEY AUTOINCREMENT,
+        financial_statement_id               INTEGER NOT NULL
+            REFERENCES financial_statement(id_financial_statement) ON DELETE CASCADE,
+        expense_id                             INTEGER NOT NULL
+            REFERENCES expense(id_expense),
+        expense_description                     TEXT NOT NULL,
+        expense_date                             TEXT NOT NULL,
+        amount_cents                              INTEGER NOT NULL CHECK (amount_cents >= 0)
+    )
+    ''',
+    'CREATE INDEX idx_statement_expense_item_statement '
+        'ON financial_statement_expense_item(financial_statement_id)',
   ];
 }

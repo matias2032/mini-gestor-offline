@@ -27,6 +27,9 @@ import 'daos/sale_payment_dao.dart';
 import 'daos/sale_category_dao.dart';
 import 'repositories/sale_repository.dart';
 import 'providers/sale_provider.dart';
+import 'daos/financial_statement_dao.dart';
+import 'repositories/financial_statement_repository.dart';
+import 'providers/financial_statement_provider.dart';
 import 'daos/expense_dao.dart';
 import 'daos/expense_category_dao.dart';
 import 'repositories/expense_repository.dart';
@@ -36,6 +39,9 @@ import 'screens/expense/expense_category_list_screen.dart';
 import 'screens/sale/sale_list_screen.dart';
 import 'screens/sale/sale_category_list_screen.dart';
 import 'screens/sale/credit_sale_list_screen.dart';
+import 'screens/sale/financial_statement_list_screen.dart';
+import 'screens/sale/financial_statement_generate_screen.dart';
+import 'screens/sale/financial_statement_detail_screen.dart';
 import 'screens/user/edit_profile_screen.dart';
 import 'screens/user/change_password_screen.dart';
 
@@ -91,6 +97,10 @@ class MyApp extends StatelessWidget {
     final salePaymentDao = SalePaymentDao(localDatabase);
     final saleRepository = SaleRepository(localDatabase, saleDao, saleCategoryDao, saleInstallmentDao, salePaymentDao);
 
+    final financialStatementDao = FinancialStatementDao(localDatabase);
+    final financialStatementRepository =
+        FinancialStatementRepository(localDatabase, financialStatementDao);
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider(userRepository)),
@@ -98,6 +108,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SupplierProvider(supplierRepository)),
         ChangeNotifierProvider(create: (_) => ExpenseProvider(expenseRepository)),
         ChangeNotifierProvider(create: (_) => SaleProvider(saleRepository)),
+        ChangeNotifierProvider(
+          create: (_) => FinancialStatementProvider(financialStatementRepository),
+        ),
       ],
       child: MaterialApp(
         title: 'Mini',
@@ -116,6 +129,9 @@ class MyApp extends StatelessWidget {
           '/sale': (_) => const SaleListScreen(),
           '/sale-category': (_) => const SaleCategoryListScreen(),
           '/credit-sale': (_) => const CreditSaleListScreen(),
+          '/sale/financial-statement': (_) => const FinancialStatementListScreen(),
+          '/sale/financial-statement/generate': (_) =>
+              const FinancialStatementGenerateScreen(),
           '/edit-profile': (_) => const EditProfileScreen(),
           '/change-password': (_) => const ChangePasswordScreen(),
         },
