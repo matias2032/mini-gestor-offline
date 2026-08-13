@@ -57,7 +57,7 @@ class SaleInstallmentDao {
     return SaleInstallmentModel.fromMap(rows.first);
   }
 
-    Future<int> cancelUnpaidInstallments(int saleId, {Transaction? txn}) async {
+Future<int> cancelUnpaidInstallments(int saleId, {Transaction? txn}) async {
     final executor = txn ?? await _localDatabase.database;
     return executor.update(
       'sale_installment',
@@ -68,5 +68,18 @@ class SaleInstallmentDao {
       where: 'sale_id = ? AND installment_status IN (?, ?)',
       whereArgs: [saleId, 'PENDING', 'PARTIAL'],
     );
+  }
+
+  /// Number of installments already generated for [saleId]. Since
+  /// installments are no longer predefined — each payment automatically
+  /// creates the "next" one — this is how SaleRepository knows the next
+  /// installment_number to use.
+  Future<int> countInstallmentsBySale(int saleId, {Transaction? txn}) async {
+    final executor = txn ?? await _localDatabase.database;
+    final result = await executor.rawQuery(
+      'SELECT COUNT(*) AS total FROM sale_installment WHERE sale_id = ?',
+      [saleId],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 }

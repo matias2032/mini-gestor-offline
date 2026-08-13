@@ -113,7 +113,7 @@ class SaleDao {
     return rows.map(SaleModel.fromMap).toList();
   }
 
-  Future<int> countAll({bool includeDeleted = true, Transaction? txn}) async {
+Future<int> countAll({bool includeDeleted = true, Transaction? txn}) async {
     final executor = txn ?? await _localDatabase.database;
     final result = await executor.rawQuery(
       includeDeleted
@@ -122,5 +122,95 @@ class SaleDao {
     );
     return Sqflite.firstIntValue(result) ?? 0;
   }
-  
+
+  /// Sales for the main sales list: every NORMAL sale, plus CREDIT sales
+  /// only once they're finalized (COMPLETED or CANCELLED). Active credit
+  /// sales stay out of this list — they live in [getOutstandingCreditSales]
+  /// until they're settled.
+  Future<List<SaleModel>> getSalesForSalesList({
+    int? saleCategoryId,
+    int? customerId,
+    String? saleType,
+    DateTime? startDate,
+    DateTime? endDate,
+    bool includeDeleted = false,
+    Transaction? txn,
+  }) async {
+    final executor = txn ?? await _localDatabase.database;
+
+    final conditions = <String>[
+      "(sale_type = 'NORMAL' OR sale_status IN ('COMPLETED','CANCELLED'))",
+    ];
+    final args = <Object?>[];
+
+    if (!includeDeleted) conditions.add('deleted = 0');
+    if (saleCategoryId != null) {
+      conditions.add('sale_category_id = ?');
+      args.add(saleCategoryId);
+    }
+    if (customerId != null) {
+      conditions.add('customer_id = ?');
+      args.add(customerId);
+    }
+    if (saleType != null) {
+      conditions.add('sale_type = ?');
+      args.add(saleType);
+    }
+    if (startDate != null) {
+      conditions.add('sale_date >= ?');
+      args.add(startDate.toIso8601String());
+    }
+    if (endDate != null) {
+      conditions.add('sale_date <= ?');
+      args.add(endDate.toIso8601String());
+    }
+
+    final rows = await executor.query(
+      'sale',
+      where: conditions.join(' AND '),
+      whereArgs: args,
+      orderBy: 'sale_date DESC',
+    );
+    return rows.map(SaleModel.fromMap).toList();
+  }
+
+  /// Credit sales still awaiting payment — exactly the ones excluded from
+  /// [getSalesForSalesList]. Backs the (upcoming) credit sales list screen.
+  Future<List<SaleModel>> getOutstandingCreditSales({
+    int? customerId,
+    DateTime? startDate,
+    DateTime? endDate,
+    bool includeDeleted = false,
+    Transaction? txn,
+  }) async {
+    final executor = txn ?? await _localDatabase.database;
+
+    final conditions = <String>[
+      "sale_type = 'CREDIT'",
+      "sale_status IN ('OPEN','OUTSTANDING')",
+    ];
+    final args = <Object?>[];
+
+    if (!includeDeleted) conditions.add('deleted = 0');
+    if (customerId != null) {
+      conditions.add('customer_id = ?');
+      args.add(customerId);
+    }
+    if (startDate != null) {
+      conditions.add('sale_date >= ?');
+      args.add(startDate.toIso8601String());
+    }
+    if (endDate != null) {
+      conditions.add('sale_date <= ?');
+      args.add(endDate.toIso8601String());
+    }
+
+    final rows = await executor.query(
+      'sale',
+      where: conditions.join(' AND '),
+      whereArgs: args,
+      orderBy: 'sale_date DESC',
+    );
+    return rows.map(SaleModel.fromMap).toList();
+  }
 }

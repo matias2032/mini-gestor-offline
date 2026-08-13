@@ -1,7 +1,6 @@
 // providers/sale_provider.dart
 
 import 'package:flutter/foundation.dart';
-
 import '../models/sale_category_model.dart';
 import '../models/sale_installment_model.dart';
 import '../models/sale_model.dart';
@@ -16,8 +15,10 @@ class SaleProvider extends ChangeNotifier {
 
   final SaleRepository _saleRepository;
 
-  List<SaleCategoryModel> _categories = [];
+List<SaleCategoryModel> _categories = [];
   List<SaleModel> _sales = [];
+  List<SaleModel> _creditSales = [];
+  SaleModel? _currentSale;
   List<SaleInstallmentModel> _installments = [];
   List<SalePaymentModel> _payments = [];
 
@@ -29,16 +30,25 @@ class SaleProvider extends ChangeNotifier {
   int? _lastSaleCategoryId;
   int? _lastCustomerId;
   String? _lastSaleType;
-  String? _lastSaleStatus;
   DateTime? _lastStartDate;
   DateTime? _lastEndDate;
+
+  // Whether loadCreditSales was ever called — lets mutations decide
+  // whether it's worth refreshing that list too. Filters for it are kept
+  // separately since it's shown on its own screen.
+  bool _creditSalesLoaded = false;
+  int? _lastCreditCustomerId;
+  DateTime? _lastCreditStartDate;
+  DateTime? _lastCreditEndDate;
 
   // Remembers which sale's installments/payments are currently loaded, so
   // registerPayment/cancelSale can keep the detail screen in sync.
   int? _currentSaleId;
 
-  List<SaleCategoryModel> get categories => _categories;
+List<SaleCategoryModel> get categories => _categories;
   List<SaleModel> get sales => _sales;
+  List<SaleModel> get creditSales => _creditSales;
+  SaleModel? get currentSale => _currentSale;
   List<SaleInstallmentModel> get installments => _installments;
   List<SalePaymentModel> get payments => _payments;
   bool get isLoading => _isLoading;
@@ -121,28 +131,28 @@ class SaleProvider extends ChangeNotifier {
   // sale
   // ---------------------------------------------------------------------
 
+/// Loads the main sales list: every NORMAL sale, plus CREDIT sales only
+  /// once they're finalized (COMPLETED/CANCELLED). Active credit sales
+  /// live in [loadCreditSales] instead.
   Future<void> loadSales({
     int? saleCategoryId,
     int? customerId,
     String? saleType,
-    String? saleStatus,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
     _lastSaleCategoryId = saleCategoryId;
     _lastCustomerId = customerId;
     _lastSaleType = saleType;
-    _lastSaleStatus = saleStatus;
     _lastStartDate = startDate;
     _lastEndDate = endDate;
 
     _setLoading(true);
     try {
-      _sales = await _saleRepository.getAllSales(
+      _sales = await _saleRepository.getSalesForSalesList(
         saleCategoryId: saleCategoryId,
         customerId: customerId,
         saleType: saleType,
-        saleStatus: saleStatus,
         startDate: startDate,
         endDate: endDate,
       );
@@ -154,17 +164,47 @@ class SaleProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> createSale({
+  /// Loads the credit sales list screen: active (unpaid) credit sales
+  /// only. Once a credit sale is fully paid or cancelled it disappears
+  /// from here and shows up in [loadSales] instead.
+  Future<void> loadCreditSales({
+    int? customerId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    _creditSalesLoaded = true;
+    _lastCreditCustomerId = customerId;
+    _lastCreditStartDate = startDate;
+    _lastCreditEndDate = endDate;
+
+    _setLoading(true);
+    try {
+      _creditSales = await _saleRepository.getOutstandingCreditSales(
+        customerId: customerId,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      _errorMessage = null;
+    } catch (error) {
+      _errorMessage = error.toString();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+Future<bool> createSale({
     required int saleCategoryId,
     required String description,
     required int totalAmountCents,
     String saleType = 'NORMAL',
-    String? creditModality,
     int? customerId,
     String? walkInCustomerName,
     DateTime? creditDueDate,
     String? notes,
-    List<InstallmentInput> installments = const [],
+    // Optional down payment for a CREDIT sale; leave null/0 for no entry
+    // (the full total starts out as outstanding debt).
+    int? initialPaymentCents,
+    String initialPaymentMethod = 'CASH',
   }) async {
     _setLoading(true);
     try {
@@ -173,14 +213,15 @@ class SaleProvider extends ChangeNotifier {
         description: description,
         totalAmountCents: totalAmountCents,
         saleType: saleType,
-        creditModality: creditModality,
         customerId: customerId,
         walkInCustomerName: walkInCustomerName,
         creditDueDate: creditDueDate,
         notes: notes,
-        installments: installments,
+        initialPaymentCents: initialPaymentCents,
+        initialPaymentMethod: initialPaymentMethod,
       );
       await _refreshSales();
+      if (_creditSalesLoaded) await _refreshCreditSales();
       _errorMessage = null;
       return true;
     } catch (error) {
@@ -191,7 +232,7 @@ class SaleProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> cancelSale({
+Future<bool> cancelSale({
     required int saleId,
     required String cancellationReason,
   }) async {
@@ -202,6 +243,7 @@ class SaleProvider extends ChangeNotifier {
         cancellationReason: cancellationReason,
       );
       await _refreshSales();
+      if (_creditSalesLoaded) await _refreshCreditSales();
       if (_currentSaleId == saleId) {
         await _refreshSaleDetail(saleId);
       }
@@ -215,7 +257,7 @@ class SaleProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> registerPayment({
+Future<bool> registerPayment({
     required int saleId,
     required int paidAmountCents,
     String paymentMethod = 'CASH',
@@ -230,6 +272,7 @@ class SaleProvider extends ChangeNotifier {
         notes: notes,
       );
       await _refreshSales();
+      if (_creditSalesLoaded) await _refreshCreditSales();
       if (_currentSaleId == saleId) {
         await _refreshSaleDetail(saleId);
       }
@@ -259,20 +302,36 @@ class SaleProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _refreshSales() async {
-    _sales = await _saleRepository.getAllSales(
+Future<void> _refreshSales() async {
+    _sales = await _saleRepository.getSalesForSalesList(
       saleCategoryId: _lastSaleCategoryId,
       customerId: _lastCustomerId,
       saleType: _lastSaleType,
-      saleStatus: _lastSaleStatus,
       startDate: _lastStartDate,
       endDate: _lastEndDate,
     );
   }
 
-  Future<void> _refreshSaleDetail(int saleId) async {
+  Future<void> _refreshCreditSales() async {
+    _creditSales = await _saleRepository.getOutstandingCreditSales(
+      customerId: _lastCreditCustomerId,
+      startDate: _lastCreditStartDate,
+      endDate: _lastCreditEndDate,
+    );
+  }
+
+Future<void> _refreshSaleDetail(int saleId) async {
+    _currentSale = await _saleRepository.getSaleById(saleId);
     _installments = await _saleRepository.getInstallmentsBySale(saleId);
     _payments = await _saleRepository.getPaymentsBySale(saleId);
+  }
+
+  /// Standalone lookup of a sale's installments, independent from the
+  /// loadSaleDetail/_currentSale flow. Meant to be called per-row from a
+  /// FutureBuilder (e.g. the finished sales list), so it never touches
+  /// isLoading/errorMessage or the detail-screen state.
+  Future<List<SaleInstallmentModel>> installmentsForSale(int saleId) {
+    return _saleRepository.getInstallmentsBySale(saleId);
   }
 
   void _setLoading(bool value) {

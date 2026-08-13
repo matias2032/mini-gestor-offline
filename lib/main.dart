@@ -35,6 +35,7 @@ import 'screens/expense/expense_list_screen.dart';
 import 'screens/expense/expense_category_list_screen.dart';
 import 'screens/sale/sale_list_screen.dart';
 import 'screens/sale/sale_category_list_screen.dart';
+import 'screens/sale/credit_sale_list_screen.dart';
 
 /// Debug switch: set to `true` to wipe the local database on every app
 /// start, simulating a fresh install (onboarding screen shows again
@@ -112,6 +113,7 @@ class MyApp extends StatelessWidget {
           '/expense-category': (_) => const ExpenseCategoryListScreen(),
           '/sale': (_) => const SaleListScreen(),
           '/sale-category': (_) => const SaleCategoryListScreen(),
+          '/credit-sale': (_) => const CreditSaleListScreen(),
         },
         home: const _StartupGate(),
       ),

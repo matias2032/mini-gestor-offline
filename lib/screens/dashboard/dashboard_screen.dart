@@ -71,9 +71,9 @@ class DashboardScreen extends StatelessWidget {
                       onTap: () => Navigator.of(context).pushNamed('/supplier'),
                     ),
                     _ModuleCard(
-                      icon: Icons.point_of_sale_outlined,
-                      label: 'Sales',
-                      onTap: () => _openModule(context, 'sale'),
+                      icon: Icons.credit_score_outlined,
+                      label: 'Credit Sales',
+                      onTap: () => Navigator.of(context).pushNamed('/credit-sale'),
                     ),
                     _ModuleCard(
                       icon: Icons.receipt_long_outlined,
