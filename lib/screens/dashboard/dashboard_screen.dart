@@ -1,34 +1,71 @@
+// screens/dashboard_screen.dart
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/user_provider.dart';
+import '/models/sale_model.dart';
+import '/providers/sale_provider.dart';
+import '/providers/user_provider.dart';
+import '/widgets/app_sidebar.dart';
 
-class DashboardScreen extends StatelessWidget {
+/// Dashboard's role changed from "grid of module shortcuts" to "sales
+/// stats screen" now that AppSidebar owns all navigation. It shows:
+///  - count of finalized sales (NORMAL always finalized; CREDIT only once
+///    COMPLETED — a cancelled/still-open credit sale contributes nothing)
+///  - total value of all finalized sales
+///  - total value of finalized credit sales specifically
+///  - a per-category breakdown
+/// All of it scoped to a period filter (today / 1 day / 1 week / 1 month /
+/// 3 months / 6 months / 1 year).
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
-  void _openModule(BuildContext context, String moduleName) {
-    // TODO: replace with Navigator.of(context).pushNamed('/$moduleName')
-    // once each module screen is built.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('"$moduleName" module is still under construction.')),
-    );
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final saleProvider = context.read<SaleProvider>();
+      saleProvider.loadDashboardStats();
+      saleProvider.loadOutstandingCreditCount();
+    });
+  }
+
+  void _onPeriodChanged(DashboardPeriod period) {
+    context.read<SaleProvider>().loadDashboardStats(period: period);
   }
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>().user;
     final greetingName = user?.name ?? '';
+    final currency = user?.currency ?? 'MZN';
+
+    final saleProvider = context.watch<SaleProvider>();
+    final stats = saleProvider.dashboardStats;
+    final selectedPeriod = saleProvider.dashboardPeriod;
+    final isLoading = saleProvider.isLoading;
+
+    final amountFormat = NumberFormat('#,##0.00');
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        automaticallyImplyLeading: false,
+      appBar: AppBar(title: const Text('Dashboard')),
+      drawer: AppSidebar(
+        currentRoute: '/dashboard',
+        creditSalesBadgeCount: saleProvider.outstandingCreditCount,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: RefreshIndicator(
+          onRefresh: () => context
+              .read<SaleProvider>()
+              .loadDashboardStats(period: selectedPeriod),
+          child: ListView(
+            padding: const EdgeInsets.all(24.0),
             children: [
               Text(
                 greetingName.isNotEmpty ? 'Hello, $greetingName' : 'Hello',
@@ -39,56 +76,82 @@ class DashboardScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               const Text(
-                'What would you like to manage today?',
+                'Here is how your sales are doing.',
                 style: TextStyle(color: Colors.grey),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
+              _PeriodFilter(
+                selected: selectedPeriod,
+                onChanged: _onPeriodChanged,
+              ),
+              const SizedBox(height: 20),
+
+              if (isLoading && stats.finalizedSalesCount == 0 &&
+                  stats.categorySummaries.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else ...[
+                Row(
                   children: [
-                    _ModuleCard(
-                      icon: Icons.point_of_sale_outlined,
-                      label: 'Sales',
-                      onTap: () => Navigator.of(context).pushNamed('/sale'),
+                    Expanded(
+                      child: _StatCard(
+                        icon: Icons.task_alt_outlined,
+                        label: 'Finalized sales',
+                        value: '${stats.finalizedSalesCount}',
+                      ),
                     ),
-                    _ModuleCard(
-                      icon: Icons.category_outlined,
-                      label: 'Sales Categories',
-                      onTap: () => Navigator.of(context).pushNamed('/sale-category'),
-                    ),
-                    _ModuleCard(
-                      icon: Icons.people_outline,
-                      label: 'Customers',
-                      onTap: () => Navigator.of(context).pushNamed('/customer'),
-                    ),
-                    _ModuleCard(
-                      icon: Icons.local_shipping_outlined,
-                      label: 'Suppliers',
-                      onTap: () => Navigator.of(context).pushNamed('/supplier'),
-                    ),
-                    _ModuleCard(
-                      icon: Icons.credit_score_outlined,
-                      label: 'Credit Sales',
-                      onTap: () => Navigator.of(context).pushNamed('/credit-sale'),
-                    ),
-                    _ModuleCard(
-                      icon: Icons.receipt_long_outlined,
-                      label: 'Expenses',
-                      onTap: () => Navigator.pushNamed(context, '/expense'),
-                    ),
-                    _ModuleCard(
-                      icon: Icons.category_outlined,
-                      label: 'Expense Categories',
-                      onTap: () =>
-                          Navigator.pushNamed(context, '/expense-category'),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatCard(
+                        icon: Icons.payments_outlined,
+                        label: 'Total revenue',
+                        value:
+                            '${amountFormat.format(stats.totalAllSalesCents / 100)} $currency',
+                      ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 12),
+                _StatCard(
+                  icon: Icons.credit_score_outlined,
+                  label: 'Settled credit sales',
+                  value:
+                      '${amountFormat.format(stats.totalCreditSalesCents / 100)} $currency',
+                  wide: true,
+                ),
+
+                const SizedBox(height: 28),
+                const Text(
+                  'Sales by category',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                if (stats.categorySummaries.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text('No categories registered yet.'),
+                  )
+                else
+                  Card(
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        for (final category in stats.categorySummaries)
+                          _CategoryRow(
+                            category: category,
+                            currency: currency,
+                            amountFormat: amountFormat,
+                            maxCents: stats.categorySummaries
+                                .map((c) => c.totalCents)
+                                .fold<int>(0, (a, b) => a > b ? a : b),
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
             ],
           ),
         ),
@@ -97,40 +160,136 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-class _ModuleCard extends StatelessWidget {
-  const _ModuleCard({
+class _PeriodFilter extends StatelessWidget {
+  const _PeriodFilter({required this.selected, required this.onChanged});
+
+  final DashboardPeriod selected;
+  final ValueChanged<DashboardPeriod> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: DashboardPeriod.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final period = DashboardPeriod.values[index];
+          final isSelected = period == selected;
+          return ChoiceChip(
+            label: Text(period.label),
+            selected: isSelected,
+            onSelected: (_) => onChanged(period),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
     required this.icon,
     required this.label,
-    required this.onTap,
+    required this.value,
+    this.wide = false,
   });
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final String value;
+  final bool wide;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryRow extends StatelessWidget {
+  const _CategoryRow({
+    required this.category,
+    required this.currency,
+    required this.amountFormat,
+    required this.maxCents,
+  });
+
+  final CategorySalesSummary category;
+  final String currency;
+  final NumberFormat amountFormat;
+  final int maxCents;
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = maxCents > 0 ? category.totalCents / maxCents : 0.0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Icon(icon, size: 40),
-              const SizedBox(height: 12),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  category.name,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
                 ),
+              ),
+              Text(
+                '${amountFormat.format(category.totalCents / 100)} $currency',
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: ratio,
+              minHeight: 6,
+              backgroundColor: Colors.grey[200],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${category.saleCount} sale${category.saleCount == 1 ? '' : 's'}',
+            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+          ),
+        ],
       ),
     );
   }

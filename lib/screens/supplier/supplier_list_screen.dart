@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../models/supplier_model.dart';
 import '../../providers/supplier_provider.dart';
 import 'supplier_form_screen.dart';
+import '/widgets/app_sidebar.dart';
 
 class SupplierListScreen extends StatefulWidget {
   const SupplierListScreen({super.key});
@@ -60,6 +60,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Suppliers')),
+      drawer: const AppSidebar(currentRoute: '/supplier'),
       body: RefreshIndicator(
         onRefresh: () => context.read<SupplierProvider>().loadSuppliers(),
         child: supplierProvider.isLoading && supplierProvider.suppliers.isEmpty

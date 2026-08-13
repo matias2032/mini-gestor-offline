@@ -369,11 +369,57 @@ Future<List<SaleModel>> getAllSales({
     return _saleInstallmentDao.getInstallmentsBySale(saleId);
   }
 
-  Future<List<SalePaymentModel>> getPaymentsBySale(int saleId) {
+Future<List<SalePaymentModel>> getPaymentsBySale(int saleId) {
     return _salePaymentDao.getPaymentsBySale(saleId);
   }
 
+  // ---------------------------------------------------------------------
+  // dashboard / badge stats
+  // ---------------------------------------------------------------------
 
+  /// Number of credit sales still not finalized — backs the sidebar badge.
+  Future<int> countOutstandingCreditSales() {
+    return _saleDao.countOutstandingCreditSales();
+  }
+
+  /// Aggregates finalized-sale numbers for the dashboard, for the given
+  /// date range. Pass null/null for an all-time snapshot.
+  Future<DashboardStats> getDashboardStats({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final finalizedCount = await _saleDao.countFinalizedSales(
+      startDate: startDate,
+      endDate: endDate,
+    );
+    final totalAllCents = await _saleDao.sumFinalizedSalesCents(
+      startDate: startDate,
+      endDate: endDate,
+    );
+    final totalCreditCents = await _saleDao.sumFinalizedSalesCents(
+      saleType: 'CREDIT',
+      startDate: startDate,
+      endDate: endDate,
+    );
+    final categoryRows = await _saleDao.sumFinalizedSalesByCategory(
+      startDate: startDate,
+      endDate: endDate,
+    );
+
+    return DashboardStats(
+      finalizedSalesCount: finalizedCount,
+      totalAllSalesCents: totalAllCents,
+      totalCreditSalesCents: totalCreditCents,
+      categorySummaries: categoryRows
+          .map((row) => CategorySalesSummary(
+                idSaleCategory: row['id_sale_category'] as int,
+                name: row['name'] as String,
+                totalCents: row['total_cents'] as int,
+                saleCount: row['sale_count'] as int,
+              ))
+          .toList(),
+    );
+  }
 
   // ---------------------------------------------------------------------
   // helpers

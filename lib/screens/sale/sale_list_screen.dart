@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-
 import '../../models/sale_installment_model.dart';
 import '../../models/sale_model.dart';
 import '../../providers/customer_provider.dart';
@@ -11,6 +10,7 @@ import '../../providers/sale_provider.dart';
 import '../../providers/user_provider.dart';
 import 'credit_sale_list_screen.dart';
 import 'sale_form_screen.dart';
+import '/widgets/app_sidebar.dart';
 
 /// Lists finished sales only: every NORMAL sale (always COMPLETED), plus
 /// CREDIT sales once they're settled (COMPLETED or CANCELLED). Active
@@ -31,6 +31,7 @@ class _SaleListScreenState extends State<SaleListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SaleProvider>().loadCategories();
       context.read<CustomerProvider>().loadCustomers();
+      context.read<SaleProvider>().loadOutstandingCreditCount();
       _applyFilters();
     });
   }
@@ -131,6 +132,10 @@ class _SaleListScreenState extends State<SaleListScreen> {
             },
           ),
         ],
+      ),
+drawer: AppSidebar(
+        currentRoute: '/sale',
+        creditSalesBadgeCount: context.watch<SaleProvider>().outstandingCreditCount,
       ),
       body: Column(
         children: [

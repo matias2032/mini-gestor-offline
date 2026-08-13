@@ -17,6 +17,12 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    context.read<UserProvider>().loadUser();
+  }
+
+  @override
   void dispose() {
     _passwordController.dispose();
     super.dispose();

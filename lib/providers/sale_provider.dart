@@ -41,18 +41,29 @@ List<SaleCategoryModel> _categories = [];
   DateTime? _lastCreditStartDate;
   DateTime? _lastCreditEndDate;
 
-  // Remembers which sale's installments/payments are currently loaded, so
+// Remembers which sale's installments/payments are currently loaded, so
   // registerPayment/cancelSale can keep the detail screen in sync.
   int? _currentSaleId;
 
-List<SaleCategoryModel> get categories => _categories;
+  // Count of not-yet-finalized credit sales — drives the sidebar badge.
+  // Kept separate from _creditSales so any screen can trigger/read it
+  // without paying for the full credit-sales list load.
+  int _outstandingCreditCount = 0;
+
+  DashboardStats _dashboardStats = DashboardStats.empty();
+  DashboardPeriod _dashboardPeriod = DashboardPeriod.oneMonth;
+
+  List<SaleCategoryModel> get categories => _categories;
   List<SaleModel> get sales => _sales;
   List<SaleModel> get creditSales => _creditSales;
   SaleModel? get currentSale => _currentSale;
   List<SaleInstallmentModel> get installments => _installments;
   List<SalePaymentModel> get payments => _payments;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+    String? get errorMessage => _errorMessage;
+    int get outstandingCreditCount => _outstandingCreditCount;
+    DashboardStats get dashboardStats => _dashboardStats;
+    DashboardPeriod get dashboardPeriod => _dashboardPeriod;
 
   // ---------------------------------------------------------------------
   // sale_category
@@ -222,6 +233,7 @@ Future<bool> createSale({
       );
       await _refreshSales();
       if (_creditSalesLoaded) await _refreshCreditSales();
+      await loadOutstandingCreditCount();
       _errorMessage = null;
       return true;
     } catch (error) {
@@ -302,7 +314,39 @@ Future<bool> registerPayment({
     }
   }
 
-Future<void> _refreshSales() async {
+/// Refreshes the sidebar badge count. Best-effort: a failure here
+  /// shouldn't surface as a page-level error, so it doesn't touch
+  /// _errorMessage/_isLoading.
+  Future<void> loadOutstandingCreditCount() async {
+    try {
+      _outstandingCreditCount = await _saleRepository.countOutstandingCreditSales();
+      notifyListeners();
+    } catch (_) {
+      // Badge is non-critical; silently keep the last known value.
+    }
+  }
+
+  /// Loads dashboard stats for [period] (or the last one used, if
+  /// omitted). Called on dashboard init and whenever the user switches
+  /// the period filter.
+  Future<void> loadDashboardStats({DashboardPeriod? period}) async {
+    if (period != null) _dashboardPeriod = period;
+    _setLoading(true);
+    try {
+      final now = DateTime.now();
+      _dashboardStats = await _saleRepository.getDashboardStats(
+        startDate: _dashboardPeriod.startDateFrom(now),
+        endDate: now,
+      );
+      _errorMessage = null;
+    } catch (error) {
+      _errorMessage = error.toString();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> _refreshSales() async {
     _sales = await _saleRepository.getSalesForSalesList(
       saleCategoryId: _lastSaleCategoryId,
       customerId: _lastCustomerId,

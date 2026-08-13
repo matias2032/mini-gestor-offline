@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../models/expense_category_model.dart';
 import '../../providers/expense_provider.dart';
 import 'expense_category_form_screen.dart';
+import '/widgets/app_sidebar.dart';
 
 class ExpenseCategoryListScreen extends StatefulWidget {
   const ExpenseCategoryListScreen({super.key});
@@ -75,6 +75,7 @@ class _ExpenseCategoryListScreenState
 
     return Scaffold(
       appBar: AppBar(title: const Text('Expense Categories')),
+            drawer: const AppSidebar(currentRoute: '/expense-category'),
       body: RefreshIndicator(
         onRefresh: () => context.read<ExpenseProvider>().loadCategories(),
         child: categories.isEmpty

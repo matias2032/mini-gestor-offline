@@ -174,6 +174,111 @@ Future<int> countAll({bool includeDeleted = true, Transaction? txn}) async {
     return rows.map(SaleModel.fromMap).toList();
   }
 
+
+
+/// Count of active (unfinalized) credit sales — powers the sidebar
+  /// badge. A sale counts here from creation until it's COMPLETED or
+  /// CANCELLED, exactly mirroring [getOutstandingCreditSales]'s filter.
+  Future<int> countOutstandingCreditSales({Transaction? txn}) async {
+    final executor = txn ?? await _localDatabase.database;
+    final result = await executor.rawQuery(
+      "SELECT COUNT(*) AS total FROM sale "
+      "WHERE deleted = 0 AND sale_type = 'CREDIT' "
+      "AND sale_status IN ('OPEN','OUTSTANDING')",
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<int> countFinalizedSales({
+    DateTime? startDate,
+    DateTime? endDate,
+    Transaction? txn,
+  }) async {
+    final executor = txn ?? await _localDatabase.database;
+    final conditions = <String>["deleted = 0", "sale_status = 'COMPLETED'"];
+    final args = <Object?>[];
+    if (startDate != null) {
+      conditions.add('sale_date >= ?');
+      args.add(startDate.toIso8601String());
+    }
+    if (endDate != null) {
+      conditions.add('sale_date <= ?');
+      args.add(endDate.toIso8601String());
+    }
+    final result = await executor.rawQuery(
+      'SELECT COUNT(*) AS total FROM sale WHERE ${conditions.join(' AND ')}',
+      args,
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  /// Sum of total_amount_cents for finalized sales. Pass [saleType] to
+  /// restrict to 'CREDIT' or 'NORMAL'; omit it for the grand total.
+  Future<int> sumFinalizedSalesCents({
+    String? saleType,
+    DateTime? startDate,
+    DateTime? endDate,
+    Transaction? txn,
+  }) async {
+    final executor = txn ?? await _localDatabase.database;
+    final conditions = <String>["deleted = 0", "sale_status = 'COMPLETED'"];
+    final args = <Object?>[];
+    if (saleType != null) {
+      conditions.add('sale_type = ?');
+      args.add(saleType);
+    }
+    if (startDate != null) {
+      conditions.add('sale_date >= ?');
+      args.add(startDate.toIso8601String());
+    }
+    if (endDate != null) {
+      conditions.add('sale_date <= ?');
+      args.add(endDate.toIso8601String());
+    }
+    final result = await executor.rawQuery(
+      'SELECT COALESCE(SUM(total_amount_cents), 0) AS total '
+      'FROM sale WHERE ${conditions.join(' AND ')}',
+      args,
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  /// One row per non-deleted sale_category, with the sum/count of its
+  /// finalized sales in the period. LEFT JOIN keeps categories with zero
+  /// sales in the result (as 0), instead of dropping them.
+  Future<List<Map<String, Object?>>> sumFinalizedSalesByCategory({
+    DateTime? startDate,
+    DateTime? endDate,
+    Transaction? txn,
+  }) async {
+    final executor = txn ?? await _localDatabase.database;
+    final joinConditions = <String>[
+      's.sale_category_id = c.id_sale_category',
+      's.deleted = 0',
+      "s.sale_status = 'COMPLETED'",
+    ];
+    final args = <Object?>[];
+    if (startDate != null) {
+      joinConditions.add('s.sale_date >= ?');
+      args.add(startDate.toIso8601String());
+    }
+    if (endDate != null) {
+      joinConditions.add('s.sale_date <= ?');
+      args.add(endDate.toIso8601String());
+    }
+    return executor.rawQuery(
+      'SELECT c.id_sale_category AS id_sale_category, c.name AS name, '
+      'COALESCE(SUM(s.total_amount_cents), 0) AS total_cents, '
+      'COUNT(s.id_sale) AS sale_count '
+      'FROM sale_category c '
+      'LEFT JOIN sale s ON ${joinConditions.join(' AND ')} '
+      'WHERE c.deleted = 0 '
+      'GROUP BY c.id_sale_category, c.name '
+      'ORDER BY total_cents DESC',
+      args,
+    );
+  }
+
   /// Credit sales still awaiting payment — exactly the ones excluded from
   /// [getSalesForSalesList]. Backs the (upcoming) credit sales list screen.
   Future<List<SaleModel>> getOutstandingCreditSales({

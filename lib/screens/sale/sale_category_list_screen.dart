@@ -2,10 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../models/sale_category_model.dart';
 import '../../providers/sale_provider.dart';
 import 'sale_category_form_screen.dart';
+import '/widgets/app_sidebar.dart';
 
 class SaleCategoryListScreen extends StatefulWidget {
   const SaleCategoryListScreen({super.key});
@@ -74,6 +74,7 @@ class _SaleCategoryListScreenState extends State<SaleCategoryListScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Sale Categories')),
+       drawer: const AppSidebar(currentRoute: '/sale-category'),
       body: RefreshIndicator(
         onRefresh: () => context.read<SaleProvider>().loadCategories(),
         child: isLoading && categories.isEmpty

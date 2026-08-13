@@ -107,6 +107,29 @@ Future<bool> createUser({
     }
   }
 
+/// Verifies [currentPassword] and, if correct, sets [newPassword].
+  /// Returns false (with errorMessage set) on a wrong current password —
+  /// distinct from an exception, which means something else went wrong.
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _setLoading(true);
+    try {
+      final success = await _userRepository.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      _errorMessage = success ? null : 'Current password is incorrect.';
+      return success;
+    } catch (error) {
+      _errorMessage = error.toString();
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<bool> completeOnboarding() async {
     _setLoading(true);
     try {

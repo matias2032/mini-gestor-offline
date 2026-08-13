@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-
 import '../../models/expense_model.dart';
 import '../../providers/expense_provider.dart';
 import '../../providers/supplier_provider.dart';
 import 'expense_filter_sheet.dart';
 import 'expense_form_screen.dart';
+import '/widgets/app_sidebar.dart';
 
 class ExpenseListScreen extends StatefulWidget {
   const ExpenseListScreen({super.key});
@@ -109,6 +109,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           ),
         ],
       ),
+         drawer: const AppSidebar(currentRoute: '/expense'),
       body: RefreshIndicator(
         onRefresh: () => context.read<ExpenseProvider>().loadExpenses(),
         child: expenseProvider.isLoading && expenseProvider.expenses.isEmpty

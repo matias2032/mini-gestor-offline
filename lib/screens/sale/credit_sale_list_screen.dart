@@ -3,12 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-
 import '../../models/sale_model.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/sale_provider.dart';
 import '../../providers/user_provider.dart';
 import 'credit_sale_detail_screen.dart';
+import '/widgets/app_sidebar.dart';
 
 /// Lists only active (unpaid) CREDIT sales — the ones excluded from the
 /// main sales list. Each entry shows who owes, how much, and how much
@@ -28,6 +28,7 @@ class _CreditSaleListScreenState extends State<CreditSaleListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SaleProvider>().loadCreditSales();
       context.read<CustomerProvider>().loadCustomers();
+            context.read<SaleProvider>().loadOutstandingCreditCount();
     });
   }
 
@@ -65,6 +66,10 @@ class _CreditSaleListScreenState extends State<CreditSaleListScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Credit Sales')),
+      drawer: AppSidebar(
+        currentRoute: '/credit-sale',
+        creditSalesBadgeCount: context.watch<SaleProvider>().outstandingCreditCount,
+      ),
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: isLoading && creditSales.isEmpty

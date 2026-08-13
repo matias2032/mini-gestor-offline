@@ -160,3 +160,88 @@ class SaleModel {
     );
   }
 }
+/// Period filter for the dashboard's aggregate stats.
+enum DashboardPeriod { today, last24Hours, oneWeek, oneMonth, threeMonths, sixMonths, oneYear }
+
+extension DashboardPeriodX on DashboardPeriod {
+  /// Computes the inclusive start of the range, given "now".
+  DateTime startDateFrom(DateTime now) {
+    switch (this) {
+      case DashboardPeriod.today:
+        return DateTime(now.year, now.month, now.day);
+      case DashboardPeriod.last24Hours:
+        return now.subtract(const Duration(hours: 24));
+      case DashboardPeriod.oneWeek:
+        return now.subtract(const Duration(days: 7));
+      case DashboardPeriod.oneMonth:
+        return now.subtract(const Duration(days: 30));
+      case DashboardPeriod.threeMonths:
+        return now.subtract(const Duration(days: 90));
+      case DashboardPeriod.sixMonths:
+        return now.subtract(const Duration(days: 180));
+      case DashboardPeriod.oneYear:
+        return now.subtract(const Duration(days: 365));
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case DashboardPeriod.today:
+        return 'Today';
+      case DashboardPeriod.last24Hours:
+        return '1 day';
+      case DashboardPeriod.oneWeek:
+        return '1 week';
+      case DashboardPeriod.oneMonth:
+        return '1 month';
+      case DashboardPeriod.threeMonths:
+        return '3 months';
+      case DashboardPeriod.sixMonths:
+        return '6 months';
+      case DashboardPeriod.oneYear:
+        return '1 year';
+    }
+  }
+}
+
+/// Aggregated totals for one sale_category, used by the dashboard's
+/// per-category breakdown. Categories with zero finalized sales in the
+/// selected period still appear, with totalCents = 0.
+class CategorySalesSummary {
+  const CategorySalesSummary({
+    required this.idSaleCategory,
+    required this.name,
+    required this.totalCents,
+    required this.saleCount,
+  });
+
+  final int idSaleCategory;
+  final String name;
+  final int totalCents;
+  final int saleCount;
+}
+
+/// Snapshot of dashboard numbers for a given period. Only *finalized*
+/// sales count here (sale_status = COMPLETED) — a CREDIT sale that is
+/// still OPEN/OUTSTANDING contributes to none of these totals, matching
+/// the rule that credit revenue only counts once the debt is settled.
+class DashboardStats {
+  const DashboardStats({
+    required this.finalizedSalesCount,
+    required this.totalAllSalesCents,
+    required this.totalCreditSalesCents,
+    required this.categorySummaries,
+  });
+
+  final int finalizedSalesCount;
+  final int totalAllSalesCents;
+  final int totalCreditSalesCents;
+  final List<CategorySalesSummary> categorySummaries;
+
+  factory DashboardStats.empty() => const DashboardStats(
+        finalizedSalesCount: 0,
+        totalAllSalesCents: 0,
+        totalCreditSalesCents: 0,
+        categorySummaries: [],
+      );
+}

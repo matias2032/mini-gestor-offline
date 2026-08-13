@@ -13,8 +13,8 @@ import 'providers/user_provider.dart';
 import 'daos/customer_dao.dart';
 import 'repositories/customer_repository.dart';
 import 'providers/customer_provider.dart';
-import 'screens/onboarding/onboarding_screen.dart';
-import 'screens/login/login_screen.dart';
+import 'screens/user/onboarding_screen.dart';
+import 'screens/user/login_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/customer/customer_list_screen.dart';
 import 'daos/supplier_dao.dart';
@@ -36,6 +36,8 @@ import 'screens/expense/expense_category_list_screen.dart';
 import 'screens/sale/sale_list_screen.dart';
 import 'screens/sale/sale_category_list_screen.dart';
 import 'screens/sale/credit_sale_list_screen.dart';
+import 'screens/user/edit_profile_screen.dart';
+import 'screens/user/change_password_screen.dart';
 
 /// Debug switch: set to `true` to wipe the local database on every app
 /// start, simulating a fresh install (onboarding screen shows again
@@ -114,6 +116,8 @@ class MyApp extends StatelessWidget {
           '/sale': (_) => const SaleListScreen(),
           '/sale-category': (_) => const SaleCategoryListScreen(),
           '/credit-sale': (_) => const CreditSaleListScreen(),
+          '/edit-profile': (_) => const EditProfileScreen(),
+          '/change-password': (_) => const ChangePasswordScreen(),
         },
         home: const _StartupGate(),
       ),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/customer_model.dart';
 import '../../providers/customer_provider.dart';
 import 'customer_form_screen.dart';
+import '/widgets/app_sidebar.dart';
 
 class CustomerListScreen extends StatefulWidget {
   const CustomerListScreen({super.key});
@@ -63,6 +64,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Customers')),
+      drawer: const AppSidebar(currentRoute: '/customer'),
       body: RefreshIndicator(
         onRefresh: () => context.read<CustomerProvider>().loadCustomers(),
         child: _buildBody(customerProvider),
