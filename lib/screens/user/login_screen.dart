@@ -43,18 +43,19 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       Navigator.of(context).pushReplacementNamed('/dashboard');
     }
-    // On failure, the provider's errorMessage is already shown
-    // automatically below the form (see build()).
   }
 
   @override
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
     final userName = userProvider.user?.name;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.signIn),
+        title: Text(l10n.signIn),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -64,25 +65,57 @@ class _LoginScreenState extends State<LoginScreen> {
             key: _formKey,
             child: ListView(
               children: [
-                Text(
-  userName != null
-      ? AppLocalizations.of(context)!.helloUser(userName)
-      : AppLocalizations.of(context)!.welcomeBack,
-  style: Theme.of(context).textTheme.headlineSmall,
-),
-                const SizedBox(height: 4),
-                Text(
-  AppLocalizations.of(context)!.enterPasswordToContinue,
-  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
 
+                // 🎯 ÍCONE ESTRATÉGICO NO CABEÇALHO
+                Center(
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withValues(alpha: 0.12),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/icone.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Textos de Boas-vindas
+                Text(
+                  userName != null
+                      ? l10n.helloUser(userName)
+                      : l10n.welcomeBack,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.enterPasswordToContinue,
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 28),
+
+                // Campo de Senha
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   autofocus: true,
                   decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!.password,
+                    labelText: l10n.password,
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -100,21 +133,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   onFieldSubmitted: (_) => _submit(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return AppLocalizations.of(context)!.passwordRequired;
+                      return l10n.passwordRequired;
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 24),
 
+                // Mensagem de Erro
                 if (userProvider.errorMessage != null) ...[
-                 Text(
-  userProvider.errorMessage!,
-  style: TextStyle(color: Theme.of(context).colorScheme.error),
-),
+                  Text(
+                    userProvider.errorMessage!,
+                    style: TextStyle(color: colorScheme.error),
+                  ),
                   const SizedBox(height: 16),
                 ],
 
+                // Botão Entrar
                 SizedBox(
                   height: 48,
                   child: ElevatedButton(
@@ -125,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text(AppLocalizations.of(context)!.signIn),
+                        : Text(l10n.signIn),
                   ),
                 ),
               ],
