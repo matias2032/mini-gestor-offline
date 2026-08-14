@@ -154,7 +154,10 @@ class _FinancialStatementGenerateScreenState
             if (errorMessage != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Text(errorMessage, style: const TextStyle(color: Colors.red)),
+                child: Text(
+                  errorMessage,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
               ),
             ElevatedButton(
               onPressed: isGenerating ? null : _submit,

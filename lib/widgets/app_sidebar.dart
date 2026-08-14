@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../providers/user_provider.dart';
+import '../providers/theme_provider.dart';
 
 /// One leaf item inside a sidebar group (e.g. "Customers").
 class _MenuItem {
@@ -197,6 +197,11 @@ class _AppSidebarState extends State<AppSidebar>
                   child: Divider(height: 1),
                 ),
                 ..._groups.map((group) => _buildGroup(context, colorScheme, group)),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  child: Divider(height: 1),
+                ),
+                _buildThemeToggleRow(colorScheme),
               ],
             ),
           ),
@@ -205,6 +210,8 @@ class _AppSidebarState extends State<AppSidebar>
       ),
     );
   }
+
+
 
   // -------------------------------------------------------------------
   // Header
@@ -275,14 +282,14 @@ class _AppSidebarState extends State<AppSidebar>
         leading: Icon(
           icon,
           size: 22,
-          color: isActive ? colorScheme.primary : Colors.grey[700],
+          color: isActive ? colorScheme.primary : colorScheme.onSurfaceVariant,
         ),
         title: Text(
           title,
           style: TextStyle(
             fontSize: 14,
             fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
-            color: isActive ? colorScheme.primary : Colors.black87,
+            color: isActive ? colorScheme.primary : colorScheme.onSurface,
           ),
         ),
         selected: isActive,
@@ -328,7 +335,7 @@ class _AppSidebarState extends State<AppSidebar>
                   Icon(
                     group.icon,
                     size: 22,
-                    color: hasActiveItem ? colorScheme.primary : Colors.grey[700],
+                    color: hasActiveItem ? colorScheme.primary : colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -337,7 +344,7 @@ class _AppSidebarState extends State<AppSidebar>
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: hasActiveItem ? FontWeight.w700 : FontWeight.w600,
-                        color: hasActiveItem ? colorScheme.primary : Colors.black87,
+                        color: hasActiveItem ? colorScheme.primary : colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -356,7 +363,7 @@ class _AppSidebarState extends State<AppSidebar>
                   AnimatedRotation(
                     turns: isExpanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: Icon(Icons.expand_more_rounded, size: 20, color: Colors.grey[600]),
+                    child: Icon(Icons.expand_more_rounded, size: 20, color: colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -400,14 +407,14 @@ Widget _buildSubItem(
         leading: Icon(
           item.icon,
           size: 20,
-          color: isActive ? colorScheme.primary : Colors.grey[600],
+          color: isActive ? colorScheme.primary : colorScheme.onSurfaceVariant,
         ),
         title: Text(
           item.title,
           style: TextStyle(
             fontSize: 13,
             fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
-            color: isActive ? colorScheme.primary : Colors.black87,
+            color: isActive ? colorScheme.primary : colorScheme.onSurface,
           ),
         ),
         trailing: badgeCount > 0
@@ -442,10 +449,10 @@ Widget _buildSubItem(
   Widget _buildUserSection(BuildContext context, ColorScheme colorScheme, dynamic user) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: colorScheme.surfaceContainerLow,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: colorScheme.shadow.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -461,29 +468,29 @@ Widget _buildSubItem(
             child: _showUserMenu
                 ? Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+                      color: colorScheme.surface,
+                      border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
                     ),
                     child: Column(
                       children: [
                         _buildUserMenuItem(
                           icon: Icons.person_outline,
                           title: 'Edit Profile',
-                          color: Colors.blue,
+                          color: colorScheme.primary,
                           onTap: () => _openStandaloneScreen('/edit-profile'),
                         ),
-                        Divider(height: 1, color: Colors.grey[200]),
+                        Divider(height: 1, color: colorScheme.outlineVariant),
                         _buildUserMenuItem(
                           icon: Icons.lock_outline,
                           title: 'Change Password',
                           color: Colors.orange,
                           onTap: () => _openStandaloneScreen('/change-password'),
                         ),
-                        Divider(height: 1, color: Colors.grey[200]),
+                        Divider(height: 1, color: colorScheme.outlineVariant),
                         _buildUserMenuItem(
                           icon: Icons.logout_outlined,
                           title: 'Log Out',
-                          color: Colors.red,
+                          color: colorScheme.error,
                           onTap: () => _confirmLogout(context),
                         ),
                       ],
@@ -527,13 +534,17 @@ Widget _buildSubItem(
                             [user.name, user.lastName]
                                 .where((part) => part != null && (part as String).isNotEmpty)
                                 .join(' '),
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: colorScheme.onSurface,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
                           Text(
                             (user.email as String?) ?? '',
-                            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                            style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -541,7 +552,7 @@ Widget _buildSubItem(
                     ),
                     RotationTransition(
                       turns: _rotationAnim,
-                      child: Icon(Icons.expand_less_rounded, color: Colors.grey[700]),
+                      child: Icon(Icons.expand_less_rounded, color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -564,13 +575,44 @@ Widget _buildSubItem(
       title: Text(
         title,
         style: TextStyle(
-          color: title == 'Log Out' ? Colors.red : Colors.black87,
+          color: title == 'Log Out'
+              ? Theme.of(context).colorScheme.error
+              : Theme.of(context).colorScheme.onSurface,
           fontSize: 13,
         ),
       ),
       dense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       onTap: onTap,
+    );
+  }
+
+
+  Widget _buildThemeToggleRow(ColorScheme colorScheme) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+        child: ListTile(
+          dense: true,
+          leading: Icon(
+            themeProvider.isDark
+                ? Icons.dark_mode_outlined
+                : Icons.light_mode_outlined,
+            size: 22,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          title: Text(
+            'Change Theme',
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+          ),
+          trailing: Switch(
+            value: themeProvider.isDark,
+            onChanged: (_) => themeProvider.toggle(),
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          onTap: themeProvider.toggle,
+        ),
+      ),
     );
   }
 
@@ -599,8 +641,8 @@ Widget _buildSubItem(
           ElevatedButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
             ),
             child: const Text('Log Out'),
           ),

@@ -88,7 +88,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
           padding: const EdgeInsets.all(24.0),
           child: Text(
             customerProvider.errorMessage!,
-            style: const TextStyle(color: Colors.red),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
             textAlign: TextAlign.center,
           ),
         ),

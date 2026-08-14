@@ -72,7 +72,7 @@ class _FinancialStatementDetailScreenState
                   Text(
                     '${dateFormat.format(statement.startDate.toLocal())} - '
                     '${dateFormat.format(statement.endDate.toLocal())}',
-                    style: TextStyle(color: Colors.grey[700]),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   const Divider(height: 24),
                   _SummaryRow(

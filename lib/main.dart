@@ -44,6 +44,8 @@ import 'screens/sale/financial_statement_generate_screen.dart';
 import 'screens/sale/financial_statement_detail_screen.dart';
 import 'screens/user/edit_profile_screen.dart';
 import 'screens/user/change_password_screen.dart';
+import 'theme/app_theme.dart';
+import 'providers/theme_provider.dart';
 
 /// Debug switch: set to `true` to wipe the local database on every app
 /// start, simulating a fresh install (onboarding screen shows again
@@ -103,6 +105,7 @@ class MyApp extends StatelessWidget {
 
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider(userRepository)),
         ChangeNotifierProvider(create: (_) => CustomerProvider(customerRepository)),
         ChangeNotifierProvider(create: (_) => SupplierProvider(supplierRepository)),
@@ -112,13 +115,14 @@ class MyApp extends StatelessWidget {
           create: (_) => FinancialStatementProvider(financialStatementRepository),
         ),
       ],
-      child: MaterialApp(
-        title: 'Mini',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
-        routes: {
+child: Consumer<ThemeProvider>(
+  builder: (context, themeProvider, _) => MaterialApp(
+    title: 'Mini',
+    debugShowCheckedModeBanner: false,
+    theme: AppTheme.light,
+    darkTheme: AppTheme.dark,
+    themeMode: themeProvider.themeMode,
+    routes: {
           '/onboarding': (_) => const OnboardingScreen(),
           '/login': (_) => const LoginScreen(),
           '/dashboard': (_) => const DashboardScreen(),
@@ -137,6 +141,7 @@ class MyApp extends StatelessWidget {
         },
         home: const _StartupGate(),
       ),
+),
     );
   }
 }

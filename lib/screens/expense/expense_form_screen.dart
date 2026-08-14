@@ -151,7 +151,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               if (expenseProvider.errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(expenseProvider.errorMessage!, style: const TextStyle(color: Colors.red)),
+                  child: Text(
+                    expenseProvider.errorMessage!,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
                 ),
               ElevatedButton(
                 onPressed: expenseProvider.isLoading ? null : _submit,

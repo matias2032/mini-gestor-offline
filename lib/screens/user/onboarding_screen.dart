@@ -89,23 +89,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             key: _formKey,
             child: ListView(
               children: [
-                const Text(
-                  'Welcome',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Fill in your details to start using the app.',
-                  style: TextStyle(color: Colors.grey),
-                ),
+                Text('Welcome', style: Theme.of(context).textTheme.headlineSmall),
+const SizedBox(height: 4),
+Text(
+  'Fill in your details to start using the app.',
+  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+),
                 const SizedBox(height: 24),
 
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Name *',
-                    border: OutlineInputBorder(),
-                  ),
+  labelText: 'Name *',
+),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Name is required';
@@ -247,9 +243,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                 if (userProvider.errorMessage != null) ...[
                   Text(
-                    userProvider.errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
+  userProvider.errorMessage!,
+  style: TextStyle(color: Theme.of(context).colorScheme.error),
+),
                   const SizedBox(height: 16),
                 ],
 

@@ -97,7 +97,7 @@ class _SaleListScreenState extends State<SaleListScreen> {
       case 'CANCELLED':
         return Colors.red;
       default:
-        return Colors.grey;
+        return Theme.of(context).colorScheme.onSurfaceVariant;
     }
   }
 

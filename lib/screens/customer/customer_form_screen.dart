@@ -135,7 +135,6 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Name *',
-                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -178,7 +177,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                 if (customerProvider.errorMessage != null) ...[
                   Text(
                     customerProvider.errorMessage!,
-                    style: const TextStyle(color: Colors.red),
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -204,3 +203,5 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     );
   }
 }
+
+

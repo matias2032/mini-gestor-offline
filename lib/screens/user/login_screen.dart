@@ -64,17 +64,14 @@ class _LoginScreenState extends State<LoginScreen> {
             child: ListView(
               children: [
                 Text(
-                  userName != null ? 'Hello, $userName' : 'Welcome back',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+  userName != null ? 'Hello, $userName' : 'Welcome back',
+  style: Theme.of(context).textTheme.headlineSmall,
+),
                 const SizedBox(height: 4),
-                const Text(
-                  'Enter your password to continue.',
-                  style: TextStyle(color: Colors.grey),
-                ),
+                Text(
+  'Enter your password to continue.',
+  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+),
                 const SizedBox(height: 24),
 
                 TextFormField(
@@ -108,10 +105,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
 
                 if (userProvider.errorMessage != null) ...[
-                  Text(
-                    userProvider.errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
+                 Text(
+  userProvider.errorMessage!,
+  style: TextStyle(color: Theme.of(context).colorScheme.error),
+),
                   const SizedBox(height: 16),
                 ],
 

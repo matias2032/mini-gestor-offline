@@ -81,7 +81,14 @@ class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Filter expenses', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+Text(
+            'Filter expenses',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
           const SizedBox(height: 16),
           DropdownButtonFormField<int?>(
             initialValue: _categoryId,
