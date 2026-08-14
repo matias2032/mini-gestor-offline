@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/expense_provider.dart';
 import '../../providers/supplier_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class ExpenseFilterSheet extends StatefulWidget {
   const ExpenseFilterSheet({super.key});
@@ -74,6 +75,7 @@ class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
   Widget build(BuildContext context) {
     final categories = context.watch<ExpenseProvider>().categories;
     final suppliers = context.watch<SupplierProvider>().suppliers;
+    final l10n = AppLocalizations.of(context)!;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -82,7 +84,7 @@ class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
 Text(
-            'Filter expenses',
+            l10n.filterExpensesTitle,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -92,9 +94,9 @@ Text(
           const SizedBox(height: 16),
           DropdownButtonFormField<int?>(
             initialValue: _categoryId,
-            decoration: const InputDecoration(labelText: 'Category'),
+            decoration: InputDecoration(labelText: l10n.categoryLabel),
             items: [
-              const DropdownMenuItem<int?>(value: null, child: Text('All')),
+              DropdownMenuItem<int?>(value: null, child: Text(l10n.allLabel)),
               ...categories.map(
                 (c) => DropdownMenuItem<int?>(value: c.idExpenseCategory, child: Text(c.name)),
               ),
@@ -104,9 +106,9 @@ Text(
           const SizedBox(height: 12),
           DropdownButtonFormField<int?>(
             initialValue: _supplierId,
-            decoration: const InputDecoration(labelText: 'Supplier'),
+            decoration: InputDecoration(labelText: l10n.supplierLabel),
             items: [
-              const DropdownMenuItem<int?>(value: null, child: Text('All')),
+              DropdownMenuItem<int?>(value: null, child: Text(l10n.allLabel)),
               ...suppliers.map(
                 (s) => DropdownMenuItem<int?>(value: s.idSupplier, child: Text(s.name)),
               ),
@@ -120,7 +122,7 @@ Text(
                 child: OutlinedButton(
                   onPressed: () => _pickDate(isStart: true),
                   child: Text(
-                    _startDate == null ? 'Start date' : _startDate!.toIso8601String().split('T').first,
+                    _startDate == null ? l10n.startDateLabel : _startDate!.toIso8601String().split('T').first,
                   ),
                 ),
               ),
@@ -129,7 +131,7 @@ Text(
                 child: OutlinedButton(
                   onPressed: () => _pickDate(isStart: false),
                   child: Text(
-                    _endDate == null ? 'End date' : _endDate!.toIso8601String().split('T').first,
+                    _endDate == null ? l10n.endDateLabel : _endDate!.toIso8601String().split('T').first,
                   ),
                 ),
               ),
@@ -139,11 +141,11 @@ Text(
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(onPressed: _clear, child: const Text('Clear')),
+                child: OutlinedButton(onPressed: _clear, child: Text(l10n.clearLabel)),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: ElevatedButton(onPressed: _apply, child: const Text('Apply')),
+                child: ElevatedButton(onPressed: _apply, child: Text(l10n.applyLabel)),
               ),
             ],
           ),

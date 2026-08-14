@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../providers/user_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -67,7 +68,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (success) {
       Navigator.of(context).pushReplacementNamed('/login');
     } else {
-      final errorMessage = userProvider.errorMessage ?? 'Failed to create account.';
+      final errorMessage =
+          userProvider.errorMessage ?? AppLocalizations.of(context)!.failedToCreateAccount;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMessage)),
       );
@@ -80,7 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create account'),
+        title: Text(AppLocalizations.of(context)!.createAccount),
       ),
       body: SafeArea(
         child: Padding(
@@ -89,22 +91,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             key: _formKey,
             child: ListView(
               children: [
-                Text('Welcome', style: Theme.of(context).textTheme.headlineSmall),
+                Text(AppLocalizations.of(context)!.welcome, style: Theme.of(context).textTheme.headlineSmall),
 const SizedBox(height: 4),
 Text(
-  'Fill in your details to start using the app.',
+  AppLocalizations.of(context)!.fillDetailsToStart,
   style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
 ),
                 const SizedBox(height: 24),
 
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-  labelText: 'Name *',
+                  decoration: InputDecoration(
+  labelText: AppLocalizations.of(context)!.nameLabel,
 ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Name is required';
+                      return AppLocalizations.of(context)!.nameRequired;
                     }
                     return null;
                   },
@@ -113,9 +115,9 @@ Text(
 
                 TextFormField(
                   controller: _lastNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Last name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.lastName,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -123,9 +125,9 @@ Text(
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.phone,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -133,9 +135,9 @@ Text(
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.email,
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -143,7 +145,7 @@ Text(
                     }
                     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
                     if (!emailRegex.hasMatch(value.trim())) {
-                      return 'Invalid email';
+                      return AppLocalizations.of(context)!.invalidEmail;
                     }
                     return null;
                   },
@@ -152,18 +154,18 @@ Text(
 
                 TextFormField(
                   controller: _businessNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Business name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.businessName,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 DropdownButtonFormField<String>(
                   initialValue: _selectedCurrency,
-                  decoration: const InputDecoration(
-                    labelText: 'Currency *',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.currencyLabel,
+                    border: const OutlineInputBorder(),
                   ),
                   items: _currencyOptions
                       .map(
@@ -186,7 +188,7 @@ Text(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password *',
+                    labelText: AppLocalizations.of(context)!.passwordLabel,
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -203,10 +205,10 @@ Text(
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Password is required';
+                      return AppLocalizations.of(context)!.passwordRequired;
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return AppLocalizations.of(context)!.passwordMinLength;
                     }
                     return null;
                   },
@@ -217,7 +219,7 @@ Text(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   decoration: InputDecoration(
-                    labelText: 'Confirm password *',
+                    labelText: AppLocalizations.of(context)!.confirmPasswordLabel,
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -234,7 +236,7 @@ Text(
                   ),
                   validator: (value) {
                     if (value != _passwordController.text) {
-                      return 'Passwords do not match';
+                      return AppLocalizations.of(context)!.passwordsDoNotMatch;
                     }
                     return null;
                   },
@@ -254,12 +256,12 @@ Text(
                   child: ElevatedButton(
                     onPressed: userProvider.isLoading ? null : _submit,
                     child: userProvider.isLoading
-                        ? const SizedBox(
+                         ? const SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Create account'),
+                        : Text(AppLocalizations.of(context)!.createAccount),
                   ),
                 ),
               ],

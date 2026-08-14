@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../models/expense_model.dart';
 import '../../providers/expense_provider.dart';
 import '../../providers/supplier_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class ExpenseFormScreen extends StatefulWidget {
   const ExpenseFormScreen({super.key, this.expense});
@@ -59,7 +60,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_categoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.pleaseSelectCategory)),
       );
       return;
     }
@@ -94,9 +95,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final expenseProvider = context.watch<ExpenseProvider>();
     final suppliers = context.watch<SupplierProvider>().suppliers;
     final dateFormat = DateFormat('dd/MM/yyyy');
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Edit expense' : 'New expense')),
+      appBar: AppBar(title: Text(_isEditing ? l10n.editExpense : l10n.newExpense)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -105,26 +107,26 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             children: [
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: InputDecoration(labelText: l10n.descriptionLabel),
                 validator: (value) =>
-                    (value == null || value.trim().isEmpty) ? 'Description is required' : null,
+                    (value == null || value.trim().isEmpty) ? l10n.descriptionRequired : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _amountController,
-                decoration: const InputDecoration(labelText: 'Amount (MZN)'),
+                decoration: InputDecoration(labelText: l10n.amountLabel),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) return 'Amount is required';
+                  if (value == null || value.trim().isEmpty) return l10n.amountRequired;
                   final parsed = double.tryParse(value.replaceAll(',', '.'));
-                  if (parsed == null || parsed < 0) return 'Invalid amount';
+                  if (parsed == null || parsed < 0) return l10n.invalidAmount;
                   return null;
                 },
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
                 initialValue: _categoryId,
-                decoration: const InputDecoration(labelText: 'Category'),
+                decoration: InputDecoration(labelText: l10n.categoryLabel),
                 items: expenseProvider.categories
                     .map((c) => DropdownMenuItem(value: c.idExpenseCategory, child: Text(c.name)))
                     .toList(),
@@ -133,9 +135,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               const SizedBox(height: 12),
               DropdownButtonFormField<int?>(
                 initialValue: _supplierId,
-                decoration: const InputDecoration(labelText: 'Supplier (optional)'),
+                decoration: InputDecoration(labelText: l10n.supplierOptionalLabel),
                 items: [
-                  const DropdownMenuItem<int?>(value: null, child: Text('None')),
+                  DropdownMenuItem<int?>(value: null, child: Text(l10n.noneLabel)),
                   ...suppliers.map(
                     (s) => DropdownMenuItem<int?>(value: s.idSupplier, child: Text(s.name)),
                   ),
@@ -145,7 +147,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: _pickDate,
-                child: Text('Date: ${dateFormat.format(_expenseDate)}'),
+                child: Text(l10n.dateLabel(dateFormat.format(_expenseDate))),
               ),
               const SizedBox(height: 20),
               if (expenseProvider.errorMessage != null)
@@ -160,7 +162,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 onPressed: expenseProvider.isLoading ? null : _submit,
                 child: expenseProvider.isLoading
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text(_isEditing ? 'Save' : 'Create'),
+                    : Text(_isEditing ? l10n.saveChanges : l10n.createExpense),
               ),
             ],
           ),

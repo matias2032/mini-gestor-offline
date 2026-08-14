@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../providers/financial_statement_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/financial_statement_model.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class FinancialStatementDetailScreen extends StatefulWidget {
   const FinancialStatementDetailScreen({
@@ -35,6 +36,7 @@ class _FinancialStatementDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final detail = context.watch<FinancialStatementProvider>().currentDetail;
     final isLoading = context.watch<FinancialStatementProvider>().isLoading;
     final currency = context.watch<UserProvider>().user?.currency ?? 'MZN';
@@ -45,7 +47,7 @@ class _FinancialStatementDetailScreenState
         detail == null ||
         detail.statement.idFinancialStatement != widget.idFinancialStatement) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Statement Detail')),
+        appBar: AppBar(title: Text(l10n.statementDetailTitle)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -76,19 +78,19 @@ class _FinancialStatementDetailScreenState
                   ),
                   const Divider(height: 24),
                   _SummaryRow(
-                    label: 'Sales (${statement.salesCount})',
+                    label: l10n.salesCountLabel(statement.salesCount),
                     value: '${amountFormat.format(statement.totalSalesCents / 100)} $currency',
                     valueColor: Colors.green,
                   ),
                   const SizedBox(height: 4),
                   _SummaryRow(
-                    label: 'Expenses (${statement.expensesCount})',
+                    label: l10n.expensesCountLabel(statement.expensesCount),
                     value: '${amountFormat.format(statement.totalExpensesCents / 100)} $currency',
                     valueColor: Colors.red,
                   ),
                   const Divider(height: 24),
                   _SummaryRow(
-                    label: 'Balance',
+                    label: l10n.balanceLabel,
                     value: '${amountFormat.format(statement.balanceCents / 100)} $currency',
                     valueColor: balanceColor,
                     bold: true,
@@ -105,10 +107,10 @@ class _FinancialStatementDetailScreenState
             ),
           ),
           const SizedBox(height: 24),
-          Text('Sales', style: Theme.of(context).textTheme.titleMedium),
+          Text(l10n.salesSectionTitle, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           if (detail.saleItems.isEmpty)
-            const Text('No sales in this period.')
+            Text(l10n.noSalesInPeriod)
           else
             Card(
               child: Column(
@@ -126,10 +128,10 @@ class _FinancialStatementDetailScreenState
               ),
             ),
           const SizedBox(height: 24),
-          Text('Expenses', style: Theme.of(context).textTheme.titleMedium),
+          Text(l10n.expensesSectionTitle, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           if (detail.expenseItems.isEmpty)
-            const Text('No expenses in this period.')
+            Text(l10n.noExpensesInPeriod)
           else
             Card(
               child: Column(

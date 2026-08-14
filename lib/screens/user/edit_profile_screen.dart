@@ -1,9 +1,9 @@
-// screens/user/edit_profile_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/user_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
+
 
 /// Lets the user edit their profile fields. On success, forces an
 /// automatic logout so the session picks up the fresh data cleanly —
@@ -69,13 +69,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!success) {
       final error = context.read<UserProvider>().errorMessage;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error ?? 'Could not update profile.')),
+        SnackBar(
+          content: Text(error ?? AppLocalizations.of(context)!.couldNotUpdateProfile),
+        ),
       );
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profile updated. Please log in again.')),
+      SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdatedRelogin)),
     );
     Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
   }
@@ -86,7 +88,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final isLoading = context.watch<UserProvider>().isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.editProfileTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -96,7 +98,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Update your account details below.',
+                  AppLocalizations.of(context)!.updateDetailsBelow,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -104,37 +106,49 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 20),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.nameFieldLabel,
+                  ),
                   validator: (value) => (value == null || value.trim().isEmpty)
-                      ? 'Name is required.'
+                      ? AppLocalizations.of(context)!.nameRequiredDot
                       : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _lastNameController,
-                  decoration: const InputDecoration(labelText: 'Last name'),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.lastName,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone'),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.phone,
+                  ),
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.email,
+                  ),
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _businessNameController,
-                  decoration: const InputDecoration(labelText: 'Business name'),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.businessName,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _currencyController,
-                  decoration: const InputDecoration(labelText: 'Currency'),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.currencyFieldLabel,
+                  ),
                   textCapitalization: TextCapitalization.characters,
                 ),
                 const SizedBox(height: 24),
@@ -146,7 +160,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Save changes'),
+                      : Text(AppLocalizations.of(context)!.saveChanges),
                 ),
               ],
             ),
@@ -156,4 +170,3 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 }
-

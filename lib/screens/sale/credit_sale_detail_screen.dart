@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/sale_provider.dart';
 import '../../providers/user_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 /// Detail screen for a single CREDIT sale. This is where each new
 /// payment is registered; every payment registered here automatically
@@ -49,28 +50,30 @@ class _CreditSaleDetailScreenState extends State<CreditSaleDetailScreen> {
   }
 
   String _debtorName(String? walkInName, int? customerId) {
+    final loc = AppLocalizations.of(context)!;
     if (walkInName != null) return walkInName;
-    if (customerId == null) return 'Unknown customer';
+    if (customerId == null) return loc.unknownCustomer;
     final customers = context.read<CustomerProvider>().customers;
     for (final customer in customers) {
       if (customer.idCustomer == customerId) return customer.name;
     }
-    return 'Customer #$customerId';
+    return loc.customerNumber(customerId.toString());
   }
 
   Future<void> _submitPayment(int remainingCents) async {
     if (!_paymentFormKey.currentState!.validate()) return;
 
+    final loc = AppLocalizations.of(context)!;
     final amountCents = _toCents(_paymentAmountController.text);
     if (amountCents <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid payment amount.')),
+        SnackBar(content: Text(loc.enterValidPaymentAmount)),
       );
       return;
     }
     if (amountCents > remainingCents) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment exceeds the remaining debt.')),
+        SnackBar(content: Text(loc.paymentExceedsRemainingDebt)),
       );
       return;
     }
@@ -86,39 +89,41 @@ class _CreditSaleDetailScreenState extends State<CreditSaleDetailScreen> {
 
     if (!mounted) return;
 
+    final loc2 = AppLocalizations.of(context)!;
     if (success) {
       _paymentAmountController.clear();
       _paymentNotesController.clear();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment registered.')),
+        SnackBar(content: Text(loc2.paymentRegistered)),
       );
     } else {
       final error = context.read<SaleProvider>().errorMessage;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error ?? 'Could not register payment.')),
+        SnackBar(content: Text(error ?? loc2.couldNotRegisterPayment)),
       );
     }
   }
 
   Future<void> _confirmCancel() async {
+    final loc = AppLocalizations.of(context)!;
     final reasonController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Cancel sale'),
+        title: Text(loc.cancelSale),
         content: TextField(
           controller: reasonController,
-          decoration: const InputDecoration(labelText: 'Cancellation reason'),
+          decoration: InputDecoration(labelText: loc.cancellationReasonLabel),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Back'),
+            child: Text(loc.back),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Cancel Sale'),
+            child: Text(loc.cancelSaleButton),
           ),
         ],
       ),
@@ -131,8 +136,9 @@ class _CreditSaleDetailScreenState extends State<CreditSaleDetailScreen> {
           );
       if (!success && mounted) {
         final error = context.read<SaleProvider>().errorMessage;
+        final loc2 = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error ?? 'Could not cancel sale.')),
+          SnackBar(content: Text(error ?? loc2.couldNotCancelSale)),
         );
       }
     }
@@ -141,6 +147,7 @@ class _CreditSaleDetailScreenState extends State<CreditSaleDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final sale = context.watch<SaleProvider>().currentSale;
     final payments = context.watch<SaleProvider>().payments;
     final isLoading = context.watch<SaleProvider>().isLoading;
@@ -150,10 +157,10 @@ class _CreditSaleDetailScreenState extends State<CreditSaleDetailScreen> {
 
     if (sale == null || sale.idSale != widget.saleId) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Credit Sale')),
+        appBar: AppBar(title: Text(loc.creditSaleTitle)),
         body: isLoading
             ? const Center(child: CircularProgressIndicator())
-            : const Center(child: Text('Sale not found.')),
+            : Center(child: Text(loc.saleNotFound)),
       );
     }
 
@@ -168,7 +175,7 @@ class _CreditSaleDetailScreenState extends State<CreditSaleDetailScreen> {
           if (!isSettled)
             IconButton(
               icon: const Icon(Icons.cancel_outlined),
-              tooltip: 'Cancel sale',
+              tooltip: loc.cancelSale,
               onPressed: _confirmCancel,
             ),
         ],
@@ -191,26 +198,28 @@ class _CreditSaleDetailScreenState extends State<CreditSaleDetailScreen> {
                   Text(sale.description),
                   const SizedBox(height: 12),
                   _InfoRow(
-                    label: 'Total',
+                    label: loc.totalLabel,
                     value:
                         '${amountFormat.format(sale.totalAmountCents / 100)} $currency',
                   ),
                   _InfoRow(
-                    label: 'Paid so far',
+                    label: loc.paidSoFarLabel,
                     value:
                         '${amountFormat.format(sale.paidAmountCents / 100)} $currency',
                   ),
                   _InfoRow(
-                    label: 'Remaining debt',
+                    label: loc.remainingDebtLabel,
                     value:
                         '${amountFormat.format(remainingCents / 100)} $currency',
                     valueColor: remainingCents > 0 ? Colors.red : Colors.green,
                   ),
-                  _InfoRow(label: 'Status', value: sale.saleStatus),
-                  _InfoRow(label: 'Payment status', value: sale.paymentStatus),
+                  _InfoRow(label: loc.statusLabel, value: sale.saleStatus),
+                  _InfoRow(
+                      label: loc.paymentStatusLabel,
+                      value: sale.paymentStatus),
                   if (sale.creditDueDate != null)
                     _InfoRow(
-                      label: 'Due date',
+                      label: loc.dueDateLabel,
                       value: '${sale.creditDueDate!.toLocal()}'.split(' ').first,
                     ),
                 ],
@@ -227,33 +236,39 @@ class _CreditSaleDetailScreenState extends State<CreditSaleDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Register payment',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        loc.registerPayment,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _paymentAmountController,
-                        decoration: const InputDecoration(labelText: 'Amount'),
+                        decoration:
+                            InputDecoration(labelText: loc.amountFieldLabel),
                         keyboardType:
                             const TextInputType.numberWithOptions(decimal: true),
                         validator: (value) {
                           final cents = _toCents(value ?? '');
-                          return cents <= 0 ? 'Enter a valid amount' : null;
+                          return cents <= 0 ? loc.enterValidAmount : null;
                         },
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: _paymentMethod,
-                        decoration:
-                            const InputDecoration(labelText: 'Payment method'),
-                        items: const [
-                          DropdownMenuItem(value: 'CASH', child: Text('Cash')),
+                        decoration: InputDecoration(
+                            labelText: loc.paymentMethodLabel),
+                        items: [
                           DropdownMenuItem(
-                              value: 'BANK_TRANSFER', child: Text('Bank transfer')),
-                          DropdownMenuItem(value: 'MPESA', child: Text('M-Pesa')),
-                          DropdownMenuItem(value: 'EMOLA', child: Text('E-Mola')),
-                          DropdownMenuItem(value: 'OTHER', child: Text('Other')),
+                              value: 'CASH', child: Text(loc.cashMethod)),
+                          DropdownMenuItem(
+                              value: 'BANK_TRANSFER',
+                              child: Text(loc.bankTransferMethod)),
+                          DropdownMenuItem(
+                              value: 'MPESA', child: Text(loc.mpesaMethod)),
+                          DropdownMenuItem(
+                              value: 'EMOLA', child: Text(loc.emolaMethod)),
+                          DropdownMenuItem(
+                              value: 'OTHER', child: Text(loc.otherMethod)),
                         ],
                         onChanged: (value) =>
                             setState(() => _paymentMethod = value!),
@@ -261,8 +276,8 @@ class _CreditSaleDetailScreenState extends State<CreditSaleDetailScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _paymentNotesController,
-                        decoration:
-                            const InputDecoration(labelText: 'Notes (optional)'),
+                        decoration: InputDecoration(
+                            labelText: loc.notesOptionalLabel),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -275,7 +290,7 @@ class _CreditSaleDetailScreenState extends State<CreditSaleDetailScreen> {
                                 width: 20,
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Text('Register payment'),
+                            : Text(loc.registerPayment),
                       ),
                     ],
                   ),
@@ -284,10 +299,11 @@ class _CreditSaleDetailScreenState extends State<CreditSaleDetailScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          const Text('Payment history', style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(loc.paymentHistory,
+              style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           if (payments.isEmpty)
-            const Text('No payments registered yet.')
+            Text(loc.noPaymentsYet)
           else
             ...payments.map(
               (payment) => Card(

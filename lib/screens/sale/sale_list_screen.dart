@@ -11,6 +11,7 @@ import '../../providers/user_provider.dart';
 import 'credit_sale_list_screen.dart';
 import 'sale_form_screen.dart';
 import '/widgets/app_sidebar.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 /// Lists finished sales only: every NORMAL sale (always COMPLETED), plus
 /// CREDIT sales once they're settled (COMPLETED or CANCELLED). Active
@@ -43,24 +44,25 @@ class _SaleListScreenState extends State<SaleListScreen> {
   }
 
   Future<void> _confirmCancel(SaleModel sale) async {
+    final l10n = AppLocalizations.of(context)!;
     final reasonController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Cancel sale'),
+        title: Text(l10n.cancelSaleTitle),
         content: TextField(
           controller: reasonController,
-          decoration: const InputDecoration(labelText: 'Cancellation reason'),
+          decoration: InputDecoration(labelText: l10n.cancellationReasonLabel),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Back'),
+            child: Text(l10n.backLabel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Cancel Sale'),
+            child: Text(l10n.cancelSaleButton),
           ),
         ],
       ),
@@ -74,7 +76,7 @@ class _SaleListScreenState extends State<SaleListScreen> {
       if (!success && mounted) {
         final error = context.read<SaleProvider>().errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error ?? 'Could not cancel sale.')),
+          SnackBar(content: Text(error ?? l10n.couldNotCancelSale)),
         );
       }
     }
@@ -102,17 +104,19 @@ class _SaleListScreenState extends State<SaleListScreen> {
   }
 
   String _customerName(SaleModel sale) {
+    final l10n = AppLocalizations.of(context)!;
     if (sale.walkInCustomerName != null) return sale.walkInCustomerName!;
-    if (sale.customerId == null) return 'No customer';
+    if (sale.customerId == null) return l10n.noCustomerLabel;
     final customers = context.read<CustomerProvider>().customers;
     for (final customer in customers) {
       if (customer.idCustomer == sale.customerId) return customer.name;
     }
-    return 'Customer #${sale.customerId}';
+    return l10n.customerNumberLabel(sale.customerId!);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final sales = context.watch<SaleProvider>().sales;
     final isLoading = context.watch<SaleProvider>().isLoading;
     final currency = context.watch<UserProvider>().user?.currency ?? 'MZN';
@@ -120,11 +124,11 @@ class _SaleListScreenState extends State<SaleListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Finished Sales'),
+        title: Text(l10n.finishedSalesTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.credit_score_outlined),
-            tooltip: 'Credit sales',
+            tooltip: l10n.creditSalesTooltip,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const CreditSaleListScreen()),
@@ -143,11 +147,11 @@ drawer: AppSidebar(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: DropdownButtonFormField<String>(
               value: _saleTypeFilter,
-              decoration: const InputDecoration(labelText: 'Type'),
-              items: const [
-                DropdownMenuItem(value: null, child: Text('All')),
-                DropdownMenuItem(value: 'NORMAL', child: Text('Normal')),
-                DropdownMenuItem(value: 'CREDIT', child: Text('Credit')),
+              decoration: InputDecoration(labelText: l10n.typeLabel),
+              items: [
+                DropdownMenuItem(value: null, child: Text(l10n.allLabel)),
+                DropdownMenuItem(value: 'NORMAL', child: Text(l10n.normalLabel)),
+                DropdownMenuItem(value: 'CREDIT', child: Text(l10n.creditLabel)),
               ],
               onChanged: (value) {
                 setState(() => _saleTypeFilter = value);
@@ -162,9 +166,9 @@ drawer: AppSidebar(
                   ? const Center(child: CircularProgressIndicator())
                   : sales.isEmpty
                       ? ListView(
-                          children: const [
-                            SizedBox(height: 120),
-                            Center(child: Text('No finished sales yet.')),
+                          children: [
+                            const SizedBox(height: 120),
+                            Center(child: Text(l10n.noFinishedSalesYet)),
                           ],
                         )
                       : ListView.separated(
@@ -191,7 +195,7 @@ drawer: AppSidebar(
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _openForm,
-        tooltip: 'New sale',
+        tooltip: l10n.newSaleTooltip,
         child: const Icon(Icons.add),
       ),
     );
@@ -221,9 +225,10 @@ class _SaleListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final title = Text('${sale.reference} — ${sale.description}');
     final subtitle = Text(
-      '$customerName • ${sale.isCredit ? 'Credit' : 'Immediate'}\n'
+      '$customerName • ${sale.isCredit ? l10n.creditLabel : l10n.immediateLabel}\n'
       '${amountFormat.format(sale.totalAmountCents / 100)} $currency',
     );
     final trailing = Row(
@@ -267,9 +272,9 @@ class _SaleListItem extends StatelessWidget {
             }
             final installments = snapshot.data ?? [];
             if (installments.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Text('No installments registered.'),
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Text(l10n.noInstallmentsRegistered),
               );
             }
             return Padding(
@@ -278,8 +283,7 @@ class _SaleListItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Paid in ${installments.length} '
-                    'installment${installments.length > 1 ? 's' : ''}:',
+                    l10n.paidInInstallmentsMessage(installments.length),
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),

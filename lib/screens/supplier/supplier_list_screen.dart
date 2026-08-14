@@ -4,6 +4,7 @@ import '../../models/supplier_model.dart';
 import '../../providers/supplier_provider.dart';
 import 'supplier_form_screen.dart';
 import '/widgets/app_sidebar.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class SupplierListScreen extends StatefulWidget {
   const SupplierListScreen({super.key});
@@ -20,19 +21,20 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
   }
 
   Future<void> _confirmDelete(SupplierModel supplier) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete supplier'),
-        content: Text('Are you sure you want to delete "${supplier.name}"?'),
+        title: Text(l10n.deleteSupplier),
+        content: Text(l10n.confirmDeleteSupplierMessage(supplier.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -57,16 +59,17 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
   @override
   Widget build(BuildContext context) {
     final supplierProvider = context.watch<SupplierProvider>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Suppliers')),
+      appBar: AppBar(title: Text(l10n.suppliersTitle)),
       drawer: const AppSidebar(currentRoute: '/supplier'),
       body: RefreshIndicator(
         onRefresh: () => context.read<SupplierProvider>().loadSuppliers(),
         child: supplierProvider.isLoading && supplierProvider.suppliers.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : supplierProvider.suppliers.isEmpty
-                ? const Center(child: Text('No suppliers registered.'))
+                ? Center(child: Text(l10n.noSuppliersYet))
                 : ListView.builder(
                     itemCount: supplierProvider.suppliers.length,
                     itemBuilder: (context, index) {

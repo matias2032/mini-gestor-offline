@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/financial_statement_model.dart';
 import '../../providers/financial_statement_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class FinancialStatementGenerateScreen extends StatefulWidget {
   const FinancialStatementGenerateScreen({super.key});
@@ -52,17 +53,18 @@ class _FinancialStatementGenerateScreenState
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final l10n = AppLocalizations.of(context)!;
     final isCustom = _periodType == StatementPeriodType.custom;
     if (isCustom) {
       if (_customStartDate == null || _customEndDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Select both a start and an end date.')),
+          SnackBar(content: Text(l10n.selectBothDatesMessage)),
         );
         return;
       }
       if (_customEndDate!.isBefore(_customStartDate!)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('End date cannot be before start date.')),
+          SnackBar(content: Text(l10n.endDateBeforeStartDateMessage)),
         );
         return;
       }
@@ -83,12 +85,13 @@ class _FinancialStatementGenerateScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final errorMessage = context.watch<FinancialStatementProvider>().errorMessage;
     final isGenerating = context.watch<FinancialStatementProvider>().isGenerating;
     final isCustom = _periodType == StatementPeriodType.custom;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Generate Statement')),
+      appBar: AppBar(title: Text(l10n.generateStatementTitle)),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -96,7 +99,7 @@ class _FinancialStatementGenerateScreenState
           children: [
             DropdownButtonFormField<StatementPeriodType>(
               value: _periodType,
-              decoration: const InputDecoration(labelText: 'Period'),
+              decoration: InputDecoration(labelText: l10n.periodLabel),
               items: StatementPeriodType.values
                   .map((period) => DropdownMenuItem(
                         value: period,
@@ -116,12 +119,14 @@ class _FinancialStatementGenerateScreenState
                     ? TextButton.icon(
                         onPressed: _pickCustomStartDate,
                         icon: const Icon(Icons.calendar_today_outlined, size: 16),
-                        label: const Text('Select start date'),
+                        label: Text(l10n.selectStartDate),
                       )
                     : InputChip(
                         avatar: const Icon(Icons.calendar_today_outlined, size: 16),
                         label: Text(
-                          'Start: ${_customStartDate!.toLocal()}'.split(' ').first,
+                          l10n.startDatePrefix(
+                            '${_customStartDate!.toLocal()}'.split(' ').first,
+                          ),
                         ),
                         onDeleted: () => setState(() => _customStartDate = null),
                       ),
@@ -133,12 +138,14 @@ class _FinancialStatementGenerateScreenState
                     ? TextButton.icon(
                         onPressed: _pickCustomEndDate,
                         icon: const Icon(Icons.calendar_today_outlined, size: 16),
-                        label: const Text('Select end date'),
+                        label: Text(l10n.selectEndDate),
                       )
                     : InputChip(
                         avatar: const Icon(Icons.calendar_today_outlined, size: 16),
                         label: Text(
-                          'End: ${_customEndDate!.toLocal()}'.split(' ').first,
+                          l10n.endDatePrefix(
+                            '${_customEndDate!.toLocal()}'.split(' ').first,
+                          ),
                         ),
                         onDeleted: () => setState(() => _customEndDate = null),
                       ),
@@ -147,7 +154,7 @@ class _FinancialStatementGenerateScreenState
             const SizedBox(height: 16),
             TextFormField(
               controller: _notesController,
-              decoration: const InputDecoration(labelText: 'Notes (optional)'),
+              decoration: InputDecoration(labelText: l10n.notesOptionalLabel),
               maxLines: 3,
             ),
             const SizedBox(height: 16),
@@ -167,7 +174,7 @@ class _FinancialStatementGenerateScreenState
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Generate'),
+                  : Text(l10n.generateButtonLabel),
             ),
           ],
         ),

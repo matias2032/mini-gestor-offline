@@ -4,6 +4,7 @@ import '../../models/expense_category_model.dart';
 import '../../providers/expense_provider.dart';
 import 'expense_category_form_screen.dart';
 import '/widgets/app_sidebar.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class ExpenseCategoryListScreen extends StatefulWidget {
   const ExpenseCategoryListScreen({super.key});
@@ -27,19 +28,20 @@ class _ExpenseCategoryListScreenState
     BuildContext context,
     ExpenseCategoryModel category,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete category'),
-        content: Text('Are you sure you want to delete "${category.name}"?'),
+        title: Text(l10n.deleteExpenseCategory),
+        content: Text(l10n.confirmDeleteExpenseCategoryMessage(category.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -52,7 +54,7 @@ class _ExpenseCategoryListScreenState
       if (!success && context.mounted) {
         final error = context.read<ExpenseProvider>().errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error ?? 'Failed to delete category.')),
+          SnackBar(content: Text(error ?? l10n.failedToDeleteExpenseCategory)),
         );
       }
     }
@@ -72,17 +74,18 @@ class _ExpenseCategoryListScreenState
   @override
   Widget build(BuildContext context) {
     final categories = context.watch<ExpenseProvider>().categories;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Expense Categories')),
+      appBar: AppBar(title: Text(l10n.expenseCategoriesTitle)),
             drawer: const AppSidebar(currentRoute: '/expense-category'),
       body: RefreshIndicator(
         onRefresh: () => context.read<ExpenseProvider>().loadCategories(),
         child: categories.isEmpty
             ? ListView(
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: Text('No categories yet.')),
+                children: [
+                  const SizedBox(height: 120),
+                  Center(child: Text(l10n.noExpenseCategoriesYet)),
                 ],
               )
             : ListView.builder(

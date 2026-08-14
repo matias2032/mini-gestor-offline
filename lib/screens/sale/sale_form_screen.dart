@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/customer_provider.dart';
 import '../../providers/sale_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class SaleFormScreen extends StatefulWidget {
   const SaleFormScreen({super.key});
@@ -71,6 +72,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final l10n = AppLocalizations.of(context)!;
     final isCredit = _saleType == 'CREDIT';
     final totalCents = _toCents(_totalAmountController.text);
 
@@ -78,13 +80,13 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
     if (isCredit) {
       if (_useExistingCustomer && _customerId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Select a customer.')),
+          SnackBar(content: Text(l10n.selectCustomerMessage)),
         );
         return;
       }
 if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Enter a walk-in customer name.')),
+          SnackBar(content: Text(l10n.enterWalkInNameMessage)),
         );
         return;
       }
@@ -99,14 +101,14 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
         final entryCents = _toCents(rawEntry);
         if (entryCents <= 0) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Enter a valid initial payment.')),
+            SnackBar(content: Text(l10n.enterValidInitialPaymentMessage)),
           );
           return;
         }
         if (entryCents > totalCents) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Initial payment cannot exceed the sale total.'),
+            SnackBar(
+              content: Text(l10n.initialPaymentExceedsTotalMessage),
             ),
           );
           return;
@@ -136,6 +138,7 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final categories = context.watch<SaleProvider>().categories;
     final customers = context.watch<CustomerProvider>().customers;
     final errorMessage = context.watch<SaleProvider>().errorMessage;
@@ -143,7 +146,7 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
     final isCredit = _saleType == 'CREDIT';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Sale')),
+      appBar: AppBar(title: Text(l10n.newSaleTitle)),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -151,7 +154,7 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
           children: [
             DropdownButtonFormField<int>(
               value: _saleCategoryId,
-              decoration: const InputDecoration(labelText: 'Category'),
+              decoration: InputDecoration(labelText: l10n.categoryLabel),
               items: categories
                   .map((category) => DropdownMenuItem(
                         value: category.idSaleCategory,
@@ -159,30 +162,32 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
                       ))
                   .toList(),
               onChanged: (value) => setState(() => _saleCategoryId = value),
-              validator: (value) => value == null ? 'Category is required' : null,
+              validator: (value) =>
+                  value == null ? l10n.categoryRequiredMessage : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Description'),
-              validator: (value) =>
-                  (value == null || value.trim().isEmpty) ? 'Description is required' : null,
+              decoration: InputDecoration(labelText: l10n.descriptionLabel),
+              validator: (value) => (value == null || value.trim().isEmpty)
+                  ? l10n.descriptionRequiredMessage
+                  : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _totalAmountController,
-              decoration: const InputDecoration(labelText: 'Total amount'),
+              decoration: InputDecoration(labelText: l10n.totalAmountLabel),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: (value) {
                 final cents = _toCents(value ?? '');
-                return cents <= 0 ? 'Enter a valid amount' : null;
+                return cents <= 0 ? l10n.enterValidAmountMessage : null;
               },
             ),
             const SizedBox(height: 16),
             SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'NORMAL', label: Text('Normal')),
-                ButtonSegment(value: 'CREDIT', label: Text('Credit')),
+              segments: [
+                ButtonSegment(value: 'NORMAL', label: Text(l10n.normalLabel)),
+                ButtonSegment(value: 'CREDIT', label: Text(l10n.creditLabel)),
               ],
               selected: {_saleType},
               onSelectionChanged: (selection) =>
@@ -194,15 +199,15 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
             // a walk-in sale with no customer on record.
             SwitchListTile(
               title: Text(isCredit
-                  ? 'Use existing customer'
-                  : 'Associate an existing customer (optional)'),
+                  ? l10n.useExistingCustomerLabel
+                  : l10n.associateExistingCustomerOptionalLabel),
               value: _useExistingCustomer,
               onChanged: (value) => setState(() => _useExistingCustomer = value),
             ),
             if (_useExistingCustomer)
               DropdownButtonFormField<int>(
                 value: _customerId,
-                decoration: const InputDecoration(labelText: 'Customer'),
+                decoration: InputDecoration(labelText: l10n.customerLabel),
                 items: customers
                     .map((customer) => DropdownMenuItem(
                           value: customer.idCustomer,
@@ -214,7 +219,7 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
             else if (isCredit)
               TextFormField(
                 controller: _walkInNameController,
-                decoration: const InputDecoration(labelText: 'Walk-in customer name'),
+                decoration: InputDecoration(labelText: l10n.walkInCustomerNameLabel),
               ),
             if (isCredit) ...[
               const SizedBox(height: 12),
@@ -224,12 +229,14 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
                     ? TextButton.icon(
                         onPressed: _pickCreditDueDate,
                         icon: const Icon(Icons.calendar_today_outlined, size: 16),
-                        label: const Text('Add a due date (optional)'),
+                        label: Text(l10n.addDueDateOptionalLabel),
                       )
                     : InputChip(
                         avatar: const Icon(Icons.calendar_today_outlined, size: 16),
                         label: Text(
-                          'Due: ${_creditDueDate!.toLocal()}'.split(' ').first,
+                          l10n.dueDatePrefix(
+                            '${_creditDueDate!.toLocal()}'.split(' ').first,
+                          ),
                         ),
                         onDeleted: () => setState(() => _creditDueDate = null),
                       ),
@@ -237,10 +244,9 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _initialPaymentController,
-                decoration: const InputDecoration(
-                  labelText: 'Initial payment (optional)',
-                  helperText:
-                      'Leave empty if nothing was paid yet — the full amount stays owed.',
+                decoration: InputDecoration(
+                  labelText: l10n.initialPaymentOptionalLabel,
+                  helperText: l10n.initialPaymentHelperText,
                 ),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
               ),
@@ -248,7 +254,7 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
             const SizedBox(height: 16),
             TextFormField(
               controller: _notesController,
-              decoration: const InputDecoration(labelText: 'Notes (optional)'),
+              decoration: InputDecoration(labelText: l10n.notesOptionalLabel),
               maxLines: 3,
             ),
             const SizedBox(height: 16),
@@ -268,7 +274,7 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Create Sale'),
+                  : Text(l10n.createSaleButton),
             ),
           ],
         ),

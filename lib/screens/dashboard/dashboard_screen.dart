@@ -8,6 +8,7 @@ import '/models/sale_model.dart';
 import '/providers/sale_provider.dart';
 import '/providers/user_provider.dart';
 import '/widgets/app_sidebar.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 /// Dashboard's role changed from "grid of module shortcuts" to "sales
 /// stats screen" now that AppSidebar owns all navigation. It shows:
@@ -42,6 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final user = context.watch<UserProvider>().user;
     final greetingName = user?.name ?? '';
     final currency = user?.currency ?? 'MZN';
@@ -54,7 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final amountFormat = NumberFormat('#,##0.00');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(title: Text(l10n.dashboardTitle)),
       drawer: AppSidebar(
         currentRoute: '/dashboard',
         creditSalesBadgeCount: saleProvider.outstandingCreditCount,
@@ -68,12 +70,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.all(24.0),
             children: [
               Text(
-                greetingName.isNotEmpty ? 'Hello, $greetingName' : 'Hello',
+                greetingName.isNotEmpty
+                    ? l10n.helloUser(greetingName)
+                    : l10n.hello,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 4),
               Text(
-                'Here is how your sales are doing.',
+                l10n.salesDoingIntro,
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 20),
@@ -96,7 +100,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Expanded(
                       child: _StatCard(
                         icon: Icons.task_alt_outlined,
-                        label: 'Finalized sales',
+                        label: l10n.finalizedSales,
                         value: '${stats.finalizedSalesCount}',
                       ),
                     ),
@@ -104,7 +108,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Expanded(
                       child: _StatCard(
                         icon: Icons.payments_outlined,
-                        label: 'Total revenue',
+                        label: l10n.totalRevenue,
                         value:
                             '${amountFormat.format(stats.totalAllSalesCents / 100)} $currency',
                       ),
@@ -114,7 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 12),
                 _StatCard(
                   icon: Icons.credit_score_outlined,
-                  label: 'Settled credit sales',
+                  label: l10n.settledCreditSales,
                   value:
                       '${amountFormat.format(stats.totalCreditSalesCents / 100)} $currency',
                   wide: true,
@@ -122,7 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 const SizedBox(height: 28),
                 Text(
-                  'Sales by category',
+                  l10n.salesByCategory,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -131,9 +135,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 8),
                 if (stats.categorySummaries.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Text('No categories registered yet.'),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(l10n.noCategoriesYet),
                   )
                 else
                   Card(
@@ -259,6 +263,7 @@ class _CategoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ratio = maxCents > 0 ? category.totalCents / maxCents : 0.0;
+    final l10n = AppLocalizations.of(context)!;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -297,7 +302,7 @@ class _CategoryRow extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '${category.saleCount} sale${category.saleCount == 1 ? '' : 's'}',
+            l10n.saleCountLabel(category.saleCount),
             style: TextStyle(
               fontSize: 11,
               color: Theme.of(context).colorScheme.onSurfaceVariant,

@@ -46,6 +46,8 @@ import 'screens/user/edit_profile_screen.dart';
 import 'screens/user/change_password_screen.dart';
 import 'theme/app_theme.dart';
 import 'providers/theme_provider.dart';
+import 'providers/locale_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 /// Debug switch: set to `true` to wipe the local database on every app
 /// start, simulating a fresh install (onboarding screen shows again
@@ -56,26 +58,27 @@ const bool _debugResetDatabaseOnStart = false;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // sqflite (o pacote "puro") só suporta Android/iOS nativamente.
-  // Em web/desktop é preciso trocar o databaseFactory global para uma
-  // implementação FFI antes de qualquer acesso à base de dados.
   if (kIsWeb) {
     databaseFactory = databaseFactoryFfiWeb;
   } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
-  // Android/iOS: mantém o databaseFactory por defeito do sqflite.
 
   if (_debugResetDatabaseOnStart) {
     await LocalDatabase.instance.resetDatabase();
   }
 
-  runApp(const MyApp());
+  final localeProvider = LocaleProvider();
+  await localeProvider.loadSavedLocale();
+
+  runApp(MyApp(localeProvider: localeProvider));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.localeProvider});
+
+  final LocaleProvider localeProvider;
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +109,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider.value(value: localeProvider),
         ChangeNotifierProvider(create: (_) => UserProvider(userRepository)),
         ChangeNotifierProvider(create: (_) => CustomerProvider(customerRepository)),
         ChangeNotifierProvider(create: (_) => SupplierProvider(supplierRepository)),
@@ -115,13 +119,16 @@ class MyApp extends StatelessWidget {
           create: (_) => FinancialStatementProvider(financialStatementRepository),
         ),
       ],
-child: Consumer<ThemeProvider>(
-  builder: (context, themeProvider, _) => MaterialApp(
+child: Consumer2<ThemeProvider, LocaleProvider>(
+  builder: (context, themeProvider, localeProvider, _) => MaterialApp(
     title: 'Mini',
     debugShowCheckedModeBanner: false,
     theme: AppTheme.light,
     darkTheme: AppTheme.dark,
     themeMode: themeProvider.themeMode,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: localeProvider.locale,
     routes: {
           '/onboarding': (_) => const OnboardingScreen(),
           '/login': (_) => const LoginScreen(),

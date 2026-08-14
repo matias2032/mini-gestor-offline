@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/expense_category_model.dart';
 import '../../providers/expense_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class ExpenseCategoryFormScreen extends StatefulWidget {
   const ExpenseCategoryFormScreen({super.key, this.category});
@@ -63,9 +64,12 @@ class _ExpenseCategoryFormScreenState
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ExpenseProvider>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Edit Category' : 'New Category')),
+      appBar: AppBar(
+        title: Text(_isEditing ? l10n.editExpenseCategory : l10n.newExpenseCategory),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -76,10 +80,10 @@ class _ExpenseCategoryFormScreenState
               children: [
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
+                  decoration: InputDecoration(labelText: l10n.nameFieldLabel),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Name is required.';
+                      return l10n.nameRequiredDot;
                     }
                     return null;
                   },
@@ -88,7 +92,7 @@ class _ExpenseCategoryFormScreenState
                 TextFormField(
                   controller: _descriptionController,
                   decoration:
-                      const InputDecoration(labelText: 'Description (optional)'),
+                      InputDecoration(labelText: l10n.descriptionOptionalLabel),
                   maxLines: 3,
                 ),
                 if (provider.errorMessage != null) ...[
@@ -107,7 +111,7 @@ class _ExpenseCategoryFormScreenState
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(_isEditing ? 'Save' : 'Create'),
+                      : Text(_isEditing ? l10n.saveChanges : l10n.createExpenseCategory),
                 ),
               ],
             ),

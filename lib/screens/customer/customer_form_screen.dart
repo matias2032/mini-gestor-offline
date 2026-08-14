@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/customer_model.dart';
 import '../../providers/customer_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 /// Handles both creation and editing.
 /// `customer == null` → create mode. `customer != null` → edit mode.
@@ -76,22 +77,20 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     final customer = widget.customer;
     if (customer == null) return;
 
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete customer'),
-        content: Text(
-          'Are you sure you want to delete "${customer.name}"? '
-          'Associated sales history will be kept.',
-        ),
+        title: Text(l10n.deleteCustomer),
+        content: Text(l10n.confirmDeleteCustomerMessage(customer.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -111,16 +110,17 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   @override
   Widget build(BuildContext context) {
     final customerProvider = context.watch<CustomerProvider>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEditing ? 'Edit customer' : 'New customer'),
+        title: Text(widget.isEditing ? l10n.editCustomer : l10n.newCustomer),
         actions: [
           if (widget.isEditing)
             IconButton(
               icon: const Icon(Icons.delete_outline),
               onPressed: _delete,
-              tooltip: 'Delete customer',
+              tooltip: l10n.deleteCustomer,
             ),
         ],
       ),
@@ -133,12 +133,12 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
               children: [
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name *',
+                  decoration: InputDecoration(
+                    labelText: l10n.nameLabel,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Name is required';
+                      return l10n.nameRequired;
                     }
                     return null;
                   },
@@ -147,9 +147,9 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
 
                 TextFormField(
                   controller: _lastNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Last name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.lastName,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -157,9 +157,9 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.phone,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -167,9 +167,9 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                 TextFormField(
                   controller: _notesController,
                   maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.notesLabel,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -192,7 +192,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text(widget.isEditing ? 'Save changes' : 'Create customer'),
+                        : Text(widget.isEditing ? l10n.saveChanges : l10n.createCustomer),
                   ),
                 ),
               ],
@@ -203,5 +203,3 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     );
   }
 }
-
-

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/locale_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 /// One leaf item inside a sidebar group (e.g. "Customers").
 class _MenuItem {
@@ -24,11 +26,16 @@ class _MenuGroup {
   const _MenuGroup({
     required this.icon,
     required this.title,
+    required this.groupKey,
     required this.items,
   });
 
   final IconData icon;
   final String title;
+
+  /// Stable, untranslated identifier for this group. Used for expand
+  /// state and badge logic instead of the (translated) title.
+  final String groupKey;
   final List<_MenuItem> items;
 }
 
@@ -60,72 +67,87 @@ class _AppSidebarState extends State<AppSidebar>
 
   final Set<String> _expandedGroups = {};
 
-  static const List<_MenuGroup> _groups = [
-    _MenuGroup(
-      icon: Icons.point_of_sale_outlined,
-      title: 'Sales',
-      items: [
-        _MenuItem(
-          icon: Icons.task_alt_outlined,
-          title: 'Finished Sales',
-          route: '/sale',
+  /// Structural map (groupKey -> item routes), independent of translated
+  /// titles, used only to figure out which group contains the active
+  /// route. Kept separate from `_buildGroups` so it doesn't need a
+  /// BuildContext/AppLocalizations.
+  static const Map<String, List<String>> _groupRoutes = {
+    'sales': ['/sale', '/credit-sale', '/sale-category', '/sale/financial-statement'],
+    'customers': ['/customer'],
+    'suppliers': ['/supplier'],
+    'expenses': ['/expense', '/expense-category'],
+  };
+
+  List<_MenuGroup> _buildGroups(AppLocalizations loc) => [
+        _MenuGroup(
+          icon: Icons.point_of_sale_outlined,
+          title: loc.salesGroupLabel,
+          groupKey: 'sales',
+          items: [
+            _MenuItem(
+              icon: Icons.task_alt_outlined,
+              title: loc.finishedSalesLabel,
+              route: '/sale',
+            ),
+            _MenuItem(
+              icon: Icons.credit_score_outlined,
+              title: loc.creditSalesTitle,
+              route: '/credit-sale',
+            ),
+            _MenuItem(
+              icon: Icons.category_outlined,
+              title: loc.saleCategoriesLabel,
+              route: '/sale-category',
+            ),
+            _MenuItem(
+              icon: Icons.summarize_outlined,
+              title: loc.financialStatementsLabel,
+              route: '/sale/financial-statement',
+            ),
+          ],
         ),
-        _MenuItem(
-          icon: Icons.credit_score_outlined,
-          title: 'Credit Sales',
-          route: '/credit-sale',
-        ),
-        _MenuItem(
-          icon: Icons.category_outlined,
-          title: 'Sale Categories',
-          route: '/sale-category',
-        ),
-        _MenuItem(
-          icon: Icons.summarize_outlined,
-          title: 'Financial Statements',
-          route: '/sale/financial-statement',
-        ),
-      ],
-    ),
-    _MenuGroup(
-      icon: Icons.people_outline,
-      title: 'Customers',
-      items: [
-        _MenuItem(
+        _MenuGroup(
           icon: Icons.people_outline,
-          title: 'Customers',
-          route: '/customer',
+          title: loc.customersTitle,
+          groupKey: 'customers',
+          items: [
+            _MenuItem(
+              icon: Icons.people_outline,
+              title: loc.customersTitle,
+              route: '/customer',
+            ),
+          ],
         ),
-      ],
-    ),
-    _MenuGroup(
-      icon: Icons.local_shipping_outlined,
-      title: 'Suppliers',
-      items: [
-        _MenuItem(
+        _MenuGroup(
           icon: Icons.local_shipping_outlined,
-          title: 'Suppliers',
-          route: '/supplier',
+          title: loc.suppliersTitle,
+          groupKey: 'suppliers',
+          items: [
+            _MenuItem(
+              icon: Icons.local_shipping_outlined,
+              title: loc.suppliersTitle,
+              route: '/supplier',
+            ),
+          ],
         ),
-      ],
-    ),
-    _MenuGroup(
-      icon: Icons.receipt_long_outlined,
-      title: 'Expenses',
-      items: [
-        _MenuItem(
+        _MenuGroup(
           icon: Icons.receipt_long_outlined,
-          title: 'Expenses',
-          route: '/expense',
+          title: loc.expensesTitle,
+          groupKey: 'expenses',
+          items: [
+            _MenuItem(
+              icon: Icons.receipt_long_outlined,
+              title: loc.expensesTitle,
+              route: '/expense',
+            ),
+            _MenuItem(
+              icon: Icons.category_outlined,
+              title: loc.expenseCategoriesTitle,
+              route: '/expense-category',
+            ),
+          ],
         ),
-        _MenuItem(
-          icon: Icons.category_outlined,
-          title: 'Expense Categories',
-          route: '/expense-category',
-        ),
-      ],
-    ),
-  ];
+      ];
 
   @override
   void initState() {
@@ -148,12 +170,10 @@ class _AppSidebarState extends State<AppSidebar>
   }
 
   void _expandActiveGroup() {
-    for (final group in _groups) {
-      for (final item in group.items) {
-        if (item.route == widget.currentRoute) {
-          setState(() => _expandedGroups.add(group.title));
-          return;
-        }
+    for (final entry in _groupRoutes.entries) {
+      if (entry.value.contains(widget.currentRoute)) {
+        setState(() => _expandedGroups.add(entry.key));
+        return;
       }
     }
   }
@@ -173,10 +193,12 @@ class _AppSidebarState extends State<AppSidebar>
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final user = context.watch<UserProvider>().user;
     if (user == null) return const SizedBox.shrink();
 
     final colorScheme = Theme.of(context).colorScheme;
+    final groups = _buildGroups(loc);
 
     return Drawer(
       child: Column(
@@ -189,23 +211,24 @@ class _AppSidebarState extends State<AppSidebar>
                 _buildSimpleItem(
                   colorScheme: colorScheme,
                   icon: Icons.dashboard_outlined,
-                  title: 'Dashboard',
+                  title: loc.dashboardTitle,
                   route: '/dashboard',
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   child: Divider(height: 1),
                 ),
-                ..._groups.map((group) => _buildGroup(context, colorScheme, group)),
+                ...groups.map((group) => _buildGroup(context, colorScheme, group)),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   child: Divider(height: 1),
                 ),
-                _buildThemeToggleRow(colorScheme),
+                _buildThemeToggleRow(colorScheme, loc),
+                _buildLanguageSelectorRow(colorScheme, loc),
               ],
             ),
           ),
-          _buildUserSection(context, colorScheme, user),
+          _buildUserSection(context, colorScheme, user, loc),
         ],
       ),
     );
@@ -305,7 +328,7 @@ class _AppSidebarState extends State<AppSidebar>
   // -------------------------------------------------------------------
 
   Widget _buildGroup(BuildContext context, ColorScheme colorScheme, _MenuGroup group) {
-    final isExpanded = _expandedGroups.contains(group.title);
+    final isExpanded = _expandedGroups.contains(group.groupKey);
     final hasActiveItem = group.items.any((item) => item.route == widget.currentRoute);
 
     return Column(
@@ -317,9 +340,9 @@ class _AppSidebarState extends State<AppSidebar>
             borderRadius: BorderRadius.circular(8),
             onTap: () => setState(() {
               if (isExpanded) {
-                _expandedGroups.remove(group.title);
+                _expandedGroups.remove(group.groupKey);
               } else {
-                _expandedGroups.add(group.title);
+                _expandedGroups.add(group.groupKey);
               }
             }),
             child: Container(
@@ -349,7 +372,7 @@ class _AppSidebarState extends State<AppSidebar>
                     ),
                   ),
                   if (!isExpanded &&
-                      group.title == 'Sales' &&
+                      group.groupKey == 'sales' &&
                       widget.creditSalesBadgeCount > 0)
                     Container(
                       width: 8,
@@ -446,7 +469,12 @@ Widget _buildSubItem(
   // Bottom user section — dropdown lives here
   // -------------------------------------------------------------------
 
-  Widget _buildUserSection(BuildContext context, ColorScheme colorScheme, dynamic user) {
+  Widget _buildUserSection(
+    BuildContext context,
+    ColorScheme colorScheme,
+    dynamic user,
+    AppLocalizations loc,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
@@ -475,22 +503,23 @@ Widget _buildSubItem(
                       children: [
                         _buildUserMenuItem(
                           icon: Icons.person_outline,
-                          title: 'Edit Profile',
+                          title: loc.editProfileTitle,
                           color: colorScheme.primary,
                           onTap: () => _openStandaloneScreen('/edit-profile'),
                         ),
                         Divider(height: 1, color: colorScheme.outlineVariant),
                         _buildUserMenuItem(
                           icon: Icons.lock_outline,
-                          title: 'Change Password',
+                          title: loc.changePasswordTitle,
                           color: Colors.orange,
                           onTap: () => _openStandaloneScreen('/change-password'),
                         ),
                         Divider(height: 1, color: colorScheme.outlineVariant),
                         _buildUserMenuItem(
                           icon: Icons.logout_outlined,
-                          title: 'Log Out',
+                          title: loc.logOut,
                           color: colorScheme.error,
+                          isDestructive: true,
                           onTap: () => _confirmLogout(context),
                         ),
                       ],
@@ -569,13 +598,14 @@ Widget _buildSubItem(
     required String title,
     required Color color,
     required VoidCallback onTap,
+    bool isDestructive = false,
   }) {
     return ListTile(
       leading: Icon(icon, color: color, size: 20),
       title: Text(
         title,
         style: TextStyle(
-          color: title == 'Log Out'
+          color: isDestructive
               ? Theme.of(context).colorScheme.error
               : Theme.of(context).colorScheme.onSurface,
           fontSize: 13,
@@ -588,7 +618,7 @@ Widget _buildSubItem(
   }
 
 
-  Widget _buildThemeToggleRow(ColorScheme colorScheme) {
+  Widget _buildThemeToggleRow(ColorScheme colorScheme, AppLocalizations loc) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
@@ -602,7 +632,7 @@ Widget _buildSubItem(
             color: colorScheme.onSurfaceVariant,
           ),
           title: Text(
-            'Change Theme',
+            loc.changeThemeLabel,
             style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
           ),
           trailing: Switch(
@@ -617,26 +647,69 @@ Widget _buildSubItem(
   }
 
   // -------------------------------------------------------------------
+  // Language selector
+  // -------------------------------------------------------------------
+
+  Widget _buildLanguageSelectorRow(ColorScheme colorScheme, AppLocalizations loc) {
+    return Consumer<LocaleProvider>(
+      builder: (context, localeProvider, _) {
+        final currentCode = localeProvider.locale?.languageCode ??
+            Localizations.localeOf(context).languageCode;
+        final selectedCode = currentCode == 'pt' ? 'pt' : 'en';
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+          child: ListTile(
+            dense: true,
+            leading: Icon(
+              Icons.language_outlined,
+              size: 22,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            title: Text(
+              loc.languageLabel,
+              style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+            ),
+            trailing: SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'en', label: Text('EN')),
+                ButtonSegment(value: 'pt', label: Text('PT')),
+              ],
+              selected: {selectedCode},
+              showSelectedIcon: false,
+              onSelectionChanged: (selection) {
+                localeProvider.setLocale(Locale(selection.first));
+              },
+            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      },
+    );
+  }
+
+  // -------------------------------------------------------------------
   // Logout
   // -------------------------------------------------------------------
 
   Future<void> _confirmLogout(BuildContext context) async {
+    final loc = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.logout_outlined, color: Colors.red),
-            SizedBox(width: 12),
-            Text('Confirm Logout'),
+            const Icon(Icons.logout_outlined, color: Colors.red),
+            const SizedBox(width: 12),
+            Text(loc.confirmLogoutTitle),
           ],
         ),
-        content: const Text('Are you sure you want to log out?'),
+        content: Text(loc.confirmLogoutMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(loc.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -644,7 +717,7 @@ Widget _buildSubItem(
               backgroundColor: Theme.of(context).colorScheme.error,
               foregroundColor: Theme.of(context).colorScheme.onError,
             ),
-            child: const Text('Log Out'),
+            child: Text(loc.logOut),
           ),
         ],
       ),

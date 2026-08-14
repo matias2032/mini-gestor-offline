@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/supplier_model.dart';
 import '../../providers/supplier_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class SupplierFormScreen extends StatefulWidget {
   const SupplierFormScreen({super.key, this.supplier});
@@ -68,19 +69,20 @@ class _SupplierFormScreenState extends State<SupplierFormScreen> {
   }
 
   Future<void> _delete() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete supplier'),
-        content: const Text('Are you sure you want to delete this supplier?'),
+        title: Text(l10n.deleteSupplier),
+        content: Text(l10n.deleteSupplierConfirmationGeneric),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -99,10 +101,11 @@ class _SupplierFormScreenState extends State<SupplierFormScreen> {
   @override
   Widget build(BuildContext context) {
     final supplierProvider = context.watch<SupplierProvider>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit supplier' : 'New supplier'),
+        title: Text(_isEditing ? l10n.editSupplier : l10n.newSupplier),
         actions: [
           if (_isEditing)
             IconButton(
@@ -120,21 +123,21 @@ class _SupplierFormScreenState extends State<SupplierFormScreen> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
+                decoration: InputDecoration(labelText: l10n.nameFieldLabel),
                 validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Name is required'
+                    ? l10n.nameRequired
                     : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _phoneController,
-                decoration: const InputDecoration(labelText: 'Phone'),
+                decoration: InputDecoration(labelText: l10n.phone),
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _addressController,
-                decoration: const InputDecoration(labelText: 'Address'),
+                decoration: InputDecoration(labelText: l10n.addressLabel),
               ),
               const SizedBox(height: 20),
               if (supplierProvider.errorMessage != null)
@@ -153,7 +156,7 @@ class _SupplierFormScreenState extends State<SupplierFormScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(_isEditing ? 'Save' : 'Create'),
+                    : Text(_isEditing ? l10n.saveChanges : l10n.createSupplier),
               ),
             ],
           ),

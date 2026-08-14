@@ -5,6 +5,7 @@ import '../../models/customer_model.dart';
 import '../../providers/customer_provider.dart';
 import 'customer_form_screen.dart';
 import '/widgets/app_sidebar.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class CustomerListScreen extends StatefulWidget {
   const CustomerListScreen({super.key});
@@ -24,22 +25,20 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
   }
 
   Future<void> _confirmDelete(CustomerModel customer) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete customer'),
-        content: Text(
-          'Are you sure you want to delete "${customer.name}"? '
-          'Associated sales history will be kept.',
-        ),
+        title: Text(l10n.deleteCustomer),
+        content: Text(l10n.confirmDeleteCustomerMessage(customer.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -61,23 +60,24 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
   @override
   Widget build(BuildContext context) {
     final customerProvider = context.watch<CustomerProvider>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Customers')),
+      appBar: AppBar(title: Text(l10n.customersTitle)),
       drawer: const AppSidebar(currentRoute: '/customer'),
       body: RefreshIndicator(
         onRefresh: () => context.read<CustomerProvider>().loadCustomers(),
-        child: _buildBody(customerProvider),
+        child: _buildBody(customerProvider, l10n),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(),
-        tooltip: 'New customer',
+        tooltip: l10n.newCustomer,
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  Widget _buildBody(CustomerProvider customerProvider) {
+  Widget _buildBody(CustomerProvider customerProvider, AppLocalizations l10n) {
     if (customerProvider.isLoading && customerProvider.customers.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -98,9 +98,9 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
     if (customerProvider.customers.isEmpty) {
       return ListView(
         // ListView (not Center) so RefreshIndicator keeps working.
-        children: const [
-          SizedBox(height: 120),
-          Center(child: Text('No customers registered yet.')),
+        children: [
+          const SizedBox(height: 120),
+          Center(child: Text(l10n.noCustomersYet)),
         ],
       );
     }

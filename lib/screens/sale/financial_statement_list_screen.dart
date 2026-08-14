@@ -11,6 +11,7 @@ import '../../providers/user_provider.dart';
 import '/widgets/app_sidebar.dart';
 import 'financial_statement_detail_screen.dart';
 import 'financial_statement_generate_screen.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 /// Lists all generated financial statements ("extractos"), most recent
 /// first. Each statement is a frozen snapshot — nothing here recomputes
@@ -52,21 +53,22 @@ class _FinancialStatementListScreenState
   }
 
   Future<void> _confirmDelete(FinancialStatementModel statement) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete statement'),
+        title: Text(l10n.deleteStatementTitle),
         content: Text(
-          'Delete statement ${statement.reference}? This cannot be undone.',
+          l10n.confirmDeleteStatementMessage(statement.reference),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -79,7 +81,7 @@ class _FinancialStatementListScreenState
       if (!success && mounted) {
         final error = context.read<FinancialStatementProvider>().errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error ?? 'Could not delete statement.')),
+          SnackBar(content: Text(error ?? l10n.couldNotDeleteStatement)),
         );
       }
     }
@@ -87,6 +89,7 @@ class _FinancialStatementListScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final statements = context.watch<FinancialStatementProvider>().statements;
     final isLoading = context.watch<FinancialStatementProvider>().isLoading;
     final currency = context.watch<UserProvider>().user?.currency ?? 'MZN';
@@ -94,7 +97,7 @@ class _FinancialStatementListScreenState
     final dateFormat = DateFormat('dd/MM/yyyy');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Financial Statements')),
+      appBar: AppBar(title: Text(l10n.financialStatementsTitle)),
       drawer: AppSidebar(
         currentRoute: '/sale/financial-statement',
         creditSalesBadgeCount: context.watch<SaleProvider>().outstandingCreditCount,
@@ -105,9 +108,9 @@ class _FinancialStatementListScreenState
             ? const Center(child: CircularProgressIndicator())
             : statements.isEmpty
                 ? ListView(
-                    children: const [
-                      SizedBox(height: 120),
-                      Center(child: Text('No statements generated yet.')),
+                    children: [
+                      const SizedBox(height: 120),
+                      Center(child: Text(l10n.noStatementsYet)),
                     ],
                   )
                 : ListView.separated(
@@ -124,7 +127,7 @@ class _FinancialStatementListScreenState
                         subtitle: Text(
                           '${dateFormat.format(statement.startDate.toLocal())} - '
                           '${dateFormat.format(statement.endDate.toLocal())}\n'
-                          'Generated ${dateFormat.format(statement.generatedAt.toLocal())}',
+                          '${l10n.generatedOnPrefix(dateFormat.format(statement.generatedAt.toLocal()))}',
                         ),
                         isThreeLine: true,
                         trailing: Row(
@@ -150,7 +153,7 @@ class _FinancialStatementListScreenState
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _openGenerate,
-        tooltip: 'Generate statement',
+        tooltip: l10n.generateStatementTooltip,
         child: const Icon(Icons.add),
       ),
     );

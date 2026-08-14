@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/user_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -53,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sign in'),
+        title: Text(AppLocalizations.of(context)!.signIn),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -64,12 +65,14 @@ class _LoginScreenState extends State<LoginScreen> {
             child: ListView(
               children: [
                 Text(
-  userName != null ? 'Hello, $userName' : 'Welcome back',
+  userName != null
+      ? AppLocalizations.of(context)!.helloUser(userName)
+      : AppLocalizations.of(context)!.welcomeBack,
   style: Theme.of(context).textTheme.headlineSmall,
 ),
                 const SizedBox(height: 4),
                 Text(
-  'Enter your password to continue.',
+  AppLocalizations.of(context)!.enterPasswordToContinue,
   style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
 ),
                 const SizedBox(height: 24),
@@ -79,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: _obscurePassword,
                   autofocus: true,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: AppLocalizations.of(context)!.password,
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -97,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onFieldSubmitted: (_) => _submit(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Password is required';
+                      return AppLocalizations.of(context)!.passwordRequired;
                     }
                     return null;
                   },
@@ -122,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Sign in'),
+                        : Text(AppLocalizations.of(context)!.signIn),
                   ),
                 ),
               ],

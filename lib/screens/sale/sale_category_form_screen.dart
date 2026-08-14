@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/sale_category_model.dart';
 import '../../providers/sale_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class SaleCategoryFormScreen extends StatefulWidget {
   const SaleCategoryFormScreen({super.key, this.category});
@@ -60,11 +61,14 @@ class _SaleCategoryFormScreenState extends State<SaleCategoryFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final errorMessage = context.watch<SaleProvider>().errorMessage;
     final isLoading = context.watch<SaleProvider>().isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Edit Category' : 'New Category')),
+      appBar: AppBar(
+        title: Text(_isEditing ? l10n.editCategoryTitle : l10n.newCategoryTitle),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -74,16 +78,15 @@ class _SaleCategoryFormScreenState extends State<SaleCategoryFormScreen> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
+                decoration: InputDecoration(labelText: l10n.nameFieldLabel),
                 validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Name is required'
+                    ? l10n.nameRequiredMessage
                     : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
-                decoration:
-                    const InputDecoration(labelText: 'Description (optional)'),
+                decoration: InputDecoration(labelText: l10n.descriptionOptionalLabel),
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
@@ -103,7 +106,7 @@ class _SaleCategoryFormScreenState extends State<SaleCategoryFormScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(_isEditing ? 'Save' : 'Create'),
+                    : Text(_isEditing ? l10n.saveChanges : l10n.createCategoryButton),
               ),
             ],
           ),

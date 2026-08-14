@@ -7,6 +7,7 @@ import '../../providers/supplier_provider.dart';
 import 'expense_filter_sheet.dart';
 import 'expense_form_screen.dart';
 import '/widgets/app_sidebar.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 class ExpenseListScreen extends StatefulWidget {
   const ExpenseListScreen({super.key});
@@ -33,21 +34,22 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   }
 
   Future<void> _confirmDelete(ExpenseModel expense) async {
+    final l10n = AppLocalizations.of(context)!;
     final reasonController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete expense'),
+        title: Text(l10n.deleteExpense),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Are you sure you want to delete "${expense.description}"?'),
+            Text(l10n.confirmDeleteExpenseMessage(expense.description)),
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
-              decoration: const InputDecoration(
-                labelText: 'Deletion reason',
+              decoration: InputDecoration(
+                labelText: l10n.deletionReasonLabel,
               ),
             ),
           ],
@@ -55,14 +57,14 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () {
               if (reasonController.text.trim().isEmpty) return;
               Navigator.pop(context, true);
             },
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -94,10 +96,11 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     final expenseProvider = context.watch<ExpenseProvider>();
     final currencyFormat = NumberFormat.currency(symbol: 'MZN ', decimalDigits: 2);
     final dateFormat = DateFormat('dd/MM/yyyy');
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Expenses'),
+        title: Text(l10n.expensesTitle),
         actions: [
           IconButton(
             icon: Icon(
@@ -115,7 +118,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         child: expenseProvider.isLoading && expenseProvider.expenses.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : expenseProvider.expenses.isEmpty
-                ? const Center(child: Text('No expenses registered.'))
+                ? Center(child: Text(l10n.noExpensesYet))
                 : ListView.builder(
                     itemCount: expenseProvider.expenses.length,
                     itemBuilder: (context, index) {

@@ -1,9 +1,8 @@
-// screens/user/change_password_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/user_provider.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 /// Lets the user change their password, verifying the current one first.
 /// On success, forces an automatic logout — the user must log back in
@@ -46,13 +45,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     if (!success) {
       final error = context.read<UserProvider>().errorMessage;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error ?? 'Could not change password.')),
+        SnackBar(
+          content: Text(error ?? AppLocalizations.of(context)!.couldNotChangePassword),
+        ),
       );
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password changed. Please log in again.')),
+      SnackBar(content: Text(AppLocalizations.of(context)!.passwordChangedRelogin)),
     );
     Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
   }
@@ -62,7 +63,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final isLoading = context.watch<UserProvider>().isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Change Password')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.changePasswordTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -72,7 +73,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Confirm your current password to set a new one.',
+                  AppLocalizations.of(context)!.confirmCurrentPasswordPrompt,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -82,7 +83,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   controller: _currentPasswordController,
                   obscureText: _obscureCurrent,
                   decoration: InputDecoration(
-                    labelText: 'Current password',
+                    labelText: AppLocalizations.of(context)!.currentPasswordLabel,
                     suffixIcon: IconButton(
                       icon: Icon(_obscureCurrent
                           ? Icons.visibility_outlined
@@ -92,7 +93,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     ),
                   ),
                   validator: (value) => (value == null || value.isEmpty)
-                      ? 'Current password is required.'
+                      ? AppLocalizations.of(context)!.currentPasswordRequired
                       : null,
                 ),
                 const SizedBox(height: 12),
@@ -100,7 +101,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   controller: _newPasswordController,
                   obscureText: _obscureNew,
                   decoration: InputDecoration(
-                    labelText: 'New password',
+                    labelText: AppLocalizations.of(context)!.newPasswordLabel,
                     suffixIcon: IconButton(
                       icon: Icon(_obscureNew
                           ? Icons.visibility_outlined
@@ -110,10 +111,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'New password is required.';
+                      return AppLocalizations.of(context)!.newPasswordRequired;
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters long.';
+                      return AppLocalizations.of(context)!.newPasswordMinLength;
                     }
                     return null;
                   },
@@ -123,7 +124,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirm,
                   decoration: InputDecoration(
-                    labelText: 'Confirm new password',
+                    labelText: AppLocalizations.of(context)!.confirmNewPasswordLabel,
                     suffixIcon: IconButton(
                       icon: Icon(_obscureConfirm
                           ? Icons.visibility_outlined
@@ -134,7 +135,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                   validator: (value) {
                     if (value != _newPasswordController.text) {
-                      return 'Passwords do not match.';
+                      return AppLocalizations.of(context)!.passwordsDoNotMatchDot;
                     }
                     return null;
                   },
@@ -148,7 +149,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Change password'),
+                      : Text(AppLocalizations.of(context)!.changePasswordButton),
                 ),
               ],
             ),

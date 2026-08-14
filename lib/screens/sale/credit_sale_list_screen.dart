@@ -9,6 +9,7 @@ import '../../providers/sale_provider.dart';
 import '../../providers/user_provider.dart';
 import 'credit_sale_detail_screen.dart';
 import '/widgets/app_sidebar.dart';
+import 'package:mini/l10n/app_localizations.dart';
 
 /// Lists only active (unpaid) CREDIT sales — the ones excluded from the
 /// main sales list. Each entry shows who owes, how much, and how much
@@ -37,13 +38,14 @@ class _CreditSaleListScreenState extends State<CreditSaleListScreen> {
   }
 
   String _debtorName(SaleModel sale, BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     if (sale.walkInCustomerName != null) return sale.walkInCustomerName!;
-    if (sale.customerId == null) return 'Unknown customer';
+    if (sale.customerId == null) return loc.unknownCustomer;
     final customers = context.read<CustomerProvider>().customers;
     for (final customer in customers) {
       if (customer.idCustomer == sale.customerId) return customer.name;
     }
-    return 'Customer #${sale.customerId}';
+    return loc.customerNumber(sale.customerId.toString());
   }
 
   Color _statusColor(String paymentStatus) {
@@ -59,13 +61,14 @@ class _CreditSaleListScreenState extends State<CreditSaleListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final creditSales = context.watch<SaleProvider>().creditSales;
     final isLoading = context.watch<SaleProvider>().isLoading;
     final currency = context.watch<UserProvider>().user?.currency ?? 'MZN';
     final amountFormat = NumberFormat('#,##0.00');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Credit Sales')),
+      appBar: AppBar(title: Text(loc.creditSalesTitle)),
       drawer: AppSidebar(
         currentRoute: '/credit-sale',
         creditSalesBadgeCount: context.watch<SaleProvider>().outstandingCreditCount,
@@ -76,9 +79,9 @@ class _CreditSaleListScreenState extends State<CreditSaleListScreen> {
             ? const Center(child: CircularProgressIndicator())
             : creditSales.isEmpty
                 ? ListView(
-                    children: const [
-                      SizedBox(height: 120),
-                      Center(child: Text('No outstanding credit sales.')),
+                    children: [
+                      const SizedBox(height: 120),
+                      Center(child: Text(loc.noOutstandingCreditSales)),
                     ],
                   )
                 : ListView.separated(
@@ -91,9 +94,13 @@ class _CreditSaleListScreenState extends State<CreditSaleListScreen> {
                       return ListTile(
                         title: Text(_debtorName(sale, context)),
                         subtitle: Text(
-                          '${sale.reference} — ${sale.description}\n'
-                          'Owed: ${amountFormat.format(remainingCents / 100)} $currency'
-                          ' • Paid so far: ${amountFormat.format(sale.paidAmountCents / 100)} $currency',
+                          loc.creditSaleSubtitle(
+                            sale.reference,
+                            sale.description,
+                            amountFormat.format(remainingCents / 100),
+                            currency,
+                            amountFormat.format(sale.paidAmountCents / 100),
+                          ),
                         ),
                         isThreeLine: true,
                         trailing: Chip(
