@@ -712,4 +712,7 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return 'Paid in $count $_temp0:';
   }
+
+  @override
+  String get splashLoading => 'Preparing your experience...';
 }

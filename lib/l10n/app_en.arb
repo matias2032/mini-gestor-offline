@@ -291,5 +291,6 @@
 "paidInInstallmentsMessage": "Paid in {count} {count, plural, one{installment} other{installments}}:",
 "@paidInInstallmentsMessage": {
   "placeholders": { "count": { "type": "int" } }
-}
+},
+"splashLoading": "Preparing your experience..."
 }

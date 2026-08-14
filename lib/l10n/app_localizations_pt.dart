@@ -721,4 +721,7 @@ class AppLocalizationsPt extends AppLocalizations {
     );
     return 'Pago em $count $_temp0:';
   }
+
+  @override
+  String get splashLoading => 'A preparar a aplicação...';
 }

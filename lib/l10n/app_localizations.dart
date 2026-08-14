@@ -1381,6 +1381,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paid in {count} {count, plural, one{installment} other{installments}}:'**
   String paidInInstallmentsMessage(int count);
+
+  /// No description provided for @splashLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing your experience...'**
+  String get splashLoading;
 }
 
 class _AppLocalizationsDelegate

@@ -48,6 +48,7 @@ import 'theme/app_theme.dart';
 import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
+import 'screens/splash/splash_screen.dart';
 
 /// Debug switch: set to `true` to wipe the local database on every app
 /// start, simulating a fresh install (onboarding screen shows again
@@ -146,47 +147,11 @@ child: Consumer2<ThemeProvider, LocaleProvider>(
           '/edit-profile': (_) => const EditProfileScreen(),
           '/change-password': (_) => const ChangePasswordScreen(),
         },
-        home: const _StartupGate(),
+home: const SplashScreen(),
       ),
 ),
     );
   }
 }
 
-/// Decides the initial screen by checking whether a user already
-/// exists in the database. Shows a loading indicator while that
-/// check resolves.
-class _StartupGate extends StatefulWidget {
-  const _StartupGate();
-
-  @override
-  State<_StartupGate> createState() => _StartupGateState();
-}
-
-class _StartupGateState extends State<_StartupGate> {
-  late final Future<void> _loadUserFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserFuture = context.read<UserProvider>().loadUser();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<void>(
-      future: _loadUserFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final hasUser = context.watch<UserProvider>().hasUser;
-        return hasUser ? const LoginScreen() : const OnboardingScreen();
-      },
-    );
-  }
-}
 

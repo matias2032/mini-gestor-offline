@@ -227,5 +227,6 @@
 "customerNumberLabel": "Cliente #{id}",
 "immediateLabel": "Imediata",
 "noInstallmentsRegistered": "Nenhuma prestação registada.",
-"paidInInstallmentsMessage": "Pago em {count} {count, plural, one{prestação} other{prestações}}:"
+"paidInInstallmentsMessage": "Pago em {count} {count, plural, one{prestação} other{prestações}}:",
+"splashLoading": "A preparar a aplicação..."
 }
