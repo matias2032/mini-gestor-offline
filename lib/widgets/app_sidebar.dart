@@ -72,13 +72,26 @@ class _AppSidebarState extends State<AppSidebar>
   /// route. Kept separate from `_buildGroups` so it doesn't need a
   /// BuildContext/AppLocalizations.
   static const Map<String, List<String>> _groupRoutes = {
-    'sales': ['/sale', '/credit-sale', '/sale-category', '/sale/financial-statement'],
+    'category': ['/category'],
+    'sales': ['/sale', '/credit-sale', '/sale/financial-statement'],
     'customers': ['/customer'],
     'suppliers': ['/supplier'],
-    'expenses': ['/expense', '/expense-category'],
+    'expenses': ['/expense'],
   };
 
   List<_MenuGroup> _buildGroups(AppLocalizations loc) => [
+        _MenuGroup(
+          icon: Icons.category_outlined,
+          title: loc.categoriesLabel,
+          groupKey: 'category',
+          items: [
+            _MenuItem(
+              icon: Icons.category_outlined,
+              title: loc.categoriesLabel,
+              route: '/category',
+            ),
+          ],
+        ),
         _MenuGroup(
           icon: Icons.point_of_sale_outlined,
           title: loc.salesGroupLabel,
@@ -93,11 +106,6 @@ class _AppSidebarState extends State<AppSidebar>
               icon: Icons.credit_score_outlined,
               title: loc.creditSalesTitle,
               route: '/credit-sale',
-            ),
-            _MenuItem(
-              icon: Icons.category_outlined,
-              title: loc.saleCategoriesLabel,
-              route: '/sale-category',
             ),
             _MenuItem(
               icon: Icons.summarize_outlined,
@@ -139,11 +147,6 @@ class _AppSidebarState extends State<AppSidebar>
               icon: Icons.receipt_long_outlined,
               title: loc.expensesTitle,
               route: '/expense',
-            ),
-            _MenuItem(
-              icon: Icons.category_outlined,
-              title: loc.expenseCategoriesTitle,
-              route: '/expense-category',
             ),
           ],
         ),

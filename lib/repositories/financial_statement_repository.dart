@@ -1,3 +1,4 @@
+// financial_statement_repository.dart
 import '../core/database/local_database.dart';
 import '../daos/financial_statement_dao.dart';
 import '../models/financial_statement_model.dart';
@@ -64,12 +65,20 @@ class FinancialStatementRepository {
         0,
         (sum, row) => sum + (row['total_amount_cents'] as int),
       );
-      final totalExpensesCents = expenseRows.fold<int>(
+        final totalExpensesCents = expenseRows.fold<int>(
         0,
         (sum, row) => sum + (row['amount_cents'] as int),
       );
+            // expenseRows now has one row per category split, so a shared
+      // expense (e.g. one internet bill split across two categories)
+      // produces two rows but is still one expense — count distinct
+      // expense ids, not rows, otherwise a shared expense would be
+      // counted twice.
+      final distinctExpenseCount =
+          expenseRows.map((row) => row['id_expense'] as int).toSet().length;
 
       final reference = await _generateStatementReference(txn);
+
 
       final statement = FinancialStatementModel(
         reference: reference,
@@ -80,7 +89,7 @@ class FinancialStatementRepository {
         totalExpensesCents: totalExpensesCents,
         balanceCents: totalSalesCents - totalExpensesCents,
         salesCount: saleRows.length,
-        expensesCount: expenseRows.length,
+ expensesCount: distinctExpenseCount,
         notes: _cleanOrNull(notes),
         generatedAt: now,
         createdAt: now,
@@ -95,6 +104,9 @@ class FinancialStatementRepository {
                 saleReference: row['reference'] as String,
                 saleDescription: row['description'] as String,
                 saleDate: DateTime.parse(row['sale_date'] as String),
+                businessCategoryId: row['business_category_id'] as int?,
+                businessCategoryName:
+                    row['business_category_name'] as String? ?? '',
                 amountCents: row['total_amount_cents'] as int,
               ))
           .toList();
@@ -108,6 +120,9 @@ class FinancialStatementRepository {
                 expenseId: row['id_expense'] as int,
                 expenseDescription: row['description'] as String,
                 expenseDate: DateTime.parse(row['expense_date'] as String),
+                businessCategoryId: row['business_category_id'] as int?,
+                businessCategoryName:
+                    row['business_category_name'] as String? ?? '',
                 amountCents: row['amount_cents'] as int,
               ))
           .toList();
@@ -178,4 +193,52 @@ class FinancialStatementDetail {
   final FinancialStatementModel statement;
   final List<FinancialStatementSaleItemModel> saleItems;
   final List<FinancialStatementExpenseItemModel> expenseItems;
+
+  /// Per-category breakdown of this statement: how much of its sales and
+  /// expenses each shared business_category accounts for. Built purely
+  /// from the snapshot items already loaded — no extra query. A category
+  /// appears here only if it has at least one sale or expense in this
+  /// statement (unlike the dashboard's breakdown, which lists every
+  /// category, even with zero activity).
+  List<CategoryStatementSummary> get categoryBreakdown {
+    final salesCents = <int?, int>{};
+    final expensesCents = <int?, int>{};
+    final names = <int?, String>{};
+
+    for (final item in saleItems) {
+      salesCents.update(
+        item.businessCategoryId,
+        (value) => value + item.amountCents,
+        ifAbsent: () => item.amountCents,
+      );
+      if (item.businessCategoryName.isNotEmpty) {
+        names[item.businessCategoryId] = item.businessCategoryName;
+      }
+    }
+
+    for (final item in expenseItems) {
+      expensesCents.update(
+        item.businessCategoryId,
+        (value) => value + item.amountCents,
+        ifAbsent: () => item.amountCents,
+      );
+      if (item.businessCategoryName.isNotEmpty) {
+        names[item.businessCategoryId] = item.businessCategoryName;
+      }
+    }
+
+    final allCategoryIds = {...salesCents.keys, ...expensesCents.keys};
+
+    final summaries = allCategoryIds
+        .map((id) => CategoryStatementSummary(
+              businessCategoryId: id,
+              name: names[id] ?? '',
+              totalSalesCents: salesCents[id] ?? 0,
+              totalExpensesCents: expensesCents[id] ?? 0,
+            ))
+        .toList();
+
+    summaries.sort((a, b) => b.balanceCents.compareTo(a.balanceCents));
+    return summaries;
+  }
 }

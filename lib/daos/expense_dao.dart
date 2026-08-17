@@ -1,3 +1,4 @@
+// expense_dao.dart
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/database/local_database.dart';
@@ -62,8 +63,10 @@ class ExpenseDao {
   /// All filters are combined with AND. Date bounds are inclusive and
   /// compared as ISO-8601 strings, consistent with how `expense_date` is
   /// stored.
+  /// Filtering by category is a sub-select against expense_category_split,
+  /// since a single expense can now belong to more than one category.
   Future<List<ExpenseModel>> getAllExpenses({
-    int? expenseCategoryId,
+    int? businessCategoryId,
     int? supplierId,
     DateTime? startDate,
     DateTime? endDate,
@@ -78,9 +81,13 @@ class ExpenseDao {
     if (!includeDeleted) {
       conditions.add('deleted = 0');
     }
-    if (expenseCategoryId != null) {
-      conditions.add('expense_category_id = ?');
-      args.add(expenseCategoryId);
+    if (businessCategoryId != null) {
+      conditions.add(
+        'id_expense IN ('
+        'SELECT expense_id FROM expense_category_split '
+        'WHERE business_category_id = ?)',
+      );
+      args.add(businessCategoryId);
     }
     if (supplierId != null) {
       conditions.add('supplier_id = ?');

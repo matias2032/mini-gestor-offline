@@ -1,8 +1,8 @@
+// expense_model.dart
 /// Pure data class representing a row in the `expense` table.
 class ExpenseModel {
   const ExpenseModel({
     this.idExpense,
-    required this.expenseCategoryId,
     this.supplierId,
     required this.description,
     required this.amountCents,
@@ -14,7 +14,6 @@ class ExpenseModel {
   });
 
   final int? idExpense;
-  final int expenseCategoryId;
   final int? supplierId;
   final String description;
   final int amountCents;
@@ -27,7 +26,6 @@ class ExpenseModel {
   factory ExpenseModel.fromMap(Map<String, Object?> map) {
     return ExpenseModel(
       idExpense: map['id_expense'] as int?,
-      expenseCategoryId: map['expense_category_id'] as int,
       supplierId: map['supplier_id'] as int?,
       description: map['description'] as String,
       amountCents: map['amount_cents'] as int,
@@ -44,7 +42,6 @@ class ExpenseModel {
   Map<String, Object?> toMap() {
     return {
       if (idExpense != null) 'id_expense': idExpense,
-      'expense_category_id': expenseCategoryId,
       'supplier_id': supplierId,
       'description': description,
       'amount_cents': amountCents,
@@ -59,7 +56,6 @@ class ExpenseModel {
 
   ExpenseModel copyWith({
     int? idExpense,
-    int? expenseCategoryId,
     int? supplierId,
     String? description,
     int? amountCents,
@@ -71,7 +67,6 @@ class ExpenseModel {
   }) {
     return ExpenseModel(
       idExpense: idExpense ?? this.idExpense,
-      expenseCategoryId: expenseCategoryId ?? this.expenseCategoryId,
       supplierId: supplierId ?? this.supplierId,
       description: description ?? this.description,
       amountCents: amountCents ?? this.amountCents,

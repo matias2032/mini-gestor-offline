@@ -1,23 +1,24 @@
-// screens/sale/sale_category_form_screen.dart
+// screens/category/business_category_form_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/sale_category_model.dart';
-import '../../providers/sale_provider.dart';
+import '../../models/business_category_model.dart';
+import '../../providers/business_category_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
 
-class SaleCategoryFormScreen extends StatefulWidget {
-  const SaleCategoryFormScreen({super.key, this.category});
+class BusinessCategoryFormScreen extends StatefulWidget {
+  const BusinessCategoryFormScreen({super.key, this.category});
 
-  final SaleCategoryModel? category;
+  final BusinessCategoryModel? category;
 
   @override
-  State<SaleCategoryFormScreen> createState() =>
-      _SaleCategoryFormScreenState();
+  State<BusinessCategoryFormScreen> createState() =>
+      _BusinessCategoryFormScreenState();
 }
 
-class _SaleCategoryFormScreenState extends State<SaleCategoryFormScreen> {
+class _BusinessCategoryFormScreenState
+    extends State<BusinessCategoryFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
@@ -42,16 +43,19 @@ class _SaleCategoryFormScreenState extends State<SaleCategoryFormScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final provider = context.read<SaleProvider>();
+    final provider = context.read<BusinessCategoryProvider>();
+    final name = _nameController.text.trim();
+    final description = _descriptionController.text.trim();
+
     final success = _isEditing
         ? await provider.updateCategory(
-            idSaleCategory: widget.category!.idSaleCategory!,
-            name: _nameController.text,
-            description: _descriptionController.text,
+            idBusinessCategory: widget.category!.idBusinessCategory!,
+            name: name,
+            description: description.isEmpty ? null : description,
           )
         : await provider.createCategory(
-            name: _nameController.text,
-            description: _descriptionController.text,
+            name: name,
+            description: description.isEmpty ? null : description,
           );
 
     if (success && mounted) {
@@ -62,8 +66,8 @@ class _SaleCategoryFormScreenState extends State<SaleCategoryFormScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final errorMessage = context.watch<SaleProvider>().errorMessage;
-    final isLoading = context.watch<SaleProvider>().isLoading;
+    final errorMessage = context.watch<BusinessCategoryProvider>().errorMessage;
+    final isLoading = context.watch<BusinessCategoryProvider>().isLoading;
 
     return Scaffold(
       appBar: AppBar(

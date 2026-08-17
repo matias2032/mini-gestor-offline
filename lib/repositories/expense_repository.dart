@@ -1,94 +1,47 @@
 import '../core/database/local_database.dart';
-import '../daos/expense_category_dao.dart';
+import '../daos/business_category_dao.dart';
+import '../daos/expense_category_split_dao.dart';
 import '../daos/expense_dao.dart';
-import '../models/expense_category_model.dart';
+import '../models/expense_category_split_model.dart';
 import '../models/expense_model.dart';
 
-/// All business logic for the expense module: expenses and their
-/// categories. Screens and providers must never talk to the DAOs
-/// directly.
+/// One category's slice of an expense being created/updated — the input
+/// shape for [ExpenseRepository.createExpense]/[updateExpense]. Not a
+/// direct model: it deliberately has no id, since splits are always
+/// replaced wholesale rather than edited individually.
+class ExpenseCategoryAllocation {
+  const ExpenseCategoryAllocation({
+    required this.businessCategoryId,
+    required this.amountCents,
+  });
+
+  final int businessCategoryId;
+  final int amountCents;
+}
+
 class ExpenseRepository {
   ExpenseRepository(
     this._localDatabase,
     this._expenseDao,
-    this._expenseCategoryDao,
+    this._expenseCategorySplitDao,
+    this._businessCategoryDao,
   );
 
   final LocalDatabase _localDatabase;
   final ExpenseDao _expenseDao;
-  final ExpenseCategoryDao _expenseCategoryDao;
-
-  // ---------------- expense_category ----------------
-
-  Future<List<ExpenseCategoryModel>> getAllCategories({
-    bool includeDeleted = false,
-  }) {
-    return _expenseCategoryDao.getAllCategories(includeDeleted: includeDeleted);
-  }
-
-  Future<ExpenseCategoryModel> createCategory({
-    required String name,
-    String? description,
-  }) async {
-    if (name.trim().isEmpty) {
-      throw ArgumentError('Category name cannot be empty.');
-    }
-
-    final category = ExpenseCategoryModel(
-      name: name.trim(),
-      description: description,
-    );
-
-    final id = await _expenseCategoryDao.insertCategory(category);
-    return category.copyWith(idExpenseCategory: id);
-  }
-
-  Future<ExpenseCategoryModel> updateCategory({
-    required int idExpenseCategory,
-    required String name,
-    String? description,
-  }) async {
-    final existing = await _expenseCategoryDao.getCategoryById(
-      idExpenseCategory,
-    );
-    if (existing == null) {
-      throw StateError('Category not found.');
-    }
-    if (existing.deleted) {
-      throw StateError('Cannot update a deleted category.');
-    }
-    if (name.trim().isEmpty) {
-      throw ArgumentError('Category name cannot be empty.');
-    }
-
-    final updated = existing.copyWith(name: name.trim(), description: description);
-    await _expenseCategoryDao.updateCategory(updated);
-    return updated;
-  }
-
-  Future<void> deleteCategory(int idExpenseCategory) async {
-    final existing = await _expenseCategoryDao.getCategoryById(
-      idExpenseCategory,
-    );
-    if (existing == null) {
-      throw StateError('Category not found.');
-    }
-    if (existing.deleted) {
-      return;
-    }
-    await _expenseCategoryDao.softDeleteCategory(idExpenseCategory);
-  }
+  final ExpenseCategorySplitDao _expenseCategorySplitDao;
+  final BusinessCategoryDao _businessCategoryDao;
 
   // ---------------- expense ----------------
 
   Future<List<ExpenseModel>> getAllExpenses({
-    int? expenseCategoryId,
+    int? businessCategoryId,
     int? supplierId,
     DateTime? startDate,
     DateTime? endDate,
   }) {
     return _expenseDao.getAllExpenses(
-      expenseCategoryId: expenseCategoryId,
+      businessCategoryId: businessCategoryId,
       supplierId: supplierId,
       startDate: startDate,
       endDate: endDate,
@@ -99,8 +52,12 @@ class ExpenseRepository {
     return _expenseDao.getExpenseById(idExpense);
   }
 
+  Future<List<ExpenseCategorySplitModel>> getSplitsByExpense(int idExpense) {
+    return _expenseCategorySplitDao.getSplitsByExpense(idExpense);
+  }
+
   Future<ExpenseModel> createExpense({
-    required int expenseCategoryId,
+    required List<ExpenseCategoryAllocation> categoryAllocations,
     int? supplierId,
     required String description,
     required int amountCents,
@@ -112,30 +69,36 @@ class ExpenseRepository {
     if (amountCents < 0) {
       throw ArgumentError('Expense amount cannot be negative.');
     }
+    await _validateAllocations(categoryAllocations, amountCents);
 
-    final category = await _expenseCategoryDao.getCategoryById(
-      expenseCategoryId,
-    );
-    if (category == null || category.deleted) {
-      throw StateError('Selected category is not available.');
-    }
+    return _localDatabase.runInTransaction((txn) async {
+      final expense = ExpenseModel(
+        supplierId: supplierId,
+        description: description.trim(),
+        amountCents: amountCents,
+        expenseDate: expenseDate,
+        createdAt: DateTime.now(),
+      );
 
-    final expense = ExpenseModel(
-      expenseCategoryId: expenseCategoryId,
-      supplierId: supplierId,
-      description: description.trim(),
-      amountCents: amountCents,
-      expenseDate: expenseDate,
-      createdAt: DateTime.now(),
-    );
+      final id = await _expenseDao.insertExpense(expense, txn: txn);
+      await _expenseCategorySplitDao.insertSplits(
+        categoryAllocations
+            .map((a) => ExpenseCategorySplitModel(
+                  expenseId: id,
+                  businessCategoryId: a.businessCategoryId,
+                  amountCents: a.amountCents,
+                ))
+            .toList(),
+        txn: txn,
+      );
 
-    final id = await _expenseDao.insertExpense(expense);
-    return expense.copyWith(idExpense: id);
+      return expense.copyWith(idExpense: id);
+    });
   }
 
   Future<ExpenseModel> updateExpense({
     required int idExpense,
-    required int expenseCategoryId,
+    required List<ExpenseCategoryAllocation> categoryAllocations,
     int? supplierId,
     required String description,
     required int amountCents,
@@ -154,30 +117,73 @@ class ExpenseRepository {
     if (amountCents < 0) {
       throw ArgumentError('Expense amount cannot be negative.');
     }
-
-    final category = await _expenseCategoryDao.getCategoryById(
-      expenseCategoryId,
-    );
-    if (category == null || category.deleted) {
-      throw StateError('Selected category is not available.');
-    }
+    await _validateAllocations(categoryAllocations, amountCents);
 
     final updated = existing.copyWith(
-      expenseCategoryId: expenseCategoryId,
       supplierId: supplierId,
       description: description.trim(),
       amountCents: amountCents,
       expenseDate: expenseDate,
     );
 
-    await _expenseDao.updateExpense(updated);
+    await _localDatabase.runInTransaction((txn) async {
+      await _expenseDao.updateExpense(updated, txn: txn);
+      // Splits are always replaced wholesale, not diffed — simpler and
+      // avoids partial-update edge cases (e.g. a category removed from
+      // the allocation).
+      await _expenseCategorySplitDao.deleteSplitsByExpense(idExpense, txn: txn);
+      await _expenseCategorySplitDao.insertSplits(
+        categoryAllocations
+            .map((a) => ExpenseCategorySplitModel(
+                  expenseId: idExpense,
+                  businessCategoryId: a.businessCategoryId,
+                  amountCents: a.amountCents,
+                ))
+            .toList(),
+        txn: txn,
+      );
+    });
+
     return updated;
   }
 
-  /// Soft-deletes an expense. [deletionReason] is mandatory and cannot be
-  /// blank — this is enforced here even though the DAO would technically
-  /// accept an empty string.
-  Future<void> deleteExpense(int idExpense, String deletionReason) async {
+  /// Ensures the allocation is well-formed: at least one category, no
+  /// category repeated, every category exists and isn't deleted, and the
+  /// amounts add up exactly to the expense total — this is the invariant
+  /// that keeps per-category totals in the financial statement correct
+  /// without ever double-counting the expense itself.
+  Future<void> _validateAllocations(
+    List<ExpenseCategoryAllocation> allocations,
+    int amountCents,
+  ) async {
+    if (allocations.isEmpty) {
+      throw ArgumentError('An expense needs at least one category.');
+    }
+
+    final seenCategoryIds = <int>{};
+    var sum = 0;
+    for (final allocation in allocations) {
+      if (allocation.amountCents <= 0) {
+        throw ArgumentError('Each category allocation must be greater than zero.');
+      }
+      if (!seenCategoryIds.add(allocation.businessCategoryId)) {
+        throw ArgumentError('The same category cannot be allocated twice.');
+      }
+      final category =
+          await _businessCategoryDao.getCategoryById(allocation.businessCategoryId);
+      if (category == null || category.deleted) {
+        throw StateError('Selected category is not available.');
+      }
+      sum += allocation.amountCents;
+    }
+
+    if (sum != amountCents) {
+      throw ArgumentError(
+        'Category allocations (${sum}) must add up to the expense total (${amountCents}).',
+      );
+    }
+  }
+    Future<void> deleteExpense(int idExpense, String deletionReason) async {
     if (deletionReason.trim().isEmpty) {
       throw ArgumentError('A deletion reason is required.');
     }
@@ -192,4 +198,4 @@ class ExpenseRepository {
 
     await _expenseDao.softDeleteExpense(idExpense, deletionReason.trim());
   }
-}
+  }

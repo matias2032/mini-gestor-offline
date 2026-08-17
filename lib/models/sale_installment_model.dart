@@ -1,3 +1,4 @@
+// sale_installment_model.dart
 class SaleInstallmentModel {
   const SaleInstallmentModel({
     this.idSaleInstallment,

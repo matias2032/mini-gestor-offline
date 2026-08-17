@@ -1,3 +1,4 @@
+// financial_statement_model.dart
 /// Period filter used when generating a statement — mirrors
 /// [DashboardPeriod] but includes a CUSTOM option for an explicit
 /// start/end date range.
@@ -215,6 +216,8 @@ class FinancialStatementSaleItemModel {
     required this.saleReference,
     required this.saleDescription,
     required this.saleDate,
+    this.businessCategoryId,
+    this.businessCategoryName = '',
     required this.amountCents,
   });
 
@@ -224,6 +227,8 @@ class FinancialStatementSaleItemModel {
   final String saleReference;
   final String saleDescription;
   final DateTime saleDate;
+  final int? businessCategoryId;
+  final String businessCategoryName;
   final int amountCents;
 
   factory FinancialStatementSaleItemModel.fromMap(Map<String, Object?> map) {
@@ -235,6 +240,8 @@ class FinancialStatementSaleItemModel {
       saleReference: map['sale_reference'] as String,
       saleDescription: map['sale_description'] as String,
       saleDate: DateTime.parse(map['sale_date'] as String),
+      businessCategoryId: map['business_category_id'] as int?,
+      businessCategoryName: map['business_category_name'] as String? ?? '',
       amountCents: map['amount_cents'] as int,
     );
   }
@@ -248,6 +255,8 @@ class FinancialStatementSaleItemModel {
       'sale_reference': saleReference,
       'sale_description': saleDescription,
       'sale_date': saleDate.toIso8601String(),
+      'business_category_id': businessCategoryId,
+      'business_category_name': businessCategoryName,
       'amount_cents': amountCents,
     };
   }
@@ -262,6 +271,8 @@ class FinancialStatementExpenseItemModel {
     required this.expenseId,
     required this.expenseDescription,
     required this.expenseDate,
+    this.businessCategoryId,
+    this.businessCategoryName = '',
     required this.amountCents,
   });
 
@@ -270,6 +281,8 @@ class FinancialStatementExpenseItemModel {
   final int expenseId;
   final String expenseDescription;
   final DateTime expenseDate;
+  final int? businessCategoryId;
+  final String businessCategoryName;
   final int amountCents;
 
   factory FinancialStatementExpenseItemModel.fromMap(Map<String, Object?> map) {
@@ -280,6 +293,8 @@ class FinancialStatementExpenseItemModel {
       expenseId: map['expense_id'] as int,
       expenseDescription: map['expense_description'] as String,
       expenseDate: DateTime.parse(map['expense_date'] as String),
+      businessCategoryId: map['business_category_id'] as int?,
+      businessCategoryName: map['business_category_name'] as String? ?? '',
       amountCents: map['amount_cents'] as int,
     );
   }
@@ -292,7 +307,28 @@ class FinancialStatementExpenseItemModel {
       'expense_id': expenseId,
       'expense_description': expenseDescription,
       'expense_date': expenseDate.toIso8601String(),
+      'business_category_id': businessCategoryId,
+      'business_category_name': businessCategoryName,
       'amount_cents': amountCents,
     };
   }
+}
+
+/// Aggregated per-category breakdown for a single financial statement —
+/// how much of that statement's sales and expenses each shared
+/// business_category accounts for. See [FinancialStatementDetail.categoryBreakdown].
+class CategoryStatementSummary {
+  const CategoryStatementSummary({
+    required this.businessCategoryId,
+    required this.name,
+    required this.totalSalesCents,
+    required this.totalExpensesCents,
+  });
+
+  final int? businessCategoryId;
+  final String name;
+  final int totalSalesCents;
+  final int totalExpensesCents;
+
+  int get balanceCents => totalSalesCents - totalExpensesCents;
 }

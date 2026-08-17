@@ -36,6 +36,7 @@
   "currencyFieldLabel": "Currency",
   "couldNotUpdateProfile": "Could not update profile.",
   "profileUpdatedRelogin": "Profile updated. Please log in again.",
+  "profileUpdated": "Profile updated.",
   "saveChanges": "Save changes",
 
   "changePasswordTitle": "Change Password",
@@ -49,6 +50,7 @@
   "passwordsDoNotMatchDot": "Passwords do not match.",
   "couldNotChangePassword": "Could not change password.",
   "passwordChangedRelogin": "Password changed. Please log in again.",
+  "passwordChanged": "Password changed.",
   "changePasswordButton": "Change password",
   "deleteCustomer": "Delete customer",
   "confirmDeleteCustomerMessage": "Are you sure you want to delete \"{name}\"? Associated sales history will be kept.",
@@ -71,7 +73,7 @@
   "settledCreditSales": "Settled credit sales",
   "salesByCategory": "Sales by category",
   "noCategoriesYet": "No categories registered yet.",
-  "saleCountLabel": "{count, plural, =1{1 sale} other{{count} sales}}",
+  "saleCountLabel": "{count, plural, =0{0 sales} =1{1 sale} other{{count} sales}}",
   "@saleCountLabel": {
     "placeholders": { "count": { "type": "int" } }
   },
@@ -87,18 +89,7 @@
 "@confirmDeleteSupplierMessage": {
   "placeholders": { "name": { "type": "String" } }
 },
-"newExpenseCategory": "New Category",
-"editExpenseCategory": "Edit Category",
-"descriptionOptionalLabel": "Description (optional)",
-"deleteExpenseCategory": "Delete category",
-"confirmDeleteExpenseCategoryMessage": "Are you sure you want to delete \"{name}\"?",
-"@confirmDeleteExpenseCategoryMessage": {
-  "placeholders": { "name": { "type": "String" } }
-},
-"failedToDeleteExpenseCategory": "Failed to delete category.",
-"expenseCategoriesTitle": "Expense Categories",
-"noExpenseCategoriesYet": "No categories yet.",
-"createExpenseCategory": "Create category",
+"newExpenseCategory": "New Category","descriptionOptionalLabel": "Description (optional)",
 
 "filterExpensesTitle": "Filter expenses",
 "categoryLabel": "Category",
@@ -124,6 +115,28 @@
   "placeholders": { "date": { "type": "String" } }
 },
 "createExpense": "Create expense",
+"noCategoriesAvailableYet": "No categories available yet.",
+"addAtLeastOneCategory": "Add at least one category.",
+"categoryAllocationsMismatch": "Category allocations ({allocated}) must add up to the expense total ({total}).",
+"@categoryAllocationsMismatch": {
+  "placeholders": {
+    "allocated": { "type": "String" },
+    "total": { "type": "String" }
+  }
+},
+"addCategoryButton": "Add category",
+"noCategoryAddedYet": "No category added yet.",
+"allocatedAmountLabel": "Allocated: {amount}",
+"@allocatedAmountLabel": {
+  "placeholders": { "amount": { "type": "String" } }
+},
+"totalAmountValueLabel": "Total: {amount}",
+"@totalAmountValueLabel": {
+  "placeholders": { "amount": { "type": "String" } }
+},
+"categoryAllocationDialogTitle": "Category allocation",
+"selectCategoryValidation": "Select a category",
+"saveLabel": "Save",
 
 "expensesTitle": "Expenses",
 "deleteExpense": "Delete expense",
@@ -181,7 +194,7 @@
 },
 "salesGroupLabel": "Sales",
 "finishedSalesLabel": "Finished Sales",
-"saleCategoriesLabel": "Sale Categories",
+"categoriesLabel": "Categories",
 "financialStatementsLabel": "Financial Statements",
 "logOut": "Log Out",
 "changeThemeLabel": "Change Theme",
@@ -236,8 +249,7 @@
 "nameRequiredMessage": "Name is required",
 "descriptionOptionalLabel": "Description (optional)",
 "createCategoryButton": "Create",
-"saleCategoriesTitle": "Sale Categories",
-"noSaleCategoriesYet": "No sale categories yet.",
+"categoriesTitle": "Categories",
 "addCategoryTooltip": "Add category",
 "deleteCategoryTitle": "Delete category",
 "confirmDeleteCategoryMessage": "Are you sure you want to delete \"{name}\"?",
@@ -288,9 +300,13 @@
 },
 "immediateLabel": "Immediate",
 "noInstallmentsRegistered": "No installments registered.",
-"paidInInstallmentsMessage": "Paid in {count} {count, plural, one{installment} other{installments}}:",
+"paidInInstallmentsMessage": "Paid in {count} {count, plural, =0{installments} one{installment} other{installments}}:",
 "@paidInInstallmentsMessage": {
   "placeholders": { "count": { "type": "int" } }
 },
-"splashLoading": "Preparing your experience..."
+"splashLoading": "Preparing your experience...",
+"categoryBreakdownSectionTitle": "By category",
+"noCategoryBreakdownInPeriod": "No categorized activity in this period.",
+"noCategoryLabel": "No category"
 }
+

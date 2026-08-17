@@ -53,9 +53,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.passwordChangedRelogin)),
+      SnackBar(content: Text(AppLocalizations.of(context)!.passwordChanged)),
     );
-    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+    Navigator.of(context).pop();
   }
 
   @override

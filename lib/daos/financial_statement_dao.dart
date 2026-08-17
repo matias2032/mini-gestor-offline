@@ -166,30 +166,44 @@ class FinancialStatementDao {
     Transaction? txn,
   }) async {
     final executor = txn ?? await _localDatabase.database;
-    return executor.query(
-      'sale',
-      columns: ['id_sale', 'reference', 'description', 'sale_date', 'total_amount_cents'],
-      where: "deleted = 0 AND sale_status = 'COMPLETED' "
-          'AND sale_date >= ? AND sale_date <= ?',
-      whereArgs: [startDate.toIso8601String(), endDate.toIso8601String()],
-      orderBy: 'sale_date ASC',
+    return executor.rawQuery(
+      '''
+      SELECT s.id_sale, s.reference, s.description, s.sale_date,
+             s.total_amount_cents,
+             s.sale_category_id AS business_category_id,
+             bc.name AS business_category_name
+      FROM sale s
+      LEFT JOIN business_category bc
+        ON bc.id_business_category = s.sale_category_id
+      WHERE s.deleted = 0 AND s.sale_status = 'COMPLETED'
+        AND s.sale_date >= ? AND s.sale_date <= ?
+      ORDER BY s.sale_date ASC
+      ''',
+      [startDate.toIso8601String(), endDate.toIso8601String()],
     );
   }
 
-  /// Expenses (not deleted) whose expense_date falls within
-  /// [startDate, endDate] inclusive.
   Future<List<Map<String, Object?>>> getExpensesInPeriod({
     required DateTime startDate,
     required DateTime endDate,
     Transaction? txn,
   }) async {
     final executor = txn ?? await _localDatabase.database;
-    return executor.query(
-      'expense',
-      columns: ['id_expense', 'description', 'expense_date', 'amount_cents'],
-      where: 'deleted = 0 AND expense_date >= ? AND expense_date <= ?',
-      whereArgs: [startDate.toIso8601String(), endDate.toIso8601String()],
-      orderBy: 'expense_date ASC',
+    return executor.rawQuery(
+      '''
+      SELECT e.id_expense, e.description, e.expense_date,
+             ecs.amount_cents,
+             ecs.business_category_id AS business_category_id,
+             bc.name AS business_category_name
+      FROM expense e
+      JOIN expense_category_split ecs ON ecs.expense_id = e.id_expense
+      LEFT JOIN business_category bc
+        ON bc.id_business_category = ecs.business_category_id
+      WHERE e.deleted = 0
+        AND e.expense_date >= ? AND e.expense_date <= ?
+      ORDER BY e.expense_date ASC
+      ''',
+      [startDate.toIso8601String(), endDate.toIso8601String()],
     );
   }
 }

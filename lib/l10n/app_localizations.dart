@@ -272,6 +272,12 @@ abstract class AppLocalizations {
   /// **'Profile updated. Please log in again.'**
   String get profileUpdatedRelogin;
 
+  /// No description provided for @profileUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated.'**
+  String get profileUpdated;
+
   /// No description provided for @saveChanges.
   ///
   /// In en, this message translates to:
@@ -343,6 +349,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password changed. Please log in again.'**
   String get passwordChangedRelogin;
+
+  /// No description provided for @passwordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed.'**
+  String get passwordChanged;
 
   /// No description provided for @changePasswordButton.
   ///
@@ -461,7 +473,7 @@ abstract class AppLocalizations {
   /// No description provided for @saleCountLabel.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 sale} other{{count} sales}}'**
+  /// **'{count, plural, =0{0 sales} =1{1 sale} other{{count} sales}}'**
   String saleCountLabel(int count);
 
   /// No description provided for @suppliersTitle.
@@ -524,53 +536,11 @@ abstract class AppLocalizations {
   /// **'New Category'**
   String get newExpenseCategory;
 
-  /// No description provided for @editExpenseCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit Category'**
-  String get editExpenseCategory;
-
   /// No description provided for @descriptionOptionalLabel.
   ///
   /// In en, this message translates to:
   /// **'Description (optional)'**
   String get descriptionOptionalLabel;
-
-  /// No description provided for @deleteExpenseCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete category'**
-  String get deleteExpenseCategory;
-
-  /// No description provided for @confirmDeleteExpenseCategoryMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete \"{name}\"?'**
-  String confirmDeleteExpenseCategoryMessage(String name);
-
-  /// No description provided for @failedToDeleteExpenseCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to delete category.'**
-  String get failedToDeleteExpenseCategory;
-
-  /// No description provided for @expenseCategoriesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Expense Categories'**
-  String get expenseCategoriesTitle;
-
-  /// No description provided for @noExpenseCategoriesYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No categories yet.'**
-  String get noExpenseCategoriesYet;
-
-  /// No description provided for @createExpenseCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Create category'**
-  String get createExpenseCategory;
 
   /// No description provided for @filterExpensesTitle.
   ///
@@ -691,6 +661,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create expense'**
   String get createExpense;
+
+  /// No description provided for @noCategoriesAvailableYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories available yet.'**
+  String get noCategoriesAvailableYet;
+
+  /// No description provided for @addAtLeastOneCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one category.'**
+  String get addAtLeastOneCategory;
+
+  /// No description provided for @categoryAllocationsMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Category allocations ({allocated}) must add up to the expense total ({total}).'**
+  String categoryAllocationsMismatch(String allocated, String total);
+
+  /// No description provided for @addCategoryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add category'**
+  String get addCategoryButton;
+
+  /// No description provided for @noCategoryAddedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No category added yet.'**
+  String get noCategoryAddedYet;
+
+  /// No description provided for @allocatedAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocated: {amount}'**
+  String allocatedAmountLabel(String amount);
+
+  /// No description provided for @totalAmountValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {amount}'**
+  String totalAmountValueLabel(String amount);
+
+  /// No description provided for @categoryAllocationDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Category allocation'**
+  String get categoryAllocationDialogTitle;
+
+  /// No description provided for @selectCategoryValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a category'**
+  String get selectCategoryValidation;
+
+  /// No description provided for @saveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveLabel;
 
   /// No description provided for @expensesTitle.
   ///
@@ -944,11 +974,11 @@ abstract class AppLocalizations {
   /// **'Finished Sales'**
   String get finishedSalesLabel;
 
-  /// No description provided for @saleCategoriesLabel.
+  /// No description provided for @categoriesLabel.
   ///
   /// In en, this message translates to:
-  /// **'Sale Categories'**
-  String get saleCategoriesLabel;
+  /// **'Categories'**
+  String get categoriesLabel;
 
   /// No description provided for @financialStatementsLabel.
   ///
@@ -1154,17 +1184,11 @@ abstract class AppLocalizations {
   /// **'Create'**
   String get createCategoryButton;
 
-  /// No description provided for @saleCategoriesTitle.
+  /// No description provided for @categoriesTitle.
   ///
   /// In en, this message translates to:
-  /// **'Sale Categories'**
-  String get saleCategoriesTitle;
-
-  /// No description provided for @noSaleCategoriesYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No sale categories yet.'**
-  String get noSaleCategoriesYet;
+  /// **'Categories'**
+  String get categoriesTitle;
 
   /// No description provided for @addCategoryTooltip.
   ///
@@ -1379,7 +1403,7 @@ abstract class AppLocalizations {
   /// No description provided for @paidInInstallmentsMessage.
   ///
   /// In en, this message translates to:
-  /// **'Paid in {count} {count, plural, one{installment} other{installments}}:'**
+  /// **'Paid in {count} {count, plural, =0{installments} one{installment} other{installments}}:'**
   String paidInInstallmentsMessage(int count);
 
   /// No description provided for @splashLoading.
@@ -1387,6 +1411,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preparing your experience...'**
   String get splashLoading;
+
+  /// No description provided for @categoryBreakdownSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'By category'**
+  String get categoryBreakdownSectionTitle;
+
+  /// No description provided for @noCategoryBreakdownInPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'No categorized activity in this period.'**
+  String get noCategoryBreakdownInPeriod;
+
+  /// No description provided for @noCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get noCategoryLabel;
 }
 
 class _AppLocalizationsDelegate

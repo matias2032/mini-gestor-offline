@@ -1,7 +1,9 @@
+// sale_dao.dart
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/database/local_database.dart';
 import '../../models/sale_model.dart';
+import 'package:flutter/foundation.dart';
 
 class SaleDao {
   SaleDao(this._localDatabase);
@@ -253,7 +255,7 @@ Future<int> countAll({bool includeDeleted = true, Transaction? txn}) async {
   }) async {
     final executor = txn ?? await _localDatabase.database;
     final joinConditions = <String>[
-      's.sale_category_id = c.id_sale_category',
+      's.sale_category_id = c.id_business_category',
       's.deleted = 0',
       "s.sale_status = 'COMPLETED'",
     ];
@@ -266,17 +268,27 @@ Future<int> countAll({bool includeDeleted = true, Transaction? txn}) async {
       joinConditions.add('s.sale_date <= ?');
       args.add(endDate.toIso8601String());
     }
-    return executor.rawQuery(
-      'SELECT c.id_sale_category AS id_sale_category, c.name AS name, '
+final rows = await executor.rawQuery(
+      'SELECT c.id_business_category AS id_business_category, c.name AS name, '
       'COALESCE(SUM(s.total_amount_cents), 0) AS total_cents, '
       'COUNT(s.id_sale) AS sale_count '
-      'FROM sale_category c '
+      'FROM business_category c '
       'LEFT JOIN sale s ON ${joinConditions.join(' AND ')} '
       'WHERE c.deleted = 0 '
-      'GROUP BY c.id_sale_category, c.name '
+      'GROUP BY c.id_business_category, c.name '
       'ORDER BY total_cents DESC',
       args,
     );
+    debugPrint('CATEGORY BREAKDOWN: $rows');
+
+    final debugRows = await executor.rawQuery(
+      'SELECT id_sale, reference, description, total_amount_cents, '
+      'sale_status, deleted, sale_category_id '
+      'FROM sale WHERE sale_category_id = 1',
+    );
+    debugPrint('DESENVOLVIMENTO RAW SALES: $debugRows');
+
+    return rows;
   }
 
   /// Credit sales still awaiting payment — exactly the ones excluded from

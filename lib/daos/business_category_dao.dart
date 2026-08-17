@@ -1,71 +1,72 @@
+// business_category_dao.dart
 import 'package:sqflite/sqflite.dart';
 
-import '../../core/database/local_database.dart';
-import '../../models/sale_category_model.dart';
+import '../core/database/local_database.dart';
+import '../models/business_category_model.dart';
 
-class SaleCategoryDao {
-  SaleCategoryDao(this._localDatabase);
+class BusinessCategoryDao {
+  BusinessCategoryDao(this._localDatabase);
 
   final LocalDatabase _localDatabase;
 
   Future<int> insertCategory(
-    SaleCategoryModel category, {
+    BusinessCategoryModel category, {
     Transaction? txn,
   }) async {
     final executor = txn ?? await _localDatabase.database;
-    return executor.insert('sale_category', category.toMap());
+    return executor.insert('business_category', category.toMap());
   }
 
   Future<int> updateCategory(
-    SaleCategoryModel category, {
+    BusinessCategoryModel category, {
     Transaction? txn,
   }) async {
     final executor = txn ?? await _localDatabase.database;
     return executor.update(
-      'sale_category',
+      'business_category',
       category.toMap(),
-      where: 'id_sale_category = ?',
-      whereArgs: [category.idSaleCategory],
+      where: 'id_business_category = ?',
+      whereArgs: [category.idBusinessCategory],
     );
   }
 
   Future<int> softDeleteCategory(
-    int idSaleCategory, {
+    int idBusinessCategory, {
     Transaction? txn,
   }) async {
     final executor = txn ?? await _localDatabase.database;
     return executor.update(
-      'sale_category',
-      {'deleted': 1, 'updated_at': DateTime.now().toIso8601String()},
-      where: 'id_sale_category = ?',
-      whereArgs: [idSaleCategory],
+      'business_category',
+      {'deleted': 1},
+      where: 'id_business_category = ?',
+      whereArgs: [idBusinessCategory],
     );
   }
 
-  Future<SaleCategoryModel?> getCategoryById(
-    int idSaleCategory, {
+  Future<BusinessCategoryModel?> getCategoryById(
+    int idBusinessCategory, {
     Transaction? txn,
   }) async {
     final executor = txn ?? await _localDatabase.database;
     final rows = await executor.query(
-      'sale_category',
-      where: 'id_sale_category = ?',
-      whereArgs: [idSaleCategory],
+      'business_category',
+      where: 'id_business_category = ?',
+      whereArgs: [idBusinessCategory],
     );
     if (rows.isEmpty) return null;
-    return SaleCategoryModel.fromMap(rows.first);
+    return BusinessCategoryModel.fromMap(rows.first);
   }
 
-  Future<List<SaleCategoryModel>> getAllCategories({
+  Future<List<BusinessCategoryModel>> getAllCategories({
     bool includeDeleted = false,
     Transaction? txn,
   }) async {
     final executor = txn ?? await _localDatabase.database;
     final rows = await executor.query(
-      'sale_category',
+      'business_category',
       where: includeDeleted ? null : 'deleted = 0',
       orderBy: 'name ASC',
     );
-    return rows.map(SaleCategoryModel.fromMap).toList();
+    return rows.map(BusinessCategoryModel.fromMap).toList();
   }
 }

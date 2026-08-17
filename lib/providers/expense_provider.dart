@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../models/expense_category_model.dart';
+import '../models/expense_category_split_model.dart';
 import '../models/expense_model.dart';
 import '../repositories/expense_repository.dart';
 
@@ -10,36 +10,33 @@ class ExpenseProvider extends ChangeNotifier {
   final ExpenseRepository _expenseRepository;
 
   List<ExpenseModel> _expenses = [];
-  List<ExpenseCategoryModel> _categories = [];
+
   bool _isLoading = false;
   String? _errorMessage;
 
   // Active filters — null means "no filter" for that field.
-  int? _filterCategoryId;
+  int? _filterBusinessCategoryId;
   int? _filterSupplierId;
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
 
   List<ExpenseModel> get expenses => _expenses;
-  List<ExpenseCategoryModel> get categories => _categories;
+
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  int? get filterCategoryId => _filterCategoryId;
+  int? get filterBusinessCategoryId => _filterBusinessCategoryId;
   int? get filterSupplierId => _filterSupplierId;
   DateTime? get filterStartDate => _filterStartDate;
   DateTime? get filterEndDate => _filterEndDate;
 
   bool get hasActiveFilters =>
-      _filterCategoryId != null ||
+      _filterBusinessCategoryId != null ||
       _filterSupplierId != null ||
       _filterStartDate != null ||
       _filterEndDate != null;
 
-  Future<void> loadCategories() async {
-    _categories = await _expenseRepository.getAllCategories();
-    notifyListeners();
-  }
+
 
   Future<void> loadExpenses() async {
     _isLoading = true;
@@ -48,7 +45,7 @@ class ExpenseProvider extends ChangeNotifier {
 
     try {
       _expenses = await _expenseRepository.getAllExpenses(
-        expenseCategoryId: _filterCategoryId,
+        businessCategoryId: _filterBusinessCategoryId,
         supplierId: _filterSupplierId,
         startDate: _filterStartDate,
         endDate: _filterEndDate,
@@ -65,8 +62,8 @@ class ExpenseProvider extends ChangeNotifier {
   /// on a field to explicitly reset it to "no filter" (since `null` here
   /// means "leave unchanged", not "clear").
   Future<void> applyFilters({
-    int? categoryId,
-    bool clearCategoryId = false,
+    int? businessCategoryId,
+    bool clearBusinessCategoryId = false,
     int? supplierId,
     bool clearSupplierId = false,
     DateTime? startDate,
@@ -74,7 +71,8 @@ class ExpenseProvider extends ChangeNotifier {
     DateTime? endDate,
     bool clearEndDate = false,
   }) async {
-    _filterCategoryId = clearCategoryId ? null : (categoryId ?? _filterCategoryId);
+    _filterBusinessCategoryId =
+        clearBusinessCategoryId ? null : (businessCategoryId ?? _filterBusinessCategoryId);
     _filterSupplierId = clearSupplierId ? null : (supplierId ?? _filterSupplierId);
     _filterStartDate = clearStartDate ? null : (startDate ?? _filterStartDate);
     _filterEndDate = clearEndDate ? null : (endDate ?? _filterEndDate);
@@ -82,7 +80,7 @@ class ExpenseProvider extends ChangeNotifier {
   }
 
   Future<void> clearFilters() async {
-    _filterCategoryId = null;
+    _filterBusinessCategoryId = null;
     _filterSupplierId = null;
     _filterStartDate = null;
     _filterEndDate = null;
@@ -90,7 +88,7 @@ class ExpenseProvider extends ChangeNotifier {
   }
 
   Future<bool> createExpense({
-    required int expenseCategoryId,
+    required List<ExpenseCategoryAllocation> categoryAllocations,
     int? supplierId,
     required String description,
     required int amountCents,
@@ -102,7 +100,7 @@ class ExpenseProvider extends ChangeNotifier {
 
     try {
       await _expenseRepository.createExpense(
-        expenseCategoryId: expenseCategoryId,
+        categoryAllocations: categoryAllocations,
         supplierId: supplierId,
         description: description,
         amountCents: amountCents,
@@ -118,9 +116,9 @@ class ExpenseProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateExpense({
+Future<bool> updateExpense({
     required int idExpense,
-    required int expenseCategoryId,
+    required List<ExpenseCategoryAllocation> categoryAllocations,
     int? supplierId,
     required String description,
     required int amountCents,
@@ -133,7 +131,7 @@ class ExpenseProvider extends ChangeNotifier {
     try {
       await _expenseRepository.updateExpense(
         idExpense: idExpense,
-        expenseCategoryId: expenseCategoryId,
+        categoryAllocations: categoryAllocations,
         supplierId: supplierId,
         description: description,
         amountCents: amountCents,
@@ -166,47 +164,12 @@ class ExpenseProvider extends ChangeNotifier {
     }
   }
 
-Future<bool> createCategory({required String name, String? description}) async {
-    try {
-      await _expenseRepository.createCategory(name: name, description: description);
-      await loadCategories();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
-      return false;
-    }
+
+/// Existing category splits for [idExpense] — used to pre-fill the
+  /// allocation UI when editing a shared expense.
+  Future<List<ExpenseCategorySplitModel>> getSplitsByExpense(int idExpense) {
+    return _expenseRepository.getSplitsByExpense(idExpense);
   }
 
-  Future<bool> updateCategory({
-    required int idExpenseCategory,
-    required String name,
-    String? description,
-  }) async {
-    try {
-      await _expenseRepository.updateCategory(
-        idExpenseCategory: idExpenseCategory,
-        name: name,
-        description: description,
-      );
-      await loadCategories();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
-      return false;
-    }
-  }
 
-  Future<bool> deleteCategory(int idExpenseCategory) async {
-    try {
-      await _expenseRepository.deleteCategory(idExpenseCategory);
-      await loadCategories();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
-      return false;
-    }
-  }
 }

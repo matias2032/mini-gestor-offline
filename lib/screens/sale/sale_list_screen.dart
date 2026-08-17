@@ -30,7 +30,6 @@ class _SaleListScreenState extends State<SaleListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SaleProvider>().loadCategories();
       context.read<CustomerProvider>().loadCustomers();
       context.read<SaleProvider>().loadOutstandingCreditCount();
       _applyFilters();

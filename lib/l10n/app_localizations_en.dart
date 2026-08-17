@@ -99,6 +99,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileUpdatedRelogin => 'Profile updated. Please log in again.';
 
   @override
+  String get profileUpdated => 'Profile updated.';
+
+  @override
   String get saveChanges => 'Save changes';
 
   @override
@@ -135,6 +138,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordChangedRelogin => 'Password changed. Please log in again.';
+
+  @override
+  String get passwordChanged => 'Password changed.';
 
   @override
   String get changePasswordButton => 'Change password';
@@ -202,6 +208,7 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: '$count sales',
       one: '1 sale',
+      zero: '0 sales',
     );
     return '$_temp0';
   }
@@ -240,30 +247,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newExpenseCategory => 'New Category';
 
   @override
-  String get editExpenseCategory => 'Edit Category';
-
-  @override
   String get descriptionOptionalLabel => 'Description (optional)';
-
-  @override
-  String get deleteExpenseCategory => 'Delete category';
-
-  @override
-  String confirmDeleteExpenseCategoryMessage(String name) {
-    return 'Are you sure you want to delete \"$name\"?';
-  }
-
-  @override
-  String get failedToDeleteExpenseCategory => 'Failed to delete category.';
-
-  @override
-  String get expenseCategoriesTitle => 'Expense Categories';
-
-  @override
-  String get noExpenseCategoriesYet => 'No categories yet.';
-
-  @override
-  String get createExpenseCategory => 'Create category';
 
   @override
   String get filterExpensesTitle => 'Filter expenses';
@@ -326,6 +310,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createExpense => 'Create expense';
+
+  @override
+  String get noCategoriesAvailableYet => 'No categories available yet.';
+
+  @override
+  String get addAtLeastOneCategory => 'Add at least one category.';
+
+  @override
+  String categoryAllocationsMismatch(String allocated, String total) {
+    return 'Category allocations ($allocated) must add up to the expense total ($total).';
+  }
+
+  @override
+  String get addCategoryButton => 'Add category';
+
+  @override
+  String get noCategoryAddedYet => 'No category added yet.';
+
+  @override
+  String allocatedAmountLabel(String amount) {
+    return 'Allocated: $amount';
+  }
+
+  @override
+  String totalAmountValueLabel(String amount) {
+    return 'Total: $amount';
+  }
+
+  @override
+  String get categoryAllocationDialogTitle => 'Category allocation';
+
+  @override
+  String get selectCategoryValidation => 'Select a category';
+
+  @override
+  String get saveLabel => 'Save';
 
   @override
   String get expensesTitle => 'Expenses';
@@ -464,7 +484,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get finishedSalesLabel => 'Finished Sales';
 
   @override
-  String get saleCategoriesLabel => 'Sale Categories';
+  String get categoriesLabel => 'Categories';
 
   @override
   String get financialStatementsLabel => 'Financial Statements';
@@ -582,10 +602,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createCategoryButton => 'Create';
 
   @override
-  String get saleCategoriesTitle => 'Sale Categories';
-
-  @override
-  String get noSaleCategoriesYet => 'No sale categories yet.';
+  String get categoriesTitle => 'Categories';
 
   @override
   String get addCategoryTooltip => 'Add category';
@@ -709,10 +726,21 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: 'installments',
       one: 'installment',
+      zero: 'installments',
     );
     return 'Paid in $count $_temp0:';
   }
 
   @override
   String get splashLoading => 'Preparing your experience...';
+
+  @override
+  String get categoryBreakdownSectionTitle => 'By category';
+
+  @override
+  String get noCategoryBreakdownInPeriod =>
+      'No categorized activity in this period.';
+
+  @override
+  String get noCategoryLabel => 'No category';
 }

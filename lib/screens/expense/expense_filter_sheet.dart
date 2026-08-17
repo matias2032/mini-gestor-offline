@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../providers/business_category_provider.dart';
 import '../../providers/expense_provider.dart';
 import '../../providers/supplier_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
@@ -22,7 +23,7 @@ class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
   void initState() {
     super.initState();
     final expenseProvider = context.read<ExpenseProvider>();
-    _categoryId = expenseProvider.filterCategoryId;
+      _categoryId = expenseProvider.filterBusinessCategoryId;
     _supplierId = expenseProvider.filterSupplierId;
     _startDate = expenseProvider.filterStartDate;
     _endDate = expenseProvider.filterEndDate;
@@ -48,8 +49,8 @@ class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
 
   Future<void> _apply() async {
     await context.read<ExpenseProvider>().applyFilters(
-      categoryId: _categoryId,
-      clearCategoryId: _categoryId == null,
+      businessCategoryId: _categoryId,
+      clearBusinessCategoryId: _categoryId == null,
       supplierId: _supplierId,
       clearSupplierId: _supplierId == null,
       startDate: _startDate,
@@ -73,7 +74,7 @@ class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = context.watch<ExpenseProvider>().categories;
+    final categories = context.watch<BusinessCategoryProvider>().categories;
     final suppliers = context.watch<SupplierProvider>().suppliers;
     final l10n = AppLocalizations.of(context)!;
 
@@ -98,7 +99,7 @@ Text(
             items: [
               DropdownMenuItem<int?>(value: null, child: Text(l10n.allLabel)),
               ...categories.map(
-                (c) => DropdownMenuItem<int?>(value: c.idExpenseCategory, child: Text(c.name)),
+                (c) => DropdownMenuItem<int?>(value: c.idBusinessCategory, child: Text(c.name)),
               ),
             ],
             onChanged: (value) => setState(() => _categoryId = value),

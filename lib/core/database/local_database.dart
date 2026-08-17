@@ -16,8 +16,7 @@ class LocalDatabase {
 
   static const String _databaseName = 'business_manager.db';
 
-  /// Bump this and add a branch in [_onUpgrade] whenever the schema changes.
-  static const int _databaseVersion = 2;
+  static const int _databaseVersion = 1;
 
   Database? _database;
 
@@ -36,7 +35,6 @@ class LocalDatabase {
       version: _databaseVersion,
       onConfigure: _onConfigure,
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
     );
   }
 
@@ -53,22 +51,6 @@ class LocalDatabase {
     await batch.commit(noResult: true);
   }
 
-  /// Migration entry point for future schema versions.
-  ///
-  /// Add one `if (oldVersion < N)` block per version bump, each applying
-  /// only the incremental change (ALTER TABLE, new CREATE TABLE, data
-  /// backfill, etc.). Never rewrite older blocks — that breaks upgrades
-  /// for users stuck on older versions.
-Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      final batch = db.batch();
-      for (final statement in _financialStatementSchemaStatements) {
-        batch.execute(statement);
-      }
-      await batch.commit(noResult: true);
-    }
-  }
-
   /// Runs [action] inside a single SQLite transaction.
   ///
   /// Use this from repositories whenever an operation touches more than
@@ -81,7 +63,7 @@ Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     return db.transaction<T>(action);
   }
 
-Future<void> close() async {
+  Future<void> close() async {
     final db = _database;
     if (db != null) {
       await db.close();
@@ -120,8 +102,6 @@ Future<void> close() async {
         created_at            TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at            TEXT
     )
-
-
     ''',
     '''
     CREATE TRIGGER trg_user_updated
@@ -131,16 +111,29 @@ Future<void> close() async {
     END
     ''',
 
-    // ---------- sale_category ----------
+    // ---------- business_category ----------
+    // Unified category, shared by sales and expenses. Replaces the old
+    // independent sale_category / expense_category tables so that a
+    // "ramo de negócio" means the same thing on both sides, which is
+    // what makes it possible to break down a financial statement
+    // (extracto) by category and not just by grand total.
     '''
-    CREATE TABLE sale_category (
-        id_sale_category INTEGER PRIMARY KEY AUTOINCREMENT,
-        name             TEXT NOT NULL UNIQUE,
-        description      TEXT,
-        deleted          INTEGER NOT NULL DEFAULT 0,
-        created_at       TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at       TEXT
+    CREATE TABLE business_category (
+        id_business_category INTEGER PRIMARY KEY AUTOINCREMENT,
+        name                  TEXT NOT NULL UNIQUE,
+        description           TEXT,
+        deleted               INTEGER NOT NULL DEFAULT 0,
+        created_at            TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at            TEXT
     )
+    ''',
+    '''
+    CREATE TRIGGER trg_business_category_updated
+    AFTER UPDATE ON business_category
+    BEGIN
+        UPDATE business_category SET updated_at = datetime('now')
+        WHERE id_business_category = NEW.id_business_category;
+    END
     ''',
 
     // ---------- customer ----------
@@ -164,7 +157,7 @@ Future<void> close() async {
         id_sale                INTEGER PRIMARY KEY AUTOINCREMENT,
         reference               TEXT NOT NULL UNIQUE,
         sale_category_id        INTEGER NOT NULL
-            REFERENCES sale_category(id_sale_category),
+            REFERENCES business_category(id_business_category),
         description              TEXT NOT NULL,
         total_amount_cents        INTEGER NOT NULL CHECK (total_amount_cents >= 0),
 
@@ -263,34 +256,45 @@ Future<void> close() async {
     )
     ''',
 
-    // ---------- expense_category ----------
-    '''
-    CREATE TABLE expense_category (
-        id_expense_category INTEGER PRIMARY KEY AUTOINCREMENT,
-        name                 TEXT NOT NULL UNIQUE,
-        description          TEXT,
-        deleted              INTEGER NOT NULL DEFAULT 0
-    )
-    ''',
-
     // ---------- expense ----------
     '''
-    CREATE TABLE expense (
-        id_expense             INTEGER PRIMARY KEY AUTOINCREMENT,
-        expense_category_id     INTEGER NOT NULL
-            REFERENCES expense_category(id_expense_category),
-        supplier_id               INTEGER
-            REFERENCES supplier(id_supplier),
-        description                 TEXT NOT NULL,
-        amount_cents                 INTEGER NOT NULL CHECK (amount_cents >= 0),
-        expense_date                   TEXT NOT NULL DEFAULT (datetime('now')),
-        deletion_reason                  TEXT,
-        deleted                            INTEGER NOT NULL DEFAULT 0,
-        created_at                           TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at                             TEXT
-    )
+CREATE TABLE expense (
+    id_expense             INTEGER PRIMARY KEY AUTOINCREMENT,
+    supplier_id               INTEGER
+        REFERENCES supplier(id_supplier),
+    description                 TEXT NOT NULL,
+    amount_cents                 INTEGER NOT NULL CHECK (amount_cents >= 0),
+    expense_date                   TEXT NOT NULL DEFAULT (datetime('now')),
+    deletion_reason                  TEXT,
+    deleted                            INTEGER NOT NULL DEFAULT 0,
+    created_at                           TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at                             TEXT
+)
     ''',
-    'CREATE INDEX idx_expense_category ON expense(expense_category_id)',
+
+    // ---------- expense_category_split ----------
+// A single expense can be shared across more than one business_category
+// (e.g. one internet bill funding both "digital marketing" and "web
+// development"). Instead of duplicating the expense row per category
+// (which would double-count it), the expense is recorded once and its
+// amount_cents is allocated across categories here. The sum of a given
+// expense's splits must always equal that expense's amount_cents — this
+// is enforced by ExpenseRepository inside a transaction, not by SQLite,
+// the same way paid_amount_cents vs sale_payment totals already are.
+'''
+CREATE TABLE expense_category_split (
+    id_expense_category_split INTEGER PRIMARY KEY AUTOINCREMENT,
+    expense_id                 INTEGER NOT NULL
+        REFERENCES expense(id_expense) ON DELETE CASCADE,
+    business_category_id        INTEGER NOT NULL
+        REFERENCES business_category(id_business_category),
+    amount_cents                  INTEGER NOT NULL CHECK (amount_cents > 0),
+    UNIQUE (expense_id, business_category_id)
+)
+''',
+'CREATE INDEX idx_expense_split_expense ON expense_category_split(expense_id)',
+'CREATE INDEX idx_expense_split_category ON expense_category_split(business_category_id)',
+
     'CREATE INDEX idx_expense_supplier ON expense(supplier_id)',
     'CREATE INDEX idx_expense_date ON expense(expense_date)',
     '''
@@ -300,20 +304,21 @@ Future<void> close() async {
         UPDATE expense SET updated_at = datetime('now') WHERE id_expense = NEW.id_expense;
     END
     ''',
-    ..._financialStatementSchemaStatements,
-  ];
 
-  // ============================================================
-  // FINANCIAL STATEMENT ("extracto") — added in schema version 2.
-  // Kept as its own list so it can be reused both by [_onCreate]
-  // (fresh installs, appended above) and by [_onUpgrade] (existing
-  // installs upgrading from version 1).
-  //
-  // Statements are snapshotted at generation time into the two child
-  // tables below, so a statement's numbers never change even if the
-  // underlying sale/expense rows are later edited or cancelled.
-  // ============================================================
-  static const List<String> _financialStatementSchemaStatements = [
+    // ============================================================
+    // FINANCIAL STATEMENT ("extracto")
+    //
+    // Statements are snapshotted at generation time into the two child
+    // tables below, so a statement's numbers never change even if the
+    // underlying sale/expense rows are later edited or cancelled.
+    //
+    // Each item also snapshots the business_category (id + name), which
+    // is what allows the extracto to be broken down by category —
+    // grouping financial_statement_sale_item / financial_statement_expense_item
+    // by business_category_id gives ganho/gasto/saldo por ramo, in
+    // addition to the general totals on financial_statement itself.
+    // ============================================================
+
     // ---------- financial_statement ----------
     '''
     CREATE TABLE financial_statement (
@@ -350,9 +355,6 @@ Future<void> close() async {
     ''',
 
     // ---------- financial_statement_sale_item ----------
-    // Snapshot of each finalized sale included in a statement. Fields are
-    // duplicated from `sale` on purpose (reference, description, date) so
-    // the statement/PDF stays accurate even if the sale row changes later.
     '''
     CREATE TABLE financial_statement_sale_item (
         id_financial_statement_sale_item INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -363,11 +365,16 @@ Future<void> close() async {
         sale_reference                        TEXT NOT NULL,
         sale_description                       TEXT NOT NULL,
         sale_date                               TEXT NOT NULL,
+        business_category_id                     INTEGER
+            REFERENCES business_category(id_business_category),
+        business_category_name                    TEXT NOT NULL DEFAULT '',
         amount_cents                             INTEGER NOT NULL CHECK (amount_cents >= 0)
     )
     ''',
     'CREATE INDEX idx_statement_sale_item_statement '
         'ON financial_statement_sale_item(financial_statement_id)',
+    'CREATE INDEX idx_statement_sale_item_category '
+        'ON financial_statement_sale_item(business_category_id)',
 
     // ---------- financial_statement_expense_item ----------
     '''
@@ -379,11 +386,15 @@ Future<void> close() async {
             REFERENCES expense(id_expense),
         expense_description                     TEXT NOT NULL,
         expense_date                             TEXT NOT NULL,
+        business_category_id                      INTEGER
+            REFERENCES business_category(id_business_category),
+        business_category_name                     TEXT NOT NULL DEFAULT '',
         amount_cents                              INTEGER NOT NULL CHECK (amount_cents >= 0)
     )
     ''',
     'CREATE INDEX idx_statement_expense_item_statement '
         'ON financial_statement_expense_item(financial_statement_id)',
+    'CREATE INDEX idx_statement_expense_item_category '
+        'ON financial_statement_expense_item(business_category_id)',
   ];
 }
-

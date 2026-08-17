@@ -1,11 +1,10 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../core/database/local_database.dart';
-import '../daos/sale_category_dao.dart';
+
 import '../daos/sale_dao.dart';
 import '../daos/sale_installment_dao.dart';
 import '../daos/sale_payment_dao.dart';
-import '../models/sale_category_model.dart';
 import '../models/sale_installment_model.dart';
 import '../models/sale_model.dart';
 import '../models/sale_payment_model.dart';
@@ -19,69 +18,18 @@ class SaleRepository {
   SaleRepository(
     this._database,
     this._saleDao,
-    this._saleCategoryDao,
+
     this._saleInstallmentDao,
     this._salePaymentDao,
   );
 
   final LocalDatabase _database;
   final SaleDao _saleDao;
-  final SaleCategoryDao _saleCategoryDao;
+
   final SaleInstallmentDao _saleInstallmentDao;
   final SalePaymentDao _salePaymentDao;
 
-  // ---------------------------------------------------------------------
-  // sale_category
-  // ---------------------------------------------------------------------
 
-  Future<SaleCategoryModel> createCategory({
-    required String name,
-    String? description,
-  }) async {
-    final trimmedName = name.trim();
-    if (trimmedName.isEmpty) {
-      throw ArgumentError('Category name cannot be empty.');
-    }
-    final category = SaleCategoryModel(
-      name: trimmedName,
-      description: _cleanOrNull(description),
-      createdAt: DateTime.now(),
-    );
-    final id = await _saleCategoryDao.insertCategory(category);
-    return category.copyWith(idSaleCategory: id);
-  }
-
-  Future<SaleCategoryModel> updateCategory({
-    required int idSaleCategory,
-    required String name,
-    String? description,
-  }) async {
-    final trimmedName = name.trim();
-    if (trimmedName.isEmpty) {
-      throw ArgumentError('Category name cannot be empty.');
-    }
-    final current = await _saleCategoryDao.getCategoryById(idSaleCategory);
-    if (current == null) {
-      throw StateError('Sale category not found.');
-    }
-    final updated = current.copyWith(
-      name: trimmedName,
-      description: _cleanOrNull(description),
-      updatedAt: DateTime.now(),
-    );
-    await _saleCategoryDao.updateCategory(updated);
-    return updated;
-  }
-
-  Future<void> deleteCategory(int idSaleCategory) {
-    return _saleCategoryDao.softDeleteCategory(idSaleCategory);
-  }
-
-  Future<List<SaleCategoryModel>> getAllCategories({
-    bool includeDeleted = false,
-  }) {
-    return _saleCategoryDao.getAllCategories(includeDeleted: includeDeleted);
-  }
 
   // ---------------------------------------------------------------------
   // sale
@@ -377,7 +325,7 @@ Future<List<SalePaymentModel>> getPaymentsBySale(int saleId) {
   // dashboard / badge stats
   // ---------------------------------------------------------------------
 
-  /// Number of credit sales still not finalized — backs the sidebar badge.
+/// Number of credit sales still not finalized — backs the sidebar badge.
   Future<int> countOutstandingCreditSales() {
     return _saleDao.countOutstandingCreditSales();
   }
@@ -412,7 +360,7 @@ Future<List<SalePaymentModel>> getPaymentsBySale(int saleId) {
       totalCreditSalesCents: totalCreditCents,
       categorySummaries: categoryRows
           .map((row) => CategorySalesSummary(
-                idSaleCategory: row['id_sale_category'] as int,
+                idBusinessCategory: row['id_business_category'] as int,
                 name: row['name'] as String,
                 totalCents: row['total_cents'] as int,
                 saleCount: row['sale_count'] as int,

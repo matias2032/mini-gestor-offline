@@ -24,20 +24,20 @@ import 'screens/supplier/supplier_list_screen.dart';
 import 'daos/sale_dao.dart';
 import 'daos/sale_installment_dao.dart';
 import 'daos/sale_payment_dao.dart';
-import 'daos/sale_category_dao.dart';
 import 'repositories/sale_repository.dart';
 import 'providers/sale_provider.dart';
 import 'daos/financial_statement_dao.dart';
 import 'repositories/financial_statement_repository.dart';
 import 'providers/financial_statement_provider.dart';
+import 'daos/business_category_dao.dart';
+import 'repositories/business_category_repository.dart';
+import 'providers/business_category_provider.dart';
 import 'daos/expense_dao.dart';
-import 'daos/expense_category_dao.dart';
 import 'repositories/expense_repository.dart';
 import 'providers/expense_provider.dart';
 import 'screens/expense/expense_list_screen.dart';
-import 'screens/expense/expense_category_list_screen.dart';
+import 'screens/category/business_category_list_screen.dart';
 import 'screens/sale/sale_list_screen.dart';
-import 'screens/sale/sale_category_list_screen.dart';
 import 'screens/sale/credit_sale_list_screen.dart';
 import 'screens/sale/financial_statement_list_screen.dart';
 import 'screens/sale/financial_statement_generate_screen.dart';
@@ -49,6 +49,7 @@ import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
 import 'screens/splash/splash_screen.dart';
+import 'daos/expense_category_split_dao.dart';
 
 /// Debug switch: set to `true` to wipe the local database on every app
 /// start, simulating a fresh install (onboarding screen shows again
@@ -93,15 +94,22 @@ class MyApp extends StatelessWidget {
     final supplierDao = SupplierDao(localDatabase);
     final supplierRepository = SupplierRepository(localDatabase, supplierDao);
 
-    final expenseDao = ExpenseDao(localDatabase);
-    final expenseCategoryDao = ExpenseCategoryDao(localDatabase);
-    final expenseRepository = ExpenseRepository(localDatabase, expenseDao, expenseCategoryDao);
+    final businessCategoryDao = BusinessCategoryDao(localDatabase);
+    final businessCategoryRepository = BusinessCategoryRepository(businessCategoryDao);
+
+final expenseDao = ExpenseDao(localDatabase);
+    final expenseCategorySplitDao = ExpenseCategorySplitDao(localDatabase);
+    final expenseRepository = ExpenseRepository(
+      localDatabase,
+      expenseDao,
+      expenseCategorySplitDao,
+      businessCategoryDao,
+    );
 
     final saleDao = SaleDao(localDatabase);
-    final saleCategoryDao = SaleCategoryDao(localDatabase);
     final saleInstallmentDao = SaleInstallmentDao(localDatabase);
     final salePaymentDao = SalePaymentDao(localDatabase);
-    final saleRepository = SaleRepository(localDatabase, saleDao, saleCategoryDao, saleInstallmentDao, salePaymentDao);
+    final saleRepository = SaleRepository(localDatabase, saleDao, saleInstallmentDao, salePaymentDao);
 
     final financialStatementDao = FinancialStatementDao(localDatabase);
     final financialStatementRepository =
@@ -114,6 +122,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProvider(userRepository)),
         ChangeNotifierProvider(create: (_) => CustomerProvider(customerRepository)),
         ChangeNotifierProvider(create: (_) => SupplierProvider(supplierRepository)),
+        ChangeNotifierProvider(
+          create: (_) => BusinessCategoryProvider(businessCategoryRepository),
+        ),
         ChangeNotifierProvider(create: (_) => ExpenseProvider(expenseRepository)),
         ChangeNotifierProvider(create: (_) => SaleProvider(saleRepository)),
         ChangeNotifierProvider(
@@ -137,10 +148,9 @@ child: Consumer2<ThemeProvider, LocaleProvider>(
           '/customer': (_) => const CustomerListScreen(),
           '/supplier': (_) => const SupplierListScreen(),
           '/expense': (_) => const ExpenseListScreen(),
-          '/expense-category': (_) => const ExpenseCategoryListScreen(),
           '/sale': (_) => const SaleListScreen(),
-          '/sale-category': (_) => const SaleCategoryListScreen(),
           '/credit-sale': (_) => const CreditSaleListScreen(),
+          '/category': (_) => const BusinessCategoryListScreen(),
           '/sale/financial-statement': (_) => const FinancialStatementListScreen(),
           '/sale/financial-statement/generate': (_) =>
               const FinancialStatementGenerateScreen(),

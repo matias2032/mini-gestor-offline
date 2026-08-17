@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../providers/business_category_provider.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/sale_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
@@ -37,7 +38,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SaleProvider>().loadCategories();
+      context.read<BusinessCategoryProvider>().loadCategories();
       context.read<CustomerProvider>().loadCustomers();
     });
   }
@@ -139,7 +140,7 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final categories = context.watch<SaleProvider>().categories;
+final categories = context.watch<BusinessCategoryProvider>().categories;
     final customers = context.watch<CustomerProvider>().customers;
     final errorMessage = context.watch<SaleProvider>().errorMessage;
     final isLoading = context.watch<SaleProvider>().isLoading;
@@ -157,7 +158,7 @@ if (!_useExistingCustomer && _walkInNameController.text.trim().isEmpty) {
               decoration: InputDecoration(labelText: l10n.categoryLabel),
               items: categories
                   .map((category) => DropdownMenuItem(
-                        value: category.idSaleCategory,
+                        value: category.idBusinessCategory,
                         child: Text(category.name),
                       ))
                   .toList(),

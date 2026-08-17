@@ -1,3 +1,4 @@
+// sale_payment_model.dart
 /// Pure data class representing a row in the `sale_payment` table.
 class SalePaymentModel {
   const SalePaymentModel({

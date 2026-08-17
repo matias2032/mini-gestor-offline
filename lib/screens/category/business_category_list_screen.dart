@@ -1,31 +1,32 @@
-// screens/sale/sale_category_list_screen.dart
+// screens/category/business_category_list_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/sale_category_model.dart';
-import '../../providers/sale_provider.dart';
-import 'sale_category_form_screen.dart';
+import '../../models/business_category_model.dart';
+import '../../providers/business_category_provider.dart';
+import 'business_category_form_screen.dart';
 import '/widgets/app_sidebar.dart';
 import 'package:mini/l10n/app_localizations.dart';
 
-class SaleCategoryListScreen extends StatefulWidget {
-  const SaleCategoryListScreen({super.key});
+class BusinessCategoryListScreen extends StatefulWidget {
+  const BusinessCategoryListScreen({super.key});
 
   @override
-  State<SaleCategoryListScreen> createState() =>
-      _SaleCategoryListScreenState();
+  State<BusinessCategoryListScreen> createState() =>
+      _BusinessCategoryListScreenState();
 }
 
-class _SaleCategoryListScreenState extends State<SaleCategoryListScreen> {
+class _BusinessCategoryListScreenState
+    extends State<BusinessCategoryListScreen> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SaleProvider>().loadCategories();
+      context.read<BusinessCategoryProvider>().loadCategories();
     });
   }
 
-  Future<void> _confirmDelete(SaleCategoryModel category) async {
+  Future<void> _confirmDelete(BusinessCategoryModel category) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -47,10 +48,10 @@ class _SaleCategoryListScreenState extends State<SaleCategoryListScreen> {
 
     if (confirmed == true && mounted) {
       final success = await context
-          .read<SaleProvider>()
-          .deleteCategory(category.idSaleCategory!);
+          .read<BusinessCategoryProvider>()
+          .deleteCategory(category.idBusinessCategory!);
       if (!success && mounted) {
-        final error = context.read<SaleProvider>().errorMessage;
+        final error = context.read<BusinessCategoryProvider>().errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error ?? l10n.couldNotDeleteCategory)),
         );
@@ -58,35 +59,35 @@ class _SaleCategoryListScreenState extends State<SaleCategoryListScreen> {
     }
   }
 
-  Future<void> _openForm({SaleCategoryModel? category}) async {
+  Future<void> _openForm({BusinessCategoryModel? category}) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => SaleCategoryFormScreen(category: category),
+        builder: (_) => BusinessCategoryFormScreen(category: category),
       ),
     );
     if (mounted) {
-      context.read<SaleProvider>().loadCategories();
+      context.read<BusinessCategoryProvider>().loadCategories();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final categories = context.watch<SaleProvider>().categories;
-    final isLoading = context.watch<SaleProvider>().isLoading;
+    final categories = context.watch<BusinessCategoryProvider>().categories;
+    final isLoading = context.watch<BusinessCategoryProvider>().isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.saleCategoriesTitle)),
-       drawer: const AppSidebar(currentRoute: '/sale-category'),
+appBar: AppBar(title: Text(l10n.categoriesTitle)),
+      drawer: const AppSidebar(currentRoute: '/category'),
       body: RefreshIndicator(
-        onRefresh: () => context.read<SaleProvider>().loadCategories(),
+        onRefresh: () => context.read<BusinessCategoryProvider>().loadCategories(),
         child: isLoading && categories.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : categories.isEmpty
                 ? ListView(
                     children: [
                       const SizedBox(height: 120),
-                      Center(child: Text(l10n.noSaleCategoriesYet)),
+                      Center(child: Text(l10n.noCategoriesYet)),
                     ],
                   )
                 : ListView.separated(

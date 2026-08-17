@@ -102,6 +102,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Perfil atualizado. Inicie sessão novamente.';
 
   @override
+  String get profileUpdated => 'Perfil atualizado.';
+
+  @override
   String get saveChanges => 'Guardar alterações';
 
   @override
@@ -140,6 +143,9 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get passwordChangedRelogin =>
       'Palavra-passe alterada. Inicie sessão novamente.';
+
+  @override
+  String get passwordChanged => 'Palavra-passe alterada.';
 
   @override
   String get changePasswordButton => 'Alterar palavra-passe';
@@ -207,6 +213,7 @@ class AppLocalizationsPt extends AppLocalizations {
       locale: localeName,
       other: '$count vendas',
       one: '1 venda',
+      zero: '0 vendas',
     );
     return '$_temp0';
   }
@@ -242,33 +249,10 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get newExpenseCategory => 'Nova categoria';
-
-  @override
-  String get editExpenseCategory => 'Editar categoria';
+  String get newExpenseCategory => 'New Category';
 
   @override
   String get descriptionOptionalLabel => 'Descrição (opcional)';
-
-  @override
-  String get deleteExpenseCategory => 'Eliminar categoria';
-
-  @override
-  String confirmDeleteExpenseCategoryMessage(String name) {
-    return 'Tem a certeza de que deseja eliminar \"$name\"?';
-  }
-
-  @override
-  String get failedToDeleteExpenseCategory => 'Falha ao eliminar a categoria.';
-
-  @override
-  String get expenseCategoriesTitle => 'Categorias de despesa';
-
-  @override
-  String get noExpenseCategoriesYet => 'Ainda não há categorias.';
-
-  @override
-  String get createExpenseCategory => 'Criar categoria';
 
   @override
   String get filterExpensesTitle => 'Filtrar despesas';
@@ -331,6 +315,43 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get createExpense => 'Criar despesa';
+
+  @override
+  String get noCategoriesAvailableYet => 'Ainda não há categorias disponíveis.';
+
+  @override
+  String get addAtLeastOneCategory => 'Adicione pelo menos uma categoria.';
+
+  @override
+  String categoryAllocationsMismatch(String allocated, String total) {
+    return 'As alocações por categoria ($allocated) devem somar o total da despesa ($total).';
+  }
+
+  @override
+  String get addCategoryButton => 'Adicionar categoria';
+
+  @override
+  String get noCategoryAddedYet =>
+      'Ainda não foi adicionada nenhuma categoria.';
+
+  @override
+  String allocatedAmountLabel(String amount) {
+    return 'Alocado: $amount';
+  }
+
+  @override
+  String totalAmountValueLabel(String amount) {
+    return 'Total: $amount';
+  }
+
+  @override
+  String get categoryAllocationDialogTitle => 'Alocação de categoria';
+
+  @override
+  String get selectCategoryValidation => 'Selecione uma categoria';
+
+  @override
+  String get saveLabel => 'Guardar';
 
   @override
   String get expensesTitle => 'Despesas';
@@ -470,7 +491,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get finishedSalesLabel => 'Vendas Concluídas';
 
   @override
-  String get saleCategoriesLabel => 'Categorias de Venda';
+  String get categoriesLabel => 'Categorias';
 
   @override
   String get financialStatementsLabel => 'Extratos Financeiros';
@@ -590,10 +611,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get createCategoryButton => 'Criar';
 
   @override
-  String get saleCategoriesTitle => 'Categorias de Venda';
-
-  @override
-  String get noSaleCategoriesYet => 'Ainda não há categorias de venda.';
+  String get categoriesTitle => 'Categorias';
 
   @override
   String get addCategoryTooltip => 'Adicionar categoria';
@@ -718,10 +736,21 @@ class AppLocalizationsPt extends AppLocalizations {
       locale: localeName,
       other: 'prestações',
       one: 'prestação',
+      zero: 'prestações',
     );
     return 'Pago em $count $_temp0:';
   }
 
   @override
   String get splashLoading => 'A preparar a aplicação...';
+
+  @override
+  String get categoryBreakdownSectionTitle => 'Por categoria';
+
+  @override
+  String get noCategoryBreakdownInPeriod =>
+      'Sem movimentos por categoria neste período.';
+
+  @override
+  String get noCategoryLabel => 'Sem categoria';
 }

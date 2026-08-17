@@ -148,6 +148,47 @@ class _FinancialStatementDetailScreenState
                 ],
               ),
             ),
+          const SizedBox(height: 24),
+          Text(l10n.categoryBreakdownSectionTitle, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          if (detail.categoryBreakdown.isEmpty)
+            Text(l10n.noCategoryBreakdownInPeriod)
+          else
+            for (final category in detail.categoryBreakdown)
+              Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        category.name.isEmpty ? l10n.noCategoryLabel : category.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      _SummaryRow(
+                        label: l10n.salesSectionTitle,
+                        value: '${amountFormat.format(category.totalSalesCents / 100)} $currency',
+                        valueColor: Colors.green,
+                      ),
+                      const SizedBox(height: 4),
+                      _SummaryRow(
+                        label: l10n.expensesSectionTitle,
+                        value: '${amountFormat.format(category.totalExpensesCents / 100)} $currency',
+                        valueColor: Colors.red,
+                      ),
+                      const SizedBox(height: 4),
+                      _SummaryRow(
+                        label: l10n.balanceLabel,
+                        value: '${amountFormat.format(category.balanceCents / 100)} $currency',
+                        valueColor: category.balanceCents >= 0 ? Colors.green : Colors.red,
+                        bold: true,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
         ],
       ),
     );

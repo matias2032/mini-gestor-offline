@@ -1,7 +1,6 @@
 // providers/sale_provider.dart
 
 import 'package:flutter/foundation.dart';
-import '../models/sale_category_model.dart';
 import '../models/sale_installment_model.dart';
 import '../models/sale_model.dart';
 import '../models/sale_payment_model.dart';
@@ -15,7 +14,6 @@ class SaleProvider extends ChangeNotifier {
 
   final SaleRepository _saleRepository;
 
-List<SaleCategoryModel> _categories = [];
   List<SaleModel> _sales = [];
   List<SaleModel> _creditSales = [];
   SaleModel? _currentSale;
@@ -53,7 +51,7 @@ List<SaleCategoryModel> _categories = [];
   DashboardStats _dashboardStats = DashboardStats.empty();
   DashboardPeriod _dashboardPeriod = DashboardPeriod.oneMonth;
 
-  List<SaleCategoryModel> get categories => _categories;
+
   List<SaleModel> get sales => _sales;
   List<SaleModel> get creditSales => _creditSales;
   SaleModel? get currentSale => _currentSale;
@@ -65,78 +63,7 @@ List<SaleCategoryModel> _categories = [];
     DashboardStats get dashboardStats => _dashboardStats;
     DashboardPeriod get dashboardPeriod => _dashboardPeriod;
 
-  // ---------------------------------------------------------------------
-  // sale_category
-  // ---------------------------------------------------------------------
 
-  Future<void> loadCategories({bool includeDeleted = false}) async {
-    _setLoading(true);
-    try {
-      _categories =
-          await _saleRepository.getAllCategories(includeDeleted: includeDeleted);
-      _errorMessage = null;
-    } catch (error) {
-      _errorMessage = error.toString();
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  Future<bool> createCategory({
-    required String name,
-    String? description,
-  }) async {
-    _setLoading(true);
-    try {
-      await _saleRepository.createCategory(name: name, description: description);
-      _categories = await _saleRepository.getAllCategories();
-      _errorMessage = null;
-      return true;
-    } catch (error) {
-      _errorMessage = error.toString();
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  Future<bool> updateCategory({
-    required int idSaleCategory,
-    required String name,
-    String? description,
-  }) async {
-    _setLoading(true);
-    try {
-      await _saleRepository.updateCategory(
-        idSaleCategory: idSaleCategory,
-        name: name,
-        description: description,
-      );
-      _categories = await _saleRepository.getAllCategories();
-      _errorMessage = null;
-      return true;
-    } catch (error) {
-      _errorMessage = error.toString();
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  Future<bool> deleteCategory(int idSaleCategory) async {
-    _setLoading(true);
-    try {
-      await _saleRepository.deleteCategory(idSaleCategory);
-      _categories = await _saleRepository.getAllCategories();
-      _errorMessage = null;
-      return true;
-    } catch (error) {
-      _errorMessage = error.toString();
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
 
   // ---------------------------------------------------------------------
   // sale
@@ -326,7 +253,7 @@ Future<bool> registerPayment({
     }
   }
 
-  /// Loads dashboard stats for [period] (or the last one used, if
+/// Loads dashboard stats for [period] (or the last one used, if
   /// omitted). Called on dashboard init and whenever the user switches
   /// the period filter.
   Future<void> loadDashboardStats({DashboardPeriod? period}) async {

@@ -1,3 +1,4 @@
+// sale_model.dart
 /// Pure data class representing a row in the `sale` table.
 ///
 /// `updated_at` is omitted from [toMap] because `trg_sale_updated` sets it
@@ -209,13 +210,13 @@ extension DashboardPeriodX on DashboardPeriod {
 /// selected period still appear, with totalCents = 0.
 class CategorySalesSummary {
   const CategorySalesSummary({
-    required this.idSaleCategory,
+    required this.idBusinessCategory,
     required this.name,
     required this.totalCents,
     required this.saleCount,
   });
 
-  final int idSaleCategory;
+  final int idBusinessCategory;
   final String name;
   final int totalCents;
   final int saleCount;
