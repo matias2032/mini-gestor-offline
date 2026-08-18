@@ -305,8 +305,24 @@
   "placeholders": { "count": { "type": "int" } }
 },
 "splashLoading": "Preparing your experience...",
-"categoryBreakdownSectionTitle": "By category",
-"noCategoryBreakdownInPeriod": "No categorized activity in this period.",
-"noCategoryLabel": "No category"
-}
+  "categoryBreakdownSectionTitle": "By category",
+  "noCategoryBreakdownInPeriod": "No categorized activity in this period.",
+  "noCategoryLabel": "No category",
 
+  "switchStoreTooltip": "Switch store",
+  "storesTitle": "Stores",
+  "newStore": "New store",
+  "storeNameLabel": "Store name",
+  "storeNameRequired": "Store name is required",
+  "renameStoreTitle": "Rename store",
+  "setAsDefault": "Set as default",
+  "defaultStoreLabel": "Default",
+  "deleteStoreTitle": "Delete store",
+  "confirmDeleteStoreMessage": "Are you sure you want to delete \"{name}\"?",
+  "@confirmDeleteStoreMessage": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "couldNotDeleteStore": "Could not delete store.",
+  "couldNotCreateStore": "Could not create store.",
+  "couldNotRenameStore": "Could not rename store."
+}

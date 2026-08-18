@@ -59,13 +59,22 @@ class SupplierDao {
   }
 
   Future<List<SupplierModel>> getAllSuppliers({
+    int? activeUnitId,
     bool includeDeleted = false,
     Transaction? txn,
   }) async {
     final executor = txn ?? await _localDatabase.database;
+    final conditions = <String>[
+      '(business_unit_id IS NULL OR business_unit_id = ?)',
+    ];
+    final args = <Object?>[activeUnitId];
+    if (!includeDeleted) {
+      conditions.add('deleted = 0');
+    }
     final rows = await executor.query(
       'supplier',
-      where: includeDeleted ? null : 'deleted = 0',
+      where: conditions.join(' AND '),
+      whereArgs: args,
       orderBy: 'name ASC',
     );
     return rows.map(SupplierModel.fromMap).toList();

@@ -3,11 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-
 import '/models/sale_model.dart';
 import '/providers/sale_provider.dart';
 import '/providers/user_provider.dart';
 import '/widgets/app_sidebar.dart';
+import '/widgets/store_selector.dart';
 import 'package:mini/l10n/app_localizations.dart';
 
 /// Dashboard's role changed from "grid of module shortcuts" to "sales
@@ -56,7 +56,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final amountFormat = NumberFormat('#,##0.00');
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.dashboardTitle)),
+      appBar: AppBar(
+        title: Text(l10n.dashboardTitle),
+        actions: const [StoreSelector(), SizedBox(width: 8)],
+      ),
       drawer: AppSidebar(
         currentRoute: '/dashboard',
         creditSalesBadgeCount: saleProvider.outstandingCreditCount,

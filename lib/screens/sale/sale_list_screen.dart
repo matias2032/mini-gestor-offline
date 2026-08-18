@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../../models/sale_installment_model.dart';
 import '../../models/sale_model.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/sale_provider.dart';

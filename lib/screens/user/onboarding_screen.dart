@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../providers/business_unit_provider.dart';
 import '../../../../providers/user_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
 
@@ -66,6 +67,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (!mounted) return;
 
     if (success) {
+      // The default business_unit was just created (inside the same
+      // transaction as the user, in UserRepository.createUser). It was
+      // written directly via BusinessUnitRepository, bypassing
+      // BusinessUnitProvider's in-memory list — so it needs an explicit
+      // reload here, otherwise the dashboard would start with an empty
+      // `units` list and no active store.
+      await context.read<BusinessUnitProvider>().loadUnits();
+      if (!mounted) return;
       Navigator.of(context).pushReplacementNamed('/login');
     } else {
       final errorMessage =

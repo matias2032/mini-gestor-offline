@@ -222,12 +222,18 @@ class _AppSidebarState extends State<AppSidebar>
                   child: Divider(height: 1),
                 ),
                 ...groups.map((group) => _buildGroup(context, colorScheme, group)),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  child: Divider(height: 1),
-                ),
-                _buildThemeToggleRow(colorScheme, loc),
-                _buildLanguageSelectorRow(colorScheme, loc),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Divider(height: 1),
+            ),
+            _buildSimpleItem(
+              colorScheme: colorScheme,
+              icon: Icons.storefront_outlined,
+              title: loc.storesTitle,
+              route: '/business-unit-management',
+            ),
+            _buildThemeToggleRow(colorScheme, loc),
+            _buildLanguageSelectorRow(colorScheme, loc),
               ],
             ),
           ),
@@ -727,8 +733,7 @@ Widget _buildSubItem(
     );
 
     if (confirmed == true && context.mounted) {
-      // TODO: replace with the real sign-out call once UserProvider
-      // exposes one, e.g. `context.read<UserProvider>().logout();`
+      context.read<UserProvider>().logout();
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     }
   }

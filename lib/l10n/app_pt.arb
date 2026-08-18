@@ -232,7 +232,21 @@
 "noInstallmentsRegistered": "Nenhuma prestação registada.",
 "paidInInstallmentsMessage": "Pago em {count} {count, plural, =0{prestações} one{prestação} other{prestações}}:",
 "splashLoading": "A preparar a aplicação...",
-"categoryBreakdownSectionTitle": "Por categoria",
-"noCategoryBreakdownInPeriod": "Sem movimentos por categoria neste período.",
-"noCategoryLabel": "Sem categoria"
+  "categoryBreakdownSectionTitle": "Por categoria",
+  "noCategoryBreakdownInPeriod": "Sem movimentos por categoria neste período.",
+  "noCategoryLabel": "Sem categoria",
+
+  "switchStoreTooltip": "Mudar de loja",
+  "storesTitle": "Lojas",
+  "newStore": "Nova loja",
+  "storeNameLabel": "Nome da loja",
+  "storeNameRequired": "O nome da loja é obrigatório",
+  "renameStoreTitle": "Renomear loja",
+  "setAsDefault": "Definir como padrão",
+  "defaultStoreLabel": "Padrão",
+  "deleteStoreTitle": "Eliminar loja",
+  "confirmDeleteStoreMessage": "Tem a certeza de que deseja eliminar \"{name}\"?",
+  "couldNotDeleteStore": "Não foi possível eliminar a loja.",
+  "couldNotCreateStore": "Não foi possível criar a loja.",
+  "couldNotRenameStore": "Não foi possível renomear a loja."
 }

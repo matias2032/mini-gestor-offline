@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../../models/expense_category_split_model.dart';
 import '../../models/expense_model.dart';
 import '../../providers/business_category_provider.dart';
 import '../../providers/expense_provider.dart';

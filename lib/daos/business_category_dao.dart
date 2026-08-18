@@ -57,7 +57,33 @@ class BusinessCategoryDao {
     return BusinessCategoryModel.fromMap(rows.first);
   }
 
-  Future<List<BusinessCategoryModel>> getAllCategories({
+    Future<List<BusinessCategoryModel>> getAllCategories({
+    int? activeUnitId,
+    bool includeDeleted = false,
+    Transaction? txn,
+  }) async {
+    final executor = txn ?? await _localDatabase.database;
+    final conditions = <String>[
+      '(business_unit_id IS NULL OR business_unit_id = ?)',
+    ];
+    final args = <Object?>[activeUnitId];
+    if (!includeDeleted) {
+      conditions.add('deleted = 0');
+    }
+    final rows = await executor.query(
+      'business_category',
+      where: conditions.join(' AND '),
+      whereArgs: args,
+      orderBy: 'name ASC',
+    );
+    return rows.map(BusinessCategoryModel.fromMap).toList();
+  }
+
+  /// Every category, from every business unit, ignoring scope entirely.
+  /// Used only by BusinessCategoryRepository to validate a Global
+  /// category's name — a Global is visible in every loja, so its name
+  /// must not collide with anyone's category, not just other Globals.
+  Future<List<BusinessCategoryModel>> getAllCategoriesUnscoped({
     bool includeDeleted = false,
     Transaction? txn,
   }) async {

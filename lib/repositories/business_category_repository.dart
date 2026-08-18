@@ -13,9 +13,13 @@ class BusinessCategoryRepository {
   final BusinessCategoryDao _dao;
 
   Future<List<BusinessCategoryModel>> getAllCategories({
+    int? activeUnitId,
     bool includeDeleted = false,
   }) {
-    return _dao.getAllCategories(includeDeleted: includeDeleted);
+    return _dao.getAllCategories(
+      activeUnitId: activeUnitId,
+      includeDeleted: includeDeleted,
+    );
   }
 
   Future<BusinessCategoryModel?> getCategoryById(int idBusinessCategory) {
@@ -25,14 +29,18 @@ class BusinessCategoryRepository {
   Future<BusinessCategoryModel> createCategory({
     required String name,
     String? description,
+    int? businessUnitId,
   }) async {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
       throw ArgumentError('Category name cannot be empty.');
     }
+    await _ensureNameAvailable(name: trimmedName, businessUnitId: businessUnitId);
+
     final category = BusinessCategoryModel(
       name: trimmedName,
       description: _cleanOrNull(description),
+      businessUnitId: businessUnitId,
       createdAt: DateTime.now(),
     );
     final id = await _dao.insertCategory(category);
@@ -52,6 +60,12 @@ class BusinessCategoryRepository {
     if (current == null) {
       throw StateError('Category not found.');
     }
+    await _ensureNameAvailable(
+      name: trimmedName,
+      businessUnitId: current.businessUnitId,
+      excludeId: idBusinessCategory,
+    );
+
     final updated = current.copyWith(
       name: trimmedName,
       description: _cleanOrNull(description),
@@ -63,6 +77,31 @@ class BusinessCategoryRepository {
 
   Future<void> deleteCategory(int idBusinessCategory) {
     return _dao.softDeleteCategory(idBusinessCategory);
+  }
+
+  /// Enforces name uniqueness (case-insensitive) within the correct scope:
+  ///  - Global (`businessUnitId == null`): checked against every category
+  ///    in every loja, since a Global is visible everywhere.
+  ///  - Scoped to a unit: checked only against what that unit actually
+  ///    sees — Globals plus its own categories — via the same hybrid
+  ///    query the list screens already use.
+  Future<void> _ensureNameAvailable({
+    required String name,
+    required int? businessUnitId,
+    int? excludeId,
+  }) async {
+    final candidates = businessUnitId == null
+        ? await _dao.getAllCategoriesUnscoped()
+        : await _dao.getAllCategories(activeUnitId: businessUnitId);
+
+    final clash = candidates.any(
+      (category) =>
+          category.idBusinessCategory != excludeId &&
+          category.name.toLowerCase() == name.toLowerCase(),
+    );
+    if (clash) {
+      throw StateError('A category with this name already exists in this scope.');
+    }
   }
 
   String? _cleanOrNull(String? value) {

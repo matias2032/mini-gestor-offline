@@ -1,5 +1,13 @@
 // expense_model.dart
+
+// ============================================================
+// expense
+// ============================================================
+
 /// Pure data class representing a row in the `expense` table.
+///
+/// `businessUnitId` is strict scope (matches `expense.business_unit_id
+/// NOT NULL` in the schema): every expense belongs to exactly one loja.
 class ExpenseModel {
   const ExpenseModel({
     this.idExpense,
@@ -11,6 +19,7 @@ class ExpenseModel {
     this.deleted = false,
     required this.createdAt,
     this.updatedAt,
+    required this.businessUnitId,
   });
 
   final int? idExpense;
@@ -22,6 +31,10 @@ class ExpenseModel {
   final bool deleted;
   final DateTime createdAt;
   final DateTime? updatedAt;
+
+  /// The business unit (loja/departamento) this expense was posted to.
+  /// Strict scope — always required, never Global.
+  final int businessUnitId;
 
   factory ExpenseModel.fromMap(Map<String, Object?> map) {
     return ExpenseModel(
@@ -36,6 +49,7 @@ class ExpenseModel {
       updatedAt: map['updated_at'] != null
           ? DateTime.parse(map['updated_at'] as String)
           : null,
+      businessUnitId: map['business_unit_id'] as int,
     );
   }
 
@@ -51,6 +65,7 @@ class ExpenseModel {
       'created_at': createdAt.toIso8601String(),
       // updated_at is intentionally omitted — the trg_expense_updated
       // trigger sets it automatically on UPDATE.
+      'business_unit_id': businessUnitId,
     };
   }
 
@@ -64,6 +79,7 @@ class ExpenseModel {
     bool? deleted,
     DateTime? createdAt,
     DateTime? updatedAt,
+    int? businessUnitId,
   }) {
     return ExpenseModel(
       idExpense: idExpense ?? this.idExpense,
@@ -75,6 +91,49 @@ class ExpenseModel {
       deleted: deleted ?? this.deleted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      businessUnitId: businessUnitId ?? this.businessUnitId,
     );
+  }
+}
+
+// ============================================================
+// expense_category_split
+// ============================================================
+
+/// Pure data class representing a row in the `expense_category_split`
+/// table — one category's slice of a shared expense.
+///
+/// No businessUnitId here on purpose: the split inherits its unit from the
+/// parent `expense` row, there is no independent scope to track.
+class ExpenseCategorySplitModel {
+  const ExpenseCategorySplitModel({
+    this.idExpenseCategorySplit,
+    required this.expenseId,
+    required this.businessCategoryId,
+    required this.amountCents,
+  });
+
+  final int? idExpenseCategorySplit;
+  final int expenseId;
+  final int businessCategoryId;
+  final int amountCents;
+
+  factory ExpenseCategorySplitModel.fromMap(Map<String, Object?> map) {
+    return ExpenseCategorySplitModel(
+      idExpenseCategorySplit: map['id_expense_category_split'] as int?,
+      expenseId: map['expense_id'] as int,
+      businessCategoryId: map['business_category_id'] as int,
+      amountCents: map['amount_cents'] as int,
+    );
+  }
+
+  Map<String, Object?> toMap() {
+    return {
+      if (idExpenseCategorySplit != null)
+        'id_expense_category_split': idExpenseCategorySplit,
+      'expense_id': expenseId,
+      'business_category_id': businessCategoryId,
+      'amount_cents': amountCents,
+    };
   }
 }

@@ -1,13 +1,15 @@
 import 'package:flutter/foundation.dart';
-
-import '../models/expense_category_split_model.dart';
 import '../models/expense_model.dart';
 import '../repositories/expense_repository.dart';
+import 'business_unit_provider.dart';
 
 class ExpenseProvider extends ChangeNotifier {
-  ExpenseProvider(this._expenseRepository);
+  ExpenseProvider(this._expenseRepository, this._businessUnitProvider) {
+    _businessUnitProvider.addListener(_onActiveUnitChanged);
+  }
 
   final ExpenseRepository _expenseRepository;
+  final BusinessUnitProvider _businessUnitProvider;
 
   List<ExpenseModel> _expenses = [];
 
@@ -36,15 +38,26 @@ class ExpenseProvider extends ChangeNotifier {
       _filterStartDate != null ||
       _filterEndDate != null;
 
+  int? get _activeUnitId => _businessUnitProvider.activeBusinessUnit?.idBusinessUnit;
 
-
+  /// getAllExpenses requires a non-null businessUnitId, so with no active
+  /// store yet (e.g. BusinessUnitProvider still loading on startup) this
+  /// just clears the list instead of calling the repository.
   Future<void> loadExpenses() async {
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _expenses = [];
+      notifyListeners();
+      return;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       _expenses = await _expenseRepository.getAllExpenses(
+        businessUnitId: unitId,
         businessCategoryId: _filterBusinessCategoryId,
         supplierId: _filterSupplierId,
         startDate: _filterStartDate,
@@ -94,12 +107,20 @@ class ExpenseProvider extends ChangeNotifier {
     required int amountCents,
     required DateTime expenseDate,
   }) async {
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _errorMessage = 'No active business unit selected.';
+      notifyListeners();
+      return false;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       await _expenseRepository.createExpense(
+        businessUnitId: unitId,
         categoryAllocations: categoryAllocations,
         supplierId: supplierId,
         description: description,
@@ -116,7 +137,7 @@ class ExpenseProvider extends ChangeNotifier {
     }
   }
 
-Future<bool> updateExpense({
+  Future<bool> updateExpense({
     required int idExpense,
     required List<ExpenseCategoryAllocation> categoryAllocations,
     int? supplierId,
@@ -164,12 +185,19 @@ Future<bool> updateExpense({
     }
   }
 
-
-/// Existing category splits for [idExpense] — used to pre-fill the
+  /// Existing category splits for [idExpense] — used to pre-fill the
   /// allocation UI when editing a shared expense.
   Future<List<ExpenseCategorySplitModel>> getSplitsByExpense(int idExpense) {
     return _expenseRepository.getSplitsByExpense(idExpense);
   }
 
+  void _onActiveUnitChanged() {
+    loadExpenses();
+  }
 
+  @override
+  void dispose() {
+    _businessUnitProvider.removeListener(_onActiveUnitChanged);
+    super.dispose();
+  }
 }

@@ -52,7 +52,12 @@ class FinancialStatementDao {
 
   /// Returns statements ordered by most recently generated first, with
   /// optional filters. All filters are combined with AND.
+  /// Returns statements ordered by most recently generated first, with
+  /// optional filters. `activeUnitId` applies the hybrid filter — null
+  /// returns only consolidated (matriz) statements; an id returns
+  /// consolidated + that unit's statements.
   Future<List<FinancialStatementModel>> getAllStatements({
+    int? activeUnitId,
     DateTime? startDate,
     DateTime? endDate,
     bool includeDeleted = false,
@@ -60,8 +65,10 @@ class FinancialStatementDao {
   }) async {
     final executor = txn ?? await _localDatabase.database;
 
-    final conditions = <String>[];
-    final args = <Object?>[];
+    final conditions = <String>[
+      '(business_unit_id IS NULL OR business_unit_id = ?)',
+    ];
+    final args = <Object?>[activeUnitId];
 
     if (!includeDeleted) {
       conditions.add('deleted = 0');
@@ -77,8 +84,8 @@ class FinancialStatementDao {
 
     final rows = await executor.query(
       'financial_statement',
-      where: conditions.isEmpty ? null : conditions.join(' AND '),
-      whereArgs: args.isEmpty ? null : args,
+      where: conditions.join(' AND '),
+      whereArgs: args,
       orderBy: 'generated_at DESC',
     );
     return rows.map(FinancialStatementModel.fromMap).toList();
@@ -161,6 +168,7 @@ class FinancialStatementDao {
   /// Finalized sales (sale_status = COMPLETED, not deleted) whose
   /// sale_date falls within [startDate, endDate] inclusive.
   Future<List<Map<String, Object?>>> getFinalizedSalesInPeriod({
+    required int businessUnitId,
     required DateTime startDate,
     required DateTime endDate,
     Transaction? txn,
@@ -176,14 +184,16 @@ class FinancialStatementDao {
       LEFT JOIN business_category bc
         ON bc.id_business_category = s.sale_category_id
       WHERE s.deleted = 0 AND s.sale_status = 'COMPLETED'
+        AND s.business_unit_id = ?
         AND s.sale_date >= ? AND s.sale_date <= ?
       ORDER BY s.sale_date ASC
       ''',
-      [startDate.toIso8601String(), endDate.toIso8601String()],
+      [businessUnitId, startDate.toIso8601String(), endDate.toIso8601String()],
     );
   }
 
   Future<List<Map<String, Object?>>> getExpensesInPeriod({
+    required int businessUnitId,
     required DateTime startDate,
     required DateTime endDate,
     Transaction? txn,
@@ -200,10 +210,11 @@ class FinancialStatementDao {
       LEFT JOIN business_category bc
         ON bc.id_business_category = ecs.business_category_id
       WHERE e.deleted = 0
+        AND e.business_unit_id = ?
         AND e.expense_date >= ? AND e.expense_date <= ?
       ORDER BY e.expense_date ASC
       ''',
-      [startDate.toIso8601String(), endDate.toIso8601String()],
+      [businessUnitId, startDate.toIso8601String(), endDate.toIso8601String()],
     );
   }
 }

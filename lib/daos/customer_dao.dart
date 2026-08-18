@@ -49,14 +49,23 @@ class CustomerDao {
   }
 
   Future<List<CustomerModel>> getAllCustomers({
+    int? activeUnitId,
     bool includeDeleted = false,
     Transaction? txn,
   }) async {
     final db = await _executor(txn);
+    final conditions = <String>[
+      '(business_unit_id IS NULL OR business_unit_id = ?)',
+    ];
+    final args = <Object?>[activeUnitId];
+    if (!includeDeleted) {
+      conditions.add('deleted = ?');
+      args.add(0);
+    }
     final rows = await db.query(
       _table,
-      where: includeDeleted ? null : 'deleted = ?',
-      whereArgs: includeDeleted ? null : [0],
+      where: conditions.join(' AND '),
+      whereArgs: args,
       orderBy: 'name ASC',
     );
     return rows.map(CustomerModel.fromMap).toList();

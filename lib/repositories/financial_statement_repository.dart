@@ -1,5 +1,6 @@
 // financial_statement_repository.dart
 import '../core/database/local_database.dart';
+import '../daos/business_unit_dao.dart';
 import '../daos/financial_statement_dao.dart';
 import '../models/financial_statement_model.dart';
 import 'package:sqflite/sqflite.dart';
@@ -12,18 +13,31 @@ import 'package:sqflite/sqflite.dart';
 /// totals are frozen in their own tables and never recomputed, even if
 /// the underlying sale/expense rows change afterwards.
 class FinancialStatementRepository {
-  FinancialStatementRepository(this._database, this._dao);
+  FinancialStatementRepository(
+    this._database,
+    this._dao,
+    this._businessUnitDao,
+  );
 
   final LocalDatabase _database;
   final FinancialStatementDao _dao;
+  final BusinessUnitDao _businessUnitDao;
 
   /// Generates a new statement for [periodType].
+  ///
+  /// [businessUnitId] scopes the statement to one loja. Omit it (leave
+  /// null) to generate a consolidated statement for the whole
+  /// matriz/grupo: since `sale`/`expense` are strict scope, there is no
+  /// single query that returns "every unit" — instead this loops every
+  /// active business unit, pulls its finalized sales/expenses for the
+  /// period, and merges the rows before aggregating totals.
   ///
   /// For every period except [StatementPeriodType.custom], the date range
   /// is derived from "now". For custom, [customStartDate]/[customEndDate]
   /// are required.
   Future<FinancialStatementModel> generateStatement({
     required StatementPeriodType periodType,
+    int? businessUnitId,
     DateTime? customStartDate,
     DateTime? customEndDate,
     String? notes,
@@ -50,26 +64,38 @@ class FinancialStatementRepository {
     }
 
     return _database.runInTransaction((txn) async {
-      final saleRows = await _dao.getFinalizedSalesInPeriod(
-        startDate: startDate,
-        endDate: endDate,
-        txn: txn,
-      );
-      final expenseRows = await _dao.getExpensesInPeriod(
-        startDate: startDate,
-        endDate: endDate,
-        txn: txn,
-      );
+      final unitIds = businessUnitId != null
+          ? [businessUnitId]
+          : (await _businessUnitDao.findAll(txn: txn))
+              .map((u) => u.idBusinessUnit!)
+              .toList();
+
+      final saleRows = <Map<String, Object?>>[];
+      final expenseRows = <Map<String, Object?>>[];
+      for (final unitId in unitIds) {
+        saleRows.addAll(await _dao.getFinalizedSalesInPeriod(
+          businessUnitId: unitId,
+          startDate: startDate,
+          endDate: endDate,
+          txn: txn,
+        ));
+        expenseRows.addAll(await _dao.getExpensesInPeriod(
+          businessUnitId: unitId,
+          startDate: startDate,
+          endDate: endDate,
+          txn: txn,
+        ));
+      }
 
       final totalSalesCents = saleRows.fold<int>(
         0,
         (sum, row) => sum + (row['total_amount_cents'] as int),
       );
-        final totalExpensesCents = expenseRows.fold<int>(
+      final totalExpensesCents = expenseRows.fold<int>(
         0,
         (sum, row) => sum + (row['amount_cents'] as int),
       );
-            // expenseRows now has one row per category split, so a shared
+      // expenseRows now has one row per category split, so a shared
       // expense (e.g. one internet bill split across two categories)
       // produces two rows but is still one expense — count distinct
       // expense ids, not rows, otherwise a shared expense would be
@@ -79,17 +105,17 @@ class FinancialStatementRepository {
 
       final reference = await _generateStatementReference(txn);
 
-
       final statement = FinancialStatementModel(
         reference: reference,
         periodType: periodType,
         startDate: startDate,
         endDate: endDate,
+        businessUnitId: businessUnitId,
         totalSalesCents: totalSalesCents,
         totalExpensesCents: totalExpensesCents,
         balanceCents: totalSalesCents - totalExpensesCents,
         salesCount: saleRows.length,
- expensesCount: distinctExpenseCount,
+        expensesCount: distinctExpenseCount,
         notes: _cleanOrNull(notes),
         generatedAt: now,
         createdAt: now,
@@ -139,10 +165,15 @@ class FinancialStatementRepository {
   }
 
   Future<List<FinancialStatementModel>> getAllStatements({
+    int? activeUnitId,
     DateTime? startDate,
     DateTime? endDate,
   }) {
-    return _dao.getAllStatements(startDate: startDate, endDate: endDate);
+    return _dao.getAllStatements(
+      activeUnitId: activeUnitId,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 
   Future<void> deleteStatement(int idFinancialStatement) {

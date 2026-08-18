@@ -91,6 +91,10 @@ extension StatementPeriodTypeX on StatementPeriodType {
 ///
 /// `updated_at` is omitted from [toMap] because `trg_financial_statement_updated`
 /// sets it automatically on UPDATE — same pattern as `sale`/`expense`.
+///
+/// `businessUnitId` is hybrid scope: `null` means a consolidated
+/// (matriz/grupo) statement; a value means the statement is for that one
+/// loja.
 class FinancialStatementModel {
   const FinancialStatementModel({
     this.idFinancialStatement,
@@ -98,6 +102,7 @@ class FinancialStatementModel {
     required this.periodType,
     required this.startDate,
     required this.endDate,
+    this.businessUnitId,
     this.totalSalesCents = 0,
     this.totalExpensesCents = 0,
     this.balanceCents = 0,
@@ -115,6 +120,7 @@ class FinancialStatementModel {
   final StatementPeriodType periodType;
   final DateTime startDate;
   final DateTime endDate;
+  final int? businessUnitId;
   final int totalSalesCents;
   final int totalExpensesCents;
   final int balanceCents;
@@ -126,6 +132,8 @@ class FinancialStatementModel {
   final DateTime createdAt;
   final DateTime? updatedAt;
 
+  bool get isConsolidated => businessUnitId == null;
+
   factory FinancialStatementModel.fromMap(Map<String, Object?> map) {
     return FinancialStatementModel(
       idFinancialStatement: map['id_financial_statement'] as int?,
@@ -133,6 +141,7 @@ class FinancialStatementModel {
       periodType: StatementPeriodTypeX.fromDbValue(map['period_type'] as String),
       startDate: DateTime.parse(map['start_date'] as String),
       endDate: DateTime.parse(map['end_date'] as String),
+      businessUnitId: map['business_unit_id'] as int?,
       totalSalesCents: map['total_sales_cents'] as int,
       totalExpensesCents: map['total_expenses_cents'] as int,
       balanceCents: map['balance_cents'] as int,
@@ -156,6 +165,7 @@ class FinancialStatementModel {
       'period_type': periodType.dbValue,
       'start_date': startDate.toIso8601String(),
       'end_date': endDate.toIso8601String(),
+      'business_unit_id': businessUnitId,
       'total_sales_cents': totalSalesCents,
       'total_expenses_cents': totalExpensesCents,
       'balance_cents': balanceCents,
@@ -175,6 +185,8 @@ class FinancialStatementModel {
     StatementPeriodType? periodType,
     DateTime? startDate,
     DateTime? endDate,
+    int? businessUnitId,
+    bool clearBusinessUnitId = false,
     int? totalSalesCents,
     int? totalExpensesCents,
     int? balanceCents,
@@ -192,6 +204,8 @@ class FinancialStatementModel {
       periodType: periodType ?? this.periodType,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
+      businessUnitId:
+          clearBusinessUnitId ? null : (businessUnitId ?? this.businessUnitId),
       totalSalesCents: totalSalesCents ?? this.totalSalesCents,
       totalExpensesCents: totalExpensesCents ?? this.totalExpensesCents,
       balanceCents: balanceCents ?? this.balanceCents,
@@ -208,6 +222,9 @@ class FinancialStatementModel {
 
 /// Snapshot row in `financial_statement_sale_item` — one finalized sale
 /// as it looked at the moment the statement was generated.
+///
+/// No businessUnitId here — a statement's items already inherit their
+/// scope from the parent `financial_statement` row.
 class FinancialStatementSaleItemModel {
   const FinancialStatementSaleItemModel({
     this.idFinancialStatementSaleItem,
@@ -264,6 +281,9 @@ class FinancialStatementSaleItemModel {
 
 /// Snapshot row in `financial_statement_expense_item` — one expense as it
 /// looked at the moment the statement was generated.
+///
+/// No businessUnitId here — same reasoning as
+/// [FinancialStatementSaleItemModel].
 class FinancialStatementExpenseItemModel {
   const FinancialStatementExpenseItemModel({
     this.idFinancialStatementExpenseItem,

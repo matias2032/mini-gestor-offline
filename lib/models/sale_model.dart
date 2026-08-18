@@ -1,8 +1,16 @@
 // sale_model.dart
+
+// ============================================================
+// sale
+// ============================================================
+
 /// Pure data class representing a row in the `sale` table.
 ///
 /// `updated_at` is omitted from [toMap] because `trg_sale_updated` sets it
 /// automatically on UPDATE — same pattern as `expense`.
+///
+/// `businessUnitId` is strict scope (matches `sale.business_unit_id
+/// NOT NULL` in the schema): every sale belongs to exactly one loja.
 class SaleModel {
   const SaleModel({
     this.idSale,
@@ -25,6 +33,7 @@ class SaleModel {
     this.deleted = false,
     required this.createdAt,
     this.updatedAt,
+    required this.businessUnitId,
   });
 
   final int? idSale;
@@ -47,6 +56,10 @@ class SaleModel {
   final bool deleted;
   final DateTime createdAt;
   final DateTime? updatedAt;
+
+  /// The business unit (loja/departamento) this sale was posted to.
+  /// Strict scope — always required, never Global.
+  final int businessUnitId;
 
   bool get isCredit => saleType == 'CREDIT';
 
@@ -78,6 +91,7 @@ class SaleModel {
       updatedAt: map['updated_at'] != null
           ? DateTime.parse(map['updated_at'] as String)
           : null,
+      businessUnitId: map['business_unit_id'] as int,
     );
   }
 
@@ -103,6 +117,7 @@ class SaleModel {
       'deleted': deleted ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
       // updated_at is set automatically by trg_sale_updated on UPDATE.
+      'business_unit_id': businessUnitId,
     };
   }
 
@@ -132,6 +147,7 @@ class SaleModel {
     bool? deleted,
     DateTime? createdAt,
     DateTime? updatedAt,
+    int? businessUnitId,
   }) {
     return SaleModel(
       idSale: idSale ?? this.idSale,
@@ -158,9 +174,184 @@ class SaleModel {
       deleted: deleted ?? this.deleted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      businessUnitId: businessUnitId ?? this.businessUnitId,
     );
   }
 }
+
+// ============================================================
+// sale_installment
+// ============================================================
+
+class SaleInstallmentModel {
+  const SaleInstallmentModel({
+    this.idSaleInstallment,
+    required this.saleId,
+    required this.installmentNumber,
+    required this.installmentAmountCents,
+    this.paidAmountCents = 0,
+    required this.dueDate,
+    this.paidAt,
+    this.installmentStatus = 'PENDING',
+    this.cancelledBySaleCancellation = false,
+    this.notes,
+  });
+
+  final int? idSaleInstallment;
+  final int saleId;
+  final int installmentNumber;
+  final int installmentAmountCents;
+  final int paidAmountCents;
+  final DateTime dueDate;
+  final DateTime? paidAt;
+  final String installmentStatus;
+  final bool cancelledBySaleCancellation;
+  final String? notes;
+
+  int get remainingCents => installmentAmountCents - paidAmountCents;
+
+  factory SaleInstallmentModel.fromMap(Map<String, Object?> map) {
+    return SaleInstallmentModel(
+      idSaleInstallment: map['id_sale_installment'] as int?,
+      saleId: map['sale_id'] as int,
+      installmentNumber: map['installment_number'] as int,
+      installmentAmountCents: map['installment_amount_cents'] as int,
+      paidAmountCents: map['paid_amount_cents'] as int,
+      dueDate: DateTime.parse(map['due_date'] as String),
+      paidAt: map['paid_at'] != null
+          ? DateTime.parse(map['paid_at'] as String)
+          : null,
+      installmentStatus: map['installment_status'] as String,
+      cancelledBySaleCancellation:
+          (map['cancelled_by_sale_cancellation'] as int) == 1,
+      notes: map['notes'] as String?,
+    );
+  }
+
+  Map<String, Object?> toMap() {
+    return {
+      if (idSaleInstallment != null) 'id_sale_installment': idSaleInstallment,
+      'sale_id': saleId,
+      'installment_number': installmentNumber,
+      'installment_amount_cents': installmentAmountCents,
+      'paid_amount_cents': paidAmountCents,
+      'due_date': dueDate.toIso8601String(),
+      'paid_at': paidAt?.toIso8601String(),
+      'installment_status': installmentStatus,
+      'cancelled_by_sale_cancellation': cancelledBySaleCancellation ? 1 : 0,
+      'notes': notes,
+    };
+  }
+
+  SaleInstallmentModel copyWith({
+    int? idSaleInstallment,
+    int? saleId,
+    int? installmentNumber,
+    int? installmentAmountCents,
+    int? paidAmountCents,
+    DateTime? dueDate,
+    DateTime? paidAt,
+    bool clearPaidAt = false,
+    String? installmentStatus,
+    bool? cancelledBySaleCancellation,
+    String? notes,
+  }) {
+    return SaleInstallmentModel(
+      idSaleInstallment: idSaleInstallment ?? this.idSaleInstallment,
+      saleId: saleId ?? this.saleId,
+      installmentNumber: installmentNumber ?? this.installmentNumber,
+      installmentAmountCents:
+          installmentAmountCents ?? this.installmentAmountCents,
+      paidAmountCents: paidAmountCents ?? this.paidAmountCents,
+      dueDate: dueDate ?? this.dueDate,
+      paidAt: clearPaidAt ? null : (paidAt ?? this.paidAt),
+      installmentStatus: installmentStatus ?? this.installmentStatus,
+      cancelledBySaleCancellation:
+          cancelledBySaleCancellation ?? this.cancelledBySaleCancellation,
+      notes: notes ?? this.notes,
+    );
+  }
+}
+
+// ============================================================
+// sale_payment
+// ============================================================
+
+/// Pure data class representing a row in the `sale_payment` table.
+class SalePaymentModel {
+  const SalePaymentModel({
+    this.idSalePayment,
+    required this.reference,
+    required this.saleId,
+    this.installmentId,
+    required this.paidAmountCents,
+    this.paymentMethod = 'CASH',
+    required this.paidAt,
+    this.notes,
+  });
+
+  final int? idSalePayment;
+  final String reference;
+  final int saleId;
+  final int? installmentId;
+  final int paidAmountCents;
+  final String paymentMethod; // CASH|BANK_TRANSFER|MPESA|EMOLA|OTHER
+  final DateTime paidAt;
+  final String? notes;
+
+  factory SalePaymentModel.fromMap(Map<String, Object?> map) {
+    return SalePaymentModel(
+      idSalePayment: map['id_sale_payment'] as int?,
+      reference: map['reference'] as String,
+      saleId: map['sale_id'] as int,
+      installmentId: map['installment_id'] as int?,
+      paidAmountCents: map['paid_amount_cents'] as int,
+      paymentMethod: map['payment_method'] as String,
+      paidAt: DateTime.parse(map['paid_at'] as String),
+      notes: map['notes'] as String?,
+    );
+  }
+
+  Map<String, Object?> toMap() {
+    return {
+      if (idSalePayment != null) 'id_sale_payment': idSalePayment,
+      'reference': reference,
+      'sale_id': saleId,
+      'installment_id': installmentId,
+      'paid_amount_cents': paidAmountCents,
+      'payment_method': paymentMethod,
+      'paid_at': paidAt.toIso8601String(),
+      'notes': notes,
+    };
+  }
+
+  SalePaymentModel copyWith({
+    int? idSalePayment,
+    String? reference,
+    int? saleId,
+    int? installmentId,
+    int? paidAmountCents,
+    String? paymentMethod,
+    DateTime? paidAt,
+    String? notes,
+  }) {
+    return SalePaymentModel(
+      idSalePayment: idSalePayment ?? this.idSalePayment,
+      reference: reference ?? this.reference,
+      saleId: saleId ?? this.saleId,
+      installmentId: installmentId ?? this.installmentId,
+      paidAmountCents: paidAmountCents ?? this.paidAmountCents,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      paidAt: paidAt ?? this.paidAt,
+      notes: notes ?? this.notes,
+    );
+  }
+}
+
+// ============================================================
+// dashboard support types (backed by aggregate queries in SaleDao)
+// ============================================================
+
 /// Period filter for the dashboard's aggregate stats.
 enum DashboardPeriod { today, last24Hours, oneWeek, oneMonth, threeMonths, sixMonths, oneYear }
 
@@ -205,7 +396,7 @@ extension DashboardPeriodX on DashboardPeriod {
   }
 }
 
-/// Aggregated totals for one sale_category, used by the dashboard's
+/// Aggregated totals for one business_category, used by the dashboard's
 /// per-category breakdown. Categories with zero finalized sales in the
 /// selected period still appear, with totalCents = 0.
 class CategorySalesSummary {
@@ -226,6 +417,10 @@ class CategorySalesSummary {
 /// sales count here (sale_status = COMPLETED) — a CREDIT sale that is
 /// still OPEN/OUTSTANDING contributes to none of these totals, matching
 /// the rule that credit revenue only counts once the debt is settled.
+///
+/// These aggregates are always scoped to the active business unit — see
+/// SaleDao/SaleProvider in FASE 3/5 for how businessUnitId is threaded
+/// through the query that produces this snapshot.
 class DashboardStats {
   const DashboardStats({
     required this.finalizedSalesCount,

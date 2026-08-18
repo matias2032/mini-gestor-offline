@@ -64,12 +64,18 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.suppliersTitle)),
       drawer: const AppSidebar(currentRoute: '/supplier'),
-      body: RefreshIndicator(
+            body: RefreshIndicator(
         onRefresh: () => context.read<SupplierProvider>().loadSuppliers(),
         child: supplierProvider.isLoading && supplierProvider.suppliers.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : supplierProvider.suppliers.isEmpty
-                ? Center(child: Text(l10n.noSuppliersYet))
+                ? ListView(
+                    // ListView (not Center) so RefreshIndicator keeps working.
+                    children: [
+                      const SizedBox(height: 120),
+                      Center(child: Text(l10n.noSuppliersYet)),
+                    ],
+                  )
                 : ListView.builder(
                     itemCount: supplierProvider.suppliers.length,
                     itemBuilder: (context, index) {

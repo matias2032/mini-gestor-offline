@@ -2,32 +2,24 @@ import 'package:sqflite/sqflite.dart';
 
 import '../core/database/local_database.dart';
 
+import '../daos/business_category_dao.dart';
 import '../daos/sale_dao.dart';
-import '../daos/sale_installment_dao.dart';
-import '../daos/sale_payment_dao.dart';
-import '../models/sale_installment_model.dart';
 import '../models/sale_model.dart';
-import '../models/sale_payment_model.dart';
 
 
 
-/// All business logic for the `sale` module: sale, sale_category,
-/// sale_installment and sale_payment. This is the only entry point the
-/// UI/providers should use — never the DAOs directly.
+/// All business logic for the `sale` module: sale, sale_installment and
+/// sale_payment. This is the only entry point the UI/providers should
+/// use — never SaleDao directly.
 class SaleRepository {
-  SaleRepository(
-    this._database,
-    this._saleDao,
-
-    this._saleInstallmentDao,
-    this._salePaymentDao,
-  );
+  SaleRepository(this._database, this._saleDao, this._businessCategoryDao);
 
   final LocalDatabase _database;
   final SaleDao _saleDao;
 
-  final SaleInstallmentDao _saleInstallmentDao;
-  final SalePaymentDao _salePaymentDao;
+  /// Used only to validate that a sale's category is visible to the loja
+  /// it's being posted to — see [createSale].
+  final BusinessCategoryDao _businessCategoryDao;
 
 
 
@@ -36,6 +28,7 @@ class SaleRepository {
   // ---------------------------------------------------------------------
 
 Future<SaleModel> createSale({
+    required int businessUnitId,
     required int saleCategoryId,
     required String description,
     required int totalAmountCents,
@@ -84,6 +77,12 @@ Future<SaleModel> createSale({
     }
 
     return _database.runInTransaction((txn) async {
+      await _ensureCategoryBelongsToUnit(
+        idBusinessCategory: saleCategoryId,
+        businessUnitId: businessUnitId,
+        txn: txn,
+      );
+
       final reference = await _generateSaleReference(txn);
 
       final sale = SaleModel(
@@ -105,6 +104,7 @@ Future<SaleModel> createSale({
         completedAt: isCredit ? null : DateTime.now(),
         notes: _cleanOrNull(notes),
         createdAt: DateTime.now(),
+        businessUnitId: businessUnitId,
       );
 
       final insertedId = await _saleDao.insertSale(sale, txn: txn);
@@ -147,7 +147,7 @@ Future<SaleModel> createSale({
         throw StateError('Sale is already cancelled.');
       }
 
-      await _saleInstallmentDao.cancelUnpaidInstallments(saleId, txn: txn);
+      await _saleDao.cancelUnpaidInstallments(saleId, txn: txn);
 
       final updatedSale = sale.copyWith(
         saleStatus: 'CANCELLED',
@@ -213,11 +213,11 @@ Future<SaleModel> createSale({
       );
     }
 
-    final nextInstallmentNumber = await _saleInstallmentDao
+    final nextInstallmentNumber = await _saleDao
             .countInstallmentsBySale(sale.idSale!, txn: txn) +
         1;
 
-    final installmentId = await _saleInstallmentDao.insertInstallment(
+    final installmentId = await _saleDao.insertInstallment(
       SaleInstallmentModel(
         saleId: sale.idSale!,
         installmentNumber: nextInstallmentNumber,
@@ -231,7 +231,7 @@ Future<SaleModel> createSale({
     );
 
     final reference = await _generatePaymentReference(txn);
-    await _salePaymentDao.insertPayment(
+    await _saleDao.insertPayment(
       SalePaymentModel(
         reference: reference,
         saleId: sale.idSale!,
@@ -265,6 +265,7 @@ Future<SaleModel> createSale({
   }
 
 Future<List<SaleModel>> getAllSales({
+    required int businessUnitId,
     int? saleCategoryId,
     int? customerId,
     String? saleType,
@@ -273,6 +274,7 @@ Future<List<SaleModel>> getAllSales({
     DateTime? endDate,
   }) {
     return _saleDao.getAllSales(
+      businessUnitId: businessUnitId,
       saleCategoryId: saleCategoryId,
       customerId: customerId,
       saleType: saleType,
@@ -285,6 +287,7 @@ Future<List<SaleModel>> getAllSales({
   /// Backs the main sales list screen: NORMAL sales always, CREDIT sales
   /// only once finalized (COMPLETED/CANCELLED).
   Future<List<SaleModel>> getSalesForSalesList({
+    required int businessUnitId,
     int? saleCategoryId,
     int? customerId,
     String? saleType,
@@ -292,6 +295,7 @@ Future<List<SaleModel>> getAllSales({
     DateTime? endDate,
   }) {
     return _saleDao.getSalesForSalesList(
+      businessUnitId: businessUnitId,
       saleCategoryId: saleCategoryId,
       customerId: customerId,
       saleType: saleType,
@@ -302,11 +306,13 @@ Future<List<SaleModel>> getAllSales({
 
   /// Backs the credit sales list screen: only active (unpaid) credit sales.
   Future<List<SaleModel>> getOutstandingCreditSales({
+    required int businessUnitId,
     int? customerId,
     DateTime? startDate,
     DateTime? endDate,
   }) {
     return _saleDao.getOutstandingCreditSales(
+      businessUnitId: businessUnitId,
       customerId: customerId,
       startDate: startDate,
       endDate: endDate,
@@ -314,11 +320,11 @@ Future<List<SaleModel>> getAllSales({
   }
 
   Future<List<SaleInstallmentModel>> getInstallmentsBySale(int saleId) {
-    return _saleInstallmentDao.getInstallmentsBySale(saleId);
+    return _saleDao.getInstallmentsBySale(saleId);
   }
 
-Future<List<SalePaymentModel>> getPaymentsBySale(int saleId) {
-    return _salePaymentDao.getPaymentsBySale(saleId);
+  Future<List<SalePaymentModel>> getPaymentsBySale(int saleId) {
+    return _saleDao.getPaymentsBySale(saleId);
   }
 
   // ---------------------------------------------------------------------
@@ -326,30 +332,36 @@ Future<List<SalePaymentModel>> getPaymentsBySale(int saleId) {
   // ---------------------------------------------------------------------
 
 /// Number of credit sales still not finalized — backs the sidebar badge.
-  Future<int> countOutstandingCreditSales() {
-    return _saleDao.countOutstandingCreditSales();
+  Future<int> countOutstandingCreditSales({required int businessUnitId}) {
+    return _saleDao.countOutstandingCreditSales(businessUnitId: businessUnitId);
   }
 
   /// Aggregates finalized-sale numbers for the dashboard, for the given
-  /// date range. Pass null/null for an all-time snapshot.
+  /// date range, scoped to the active business unit. Pass null/null dates
+  /// for an all-time snapshot within that unit.
   Future<DashboardStats> getDashboardStats({
+    required int businessUnitId,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
     final finalizedCount = await _saleDao.countFinalizedSales(
+      businessUnitId: businessUnitId,
       startDate: startDate,
       endDate: endDate,
     );
     final totalAllCents = await _saleDao.sumFinalizedSalesCents(
+      businessUnitId: businessUnitId,
       startDate: startDate,
       endDate: endDate,
     );
     final totalCreditCents = await _saleDao.sumFinalizedSalesCents(
+      businessUnitId: businessUnitId,
       saleType: 'CREDIT',
       startDate: startDate,
       endDate: endDate,
     );
     final categoryRows = await _saleDao.sumFinalizedSalesByCategory(
+      businessUnitId: businessUnitId,
       startDate: startDate,
       endDate: endDate,
     );
@@ -373,13 +385,32 @@ Future<List<SalePaymentModel>> getPaymentsBySale(int saleId) {
   // helpers
   // ---------------------------------------------------------------------
 
+  /// A sale's category must be either Global or belong to the same loja
+  /// the sale is being posted to — mirrors the same check added to
+  /// ExpenseRepository for expense_category_split.
+  Future<void> _ensureCategoryBelongsToUnit({
+    required int idBusinessCategory,
+    required int businessUnitId,
+    required Transaction txn,
+  }) async {
+    final category =
+        await _businessCategoryDao.getCategoryById(idBusinessCategory, txn: txn);
+    if (category == null || category.deleted) {
+      throw StateError('Selected category is not available.');
+    }
+    if (category.businessUnitId != null &&
+        category.businessUnitId != businessUnitId) {
+      throw StateError('Selected category does not belong to this store.');
+    }
+  }
+
   Future<String> _generateSaleReference(Transaction txn) async {
     final count = await _saleDao.countAll(txn: txn);
     return 'V-${(count + 1).toString().padLeft(5, '0')}';
   }
 
   Future<String> _generatePaymentReference(Transaction txn) async {
-    final count = await _salePaymentDao.countAll(txn: txn);
+    final count = await _saleDao.countAllPayments(txn: txn);
     return 'V-${(count + 1).toString().padLeft(5, '0')}';
   }
 
@@ -389,5 +420,3 @@ Future<List<SalePaymentModel>> getPaymentsBySale(int saleId) {
     return trimmed.isEmpty ? null : trimmed;
   }
 }
-
-

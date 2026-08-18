@@ -1,18 +1,22 @@
 // providers/sale_provider.dart
 
 import 'package:flutter/foundation.dart';
-import '../models/sale_installment_model.dart';
 import '../models/sale_model.dart';
-import '../models/sale_payment_model.dart';
 import '../repositories/sale_repository.dart';
+import 'business_unit_provider.dart';
 
 /// Thin UI state holder for the sale module (sale, sale_category,
 /// sale_installment, sale_payment). Zero business logic — only calls
-/// SaleRepository and exposes loading/error/data for the UI.
+/// SaleRepository and exposes loading/error/data for the UI. Listens to
+/// [BusinessUnitProvider] so switching the active store reloads every
+/// sale-scoped list/stat automatically.
 class SaleProvider extends ChangeNotifier {
-  SaleProvider(this._saleRepository);
+  SaleProvider(this._saleRepository, this._businessUnitProvider) {
+    _businessUnitProvider.addListener(_onActiveUnitChanged);
+  }
 
   final SaleRepository _saleRepository;
+  final BusinessUnitProvider _businessUnitProvider;
 
   List<SaleModel> _sales = [];
   List<SaleModel> _creditSales = [];
@@ -24,7 +28,8 @@ class SaleProvider extends ChangeNotifier {
   String? _errorMessage;
 
   // Remembers the last filters used in loadSales, so mutations (create,
-  // cancel, payment) can refresh the list with the same view active.
+  // cancel, payment) and store switches can refresh the list with the
+  // same view active.
   int? _lastSaleCategoryId;
   int? _lastCustomerId;
   String? _lastSaleType;
@@ -39,7 +44,7 @@ class SaleProvider extends ChangeNotifier {
   DateTime? _lastCreditStartDate;
   DateTime? _lastCreditEndDate;
 
-// Remembers which sale's installments/payments are currently loaded, so
+  // Remembers which sale's installments/payments are currently loaded, so
   // registerPayment/cancelSale can keep the detail screen in sync.
   int? _currentSaleId;
 
@@ -51,25 +56,24 @@ class SaleProvider extends ChangeNotifier {
   DashboardStats _dashboardStats = DashboardStats.empty();
   DashboardPeriod _dashboardPeriod = DashboardPeriod.oneMonth;
 
-
   List<SaleModel> get sales => _sales;
   List<SaleModel> get creditSales => _creditSales;
   SaleModel? get currentSale => _currentSale;
   List<SaleInstallmentModel> get installments => _installments;
   List<SalePaymentModel> get payments => _payments;
   bool get isLoading => _isLoading;
-    String? get errorMessage => _errorMessage;
-    int get outstandingCreditCount => _outstandingCreditCount;
-    DashboardStats get dashboardStats => _dashboardStats;
-    DashboardPeriod get dashboardPeriod => _dashboardPeriod;
+  String? get errorMessage => _errorMessage;
+  int get outstandingCreditCount => _outstandingCreditCount;
+  DashboardStats get dashboardStats => _dashboardStats;
+  DashboardPeriod get dashboardPeriod => _dashboardPeriod;
 
-
+  int? get _activeUnitId => _businessUnitProvider.activeBusinessUnit?.idBusinessUnit;
 
   // ---------------------------------------------------------------------
   // sale
   // ---------------------------------------------------------------------
 
-/// Loads the main sales list: every NORMAL sale, plus CREDIT sales only
+  /// Loads the main sales list: every NORMAL sale, plus CREDIT sales only
   /// once they're finalized (COMPLETED/CANCELLED). Active credit sales
   /// live in [loadCreditSales] instead.
   Future<void> loadSales({
@@ -85,9 +89,17 @@ class SaleProvider extends ChangeNotifier {
     _lastStartDate = startDate;
     _lastEndDate = endDate;
 
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _sales = [];
+      notifyListeners();
+      return;
+    }
+
     _setLoading(true);
     try {
       _sales = await _saleRepository.getSalesForSalesList(
+        businessUnitId: unitId,
         saleCategoryId: saleCategoryId,
         customerId: customerId,
         saleType: saleType,
@@ -115,9 +127,17 @@ class SaleProvider extends ChangeNotifier {
     _lastCreditStartDate = startDate;
     _lastCreditEndDate = endDate;
 
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _creditSales = [];
+      notifyListeners();
+      return;
+    }
+
     _setLoading(true);
     try {
       _creditSales = await _saleRepository.getOutstandingCreditSales(
+        businessUnitId: unitId,
         customerId: customerId,
         startDate: startDate,
         endDate: endDate,
@@ -130,7 +150,7 @@ class SaleProvider extends ChangeNotifier {
     }
   }
 
-Future<bool> createSale({
+  Future<bool> createSale({
     required int saleCategoryId,
     required String description,
     required int totalAmountCents,
@@ -144,9 +164,17 @@ Future<bool> createSale({
     int? initialPaymentCents,
     String initialPaymentMethod = 'CASH',
   }) async {
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _errorMessage = 'No active business unit selected.';
+      notifyListeners();
+      return false;
+    }
+
     _setLoading(true);
     try {
       await _saleRepository.createSale(
+        businessUnitId: unitId,
         saleCategoryId: saleCategoryId,
         description: description,
         totalAmountCents: totalAmountCents,
@@ -171,7 +199,7 @@ Future<bool> createSale({
     }
   }
 
-Future<bool> cancelSale({
+  Future<bool> cancelSale({
     required int saleId,
     required String cancellationReason,
   }) async {
@@ -196,7 +224,7 @@ Future<bool> cancelSale({
     }
   }
 
-Future<bool> registerPayment({
+  Future<bool> registerPayment({
     required int saleId,
     required int paidAmountCents,
     String paymentMethod = 'CASH',
@@ -241,27 +269,43 @@ Future<bool> registerPayment({
     }
   }
 
-/// Refreshes the sidebar badge count. Best-effort: a failure here
+  /// Refreshes the sidebar badge count. Best-effort: a failure here
   /// shouldn't surface as a page-level error, so it doesn't touch
-  /// _errorMessage/_isLoading.
+  /// _errorMessage/_isLoading. No-op if there's no active store yet.
   Future<void> loadOutstandingCreditCount() async {
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _outstandingCreditCount = 0;
+      notifyListeners();
+      return;
+    }
     try {
-      _outstandingCreditCount = await _saleRepository.countOutstandingCreditSales();
+      _outstandingCreditCount =
+          await _saleRepository.countOutstandingCreditSales(businessUnitId: unitId);
       notifyListeners();
     } catch (_) {
       // Badge is non-critical; silently keep the last known value.
     }
   }
 
-/// Loads dashboard stats for [period] (or the last one used, if
+  /// Loads dashboard stats for [period] (or the last one used, if
   /// omitted). Called on dashboard init and whenever the user switches
   /// the period filter.
   Future<void> loadDashboardStats({DashboardPeriod? period}) async {
     if (period != null) _dashboardPeriod = period;
+
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _dashboardStats = DashboardStats.empty();
+      notifyListeners();
+      return;
+    }
+
     _setLoading(true);
     try {
       final now = DateTime.now();
       _dashboardStats = await _saleRepository.getDashboardStats(
+        businessUnitId: unitId,
         startDate: _dashboardPeriod.startDateFrom(now),
         endDate: now,
       );
@@ -274,7 +318,13 @@ Future<bool> registerPayment({
   }
 
   Future<void> _refreshSales() async {
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _sales = [];
+      return;
+    }
     _sales = await _saleRepository.getSalesForSalesList(
+      businessUnitId: unitId,
       saleCategoryId: _lastSaleCategoryId,
       customerId: _lastCustomerId,
       saleType: _lastSaleType,
@@ -284,14 +334,20 @@ Future<bool> registerPayment({
   }
 
   Future<void> _refreshCreditSales() async {
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _creditSales = [];
+      return;
+    }
     _creditSales = await _saleRepository.getOutstandingCreditSales(
+      businessUnitId: unitId,
       customerId: _lastCreditCustomerId,
       startDate: _lastCreditStartDate,
       endDate: _lastCreditEndDate,
     );
   }
 
-Future<void> _refreshSaleDetail(int saleId) async {
+  Future<void> _refreshSaleDetail(int saleId) async {
     _currentSale = await _saleRepository.getSaleById(saleId);
     _installments = await _saleRepository.getInstallmentsBySale(saleId);
     _payments = await _saleRepository.getPaymentsBySale(saleId);
@@ -305,8 +361,37 @@ Future<void> _refreshSaleDetail(int saleId) async {
     return _saleRepository.getInstallmentsBySale(saleId);
   }
 
+  /// Reloads every store-scoped list/stat currently in use when the
+  /// active business unit changes. Detail state (_currentSale, etc.) is
+  /// intentionally left untouched — a sale detail screen open on a sale
+  /// from the previous store shouldn't silently vanish under the user.
+  void _onActiveUnitChanged() {
+    loadSales(
+      saleCategoryId: _lastSaleCategoryId,
+      customerId: _lastCustomerId,
+      saleType: _lastSaleType,
+      startDate: _lastStartDate,
+      endDate: _lastEndDate,
+    );
+    if (_creditSalesLoaded) {
+      loadCreditSales(
+        customerId: _lastCreditCustomerId,
+        startDate: _lastCreditStartDate,
+        endDate: _lastCreditEndDate,
+      );
+    }
+    loadOutstandingCreditCount();
+    loadDashboardStats();
+  }
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _businessUnitProvider.removeListener(_onActiveUnitChanged);
+    super.dispose();
   }
 }

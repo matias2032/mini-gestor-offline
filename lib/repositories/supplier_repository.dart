@@ -12,9 +12,13 @@ class SupplierRepository {
   final SupplierDao _supplierDao;
 
   Future<List<SupplierModel>> getAllSuppliers({
+    int? activeUnitId,
     bool includeDeleted = false,
   }) {
-    return _supplierDao.getAllSuppliers(includeDeleted: includeDeleted);
+    return _supplierDao.getAllSuppliers(
+      activeUnitId: activeUnitId,
+      includeDeleted: includeDeleted,
+    );
   }
 
   Future<SupplierModel?> getSupplierById(int idSupplier) {
@@ -25,6 +29,7 @@ class SupplierRepository {
     required String name,
     String? phone,
     String? address,
+    int? businessUnitId,
   }) async {
     if (name.trim().isEmpty) {
       throw ArgumentError('Supplier name cannot be empty.');
@@ -34,6 +39,7 @@ class SupplierRepository {
       name: name.trim(),
       phone: phone,
       address: address,
+      businessUnitId: businessUnitId,
       createdAt: DateTime.now(),
     );
 

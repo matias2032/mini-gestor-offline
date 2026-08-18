@@ -1429,6 +1429,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No category'**
   String get noCategoryLabel;
+
+  /// No description provided for @switchStoreTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch store'**
+  String get switchStoreTooltip;
+
+  /// No description provided for @storesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stores'**
+  String get storesTitle;
+
+  /// No description provided for @newStore.
+  ///
+  /// In en, this message translates to:
+  /// **'New store'**
+  String get newStore;
+
+  /// No description provided for @storeNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Store name'**
+  String get storeNameLabel;
+
+  /// No description provided for @storeNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Store name is required'**
+  String get storeNameRequired;
+
+  /// No description provided for @renameStoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename store'**
+  String get renameStoreTitle;
+
+  /// No description provided for @setAsDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as default'**
+  String get setAsDefault;
+
+  /// No description provided for @defaultStoreLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get defaultStoreLabel;
+
+  /// No description provided for @deleteStoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete store'**
+  String get deleteStoreTitle;
+
+  /// No description provided for @confirmDeleteStoreMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"?'**
+  String confirmDeleteStoreMessage(String name);
+
+  /// No description provided for @couldNotDeleteStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete store.'**
+  String get couldNotDeleteStore;
+
+  /// No description provided for @couldNotCreateStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create store.'**
+  String get couldNotCreateStore;
+
+  /// No description provided for @couldNotRenameStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not rename store.'**
+  String get couldNotRenameStore;
 }
 
 class _AppLocalizationsDelegate

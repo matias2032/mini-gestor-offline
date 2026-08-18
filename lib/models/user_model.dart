@@ -1,3 +1,7 @@
+/// Represents the holding/matriz account. `businessName` is now the name
+/// of the holding, not of a single store — each store is a separate
+/// `BusinessUnitModel` created during onboarding (see
+/// `BusinessUnitRepository.createDefaultUnit`).
 class UserModel {
   final int idUser;
   final String name;

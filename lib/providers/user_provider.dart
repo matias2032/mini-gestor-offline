@@ -144,6 +144,16 @@ Future<bool> createUser({
     }
   }
 
+  /// Clears the in-memory session. There's no token/remote session to
+  /// invalidate — auth is local-only (password check against the single
+  /// `user` row) — so this just drops [_user] and notifies listeners.
+  /// Callers are responsible for navigating to `/login` afterwards.
+  void logout() {
+    _user = null;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();

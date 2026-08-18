@@ -743,4 +743,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noCategoryLabel => 'No category';
+
+  @override
+  String get switchStoreTooltip => 'Switch store';
+
+  @override
+  String get storesTitle => 'Stores';
+
+  @override
+  String get newStore => 'New store';
+
+  @override
+  String get storeNameLabel => 'Store name';
+
+  @override
+  String get storeNameRequired => 'Store name is required';
+
+  @override
+  String get renameStoreTitle => 'Rename store';
+
+  @override
+  String get setAsDefault => 'Set as default';
+
+  @override
+  String get defaultStoreLabel => 'Default';
+
+  @override
+  String get deleteStoreTitle => 'Delete store';
+
+  @override
+  String confirmDeleteStoreMessage(String name) {
+    return 'Are you sure you want to delete \"$name\"?';
+  }
+
+  @override
+  String get couldNotDeleteStore => 'Could not delete store.';
+
+  @override
+  String get couldNotCreateStore => 'Could not create store.';
+
+  @override
+  String get couldNotRenameStore => 'Could not rename store.';
 }

@@ -1,8 +1,6 @@
 import '../core/database/local_database.dart';
 import '../daos/business_category_dao.dart';
-import '../daos/expense_category_split_dao.dart';
 import '../daos/expense_dao.dart';
-import '../models/expense_category_split_model.dart';
 import '../models/expense_model.dart';
 
 /// One category's slice of an expense being created/updated — the input
@@ -23,24 +21,24 @@ class ExpenseRepository {
   ExpenseRepository(
     this._localDatabase,
     this._expenseDao,
-    this._expenseCategorySplitDao,
     this._businessCategoryDao,
   );
 
-  final LocalDatabase _localDatabase;
+ final LocalDatabase _localDatabase;
   final ExpenseDao _expenseDao;
-  final ExpenseCategorySplitDao _expenseCategorySplitDao;
   final BusinessCategoryDao _businessCategoryDao;
 
   // ---------------- expense ----------------
 
   Future<List<ExpenseModel>> getAllExpenses({
+    required int businessUnitId,
     int? businessCategoryId,
     int? supplierId,
     DateTime? startDate,
     DateTime? endDate,
   }) {
     return _expenseDao.getAllExpenses(
+      businessUnitId: businessUnitId,
       businessCategoryId: businessCategoryId,
       supplierId: supplierId,
       startDate: startDate,
@@ -53,10 +51,11 @@ class ExpenseRepository {
   }
 
   Future<List<ExpenseCategorySplitModel>> getSplitsByExpense(int idExpense) {
-    return _expenseCategorySplitDao.getSplitsByExpense(idExpense);
+    return _expenseDao.getSplitsByExpense(idExpense);
   }
 
   Future<ExpenseModel> createExpense({
+    required int businessUnitId,
     required List<ExpenseCategoryAllocation> categoryAllocations,
     int? supplierId,
     required String description,
@@ -69,7 +68,7 @@ class ExpenseRepository {
     if (amountCents < 0) {
       throw ArgumentError('Expense amount cannot be negative.');
     }
-    await _validateAllocations(categoryAllocations, amountCents);
+    await _validateAllocations(categoryAllocations, amountCents, businessUnitId);
 
     return _localDatabase.runInTransaction((txn) async {
       final expense = ExpenseModel(
@@ -78,10 +77,11 @@ class ExpenseRepository {
         amountCents: amountCents,
         expenseDate: expenseDate,
         createdAt: DateTime.now(),
+        businessUnitId: businessUnitId,
       );
 
       final id = await _expenseDao.insertExpense(expense, txn: txn);
-      await _expenseCategorySplitDao.insertSplits(
+      await _expenseDao.insertSplits(
         categoryAllocations
             .map((a) => ExpenseCategorySplitModel(
                   expenseId: id,
@@ -117,7 +117,10 @@ class ExpenseRepository {
     if (amountCents < 0) {
       throw ArgumentError('Expense amount cannot be negative.');
     }
-    await _validateAllocations(categoryAllocations, amountCents);
+    // Uses existing.businessUnitId, not a parameter — an expense's loja
+    // is immutable after creation, so this is always the right scope to
+    // validate the (possibly changed) category allocation against.
+    await _validateAllocations(categoryAllocations, amountCents, existing.businessUnitId);
 
     final updated = existing.copyWith(
       supplierId: supplierId,
@@ -131,8 +134,8 @@ class ExpenseRepository {
       // Splits are always replaced wholesale, not diffed — simpler and
       // avoids partial-update edge cases (e.g. a category removed from
       // the allocation).
-      await _expenseCategorySplitDao.deleteSplitsByExpense(idExpense, txn: txn);
-      await _expenseCategorySplitDao.insertSplits(
+      await _expenseDao.deleteSplitsByExpense(idExpense, txn: txn);
+      await _expenseDao.insertSplits(
         categoryAllocations
             .map((a) => ExpenseCategorySplitModel(
                   expenseId: idExpense,
@@ -155,6 +158,7 @@ class ExpenseRepository {
   Future<void> _validateAllocations(
     List<ExpenseCategoryAllocation> allocations,
     int amountCents,
+    int businessUnitId,
   ) async {
     if (allocations.isEmpty) {
       throw ArgumentError('An expense needs at least one category.');
@@ -173,6 +177,12 @@ class ExpenseRepository {
           await _businessCategoryDao.getCategoryById(allocation.businessCategoryId);
       if (category == null || category.deleted) {
         throw StateError('Selected category is not available.');
+      }
+      // Hybrid scope: a Global category (businessUnitId == null) is fine
+      // for any loja; a scoped one must belong to this exact loja.
+      if (category.businessUnitId != null &&
+          category.businessUnitId != businessUnitId) {
+        throw StateError('Selected category does not belong to this store.');
       }
       sum += allocation.amountCents;
     }

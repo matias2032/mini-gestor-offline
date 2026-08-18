@@ -3,6 +3,7 @@
 import '../core/database/local_database.dart';
 import '../daos/user_dao.dart';
 import '../models/user_model.dart';
+import 'business_unit_repository.dart';
 import 'package:bcrypt/bcrypt.dart';
 
 /// All business logic for the single-user profile.
@@ -11,10 +12,14 @@ import 'package:bcrypt/bcrypt.dart';
 /// the schema expresses via CHECK but cannot fully guarantee on its own
 /// (e.g. preventing a second insert, deciding what a fresh install means).
 class UserRepository {
-  UserRepository(this._database, this._userDao);
+  UserRepository(this._database, this._userDao, this._businessUnitRepository);
 
   final LocalDatabase _database;
   final UserDao _userDao;
+
+  /// Used to create the first `business_unit` ("Sede") atomically with the
+  /// `user` row during onboarding — see [createUser].
+  final BusinessUnitRepository _businessUnitRepository;
 
   static const int _singletonId = 1;
 
@@ -66,6 +71,17 @@ class UserRepository {
       );
 
       await _userDao.insertUser(user, txn: txn);
+
+      // Every account needs at least one business_unit to post
+      // sales/expenses to. Created here, inside the same transaction, so
+      // "criar usuário" and "criar a primeira loja" succeed or fail
+      // together. Falls back to a generic name inside createDefaultUnit
+      // itself if businessName was left blank.
+      await _businessUnitRepository.createDefaultUnit(
+        txn,
+        name: user.businessName ?? '',
+      );
+
       return user;
     });
   }

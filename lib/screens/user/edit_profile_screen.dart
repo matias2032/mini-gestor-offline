@@ -77,9 +77,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdated)),
+      SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdatedRelogin)),
     );
-    Navigator.of(context).pop();
+    context.read<UserProvider>().logout();
+    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
   }
 
   @override

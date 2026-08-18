@@ -753,4 +753,45 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get noCategoryLabel => 'Sem categoria';
+
+  @override
+  String get switchStoreTooltip => 'Mudar de loja';
+
+  @override
+  String get storesTitle => 'Lojas';
+
+  @override
+  String get newStore => 'Nova loja';
+
+  @override
+  String get storeNameLabel => 'Nome da loja';
+
+  @override
+  String get storeNameRequired => 'O nome da loja é obrigatório';
+
+  @override
+  String get renameStoreTitle => 'Renomear loja';
+
+  @override
+  String get setAsDefault => 'Definir como padrão';
+
+  @override
+  String get defaultStoreLabel => 'Padrão';
+
+  @override
+  String get deleteStoreTitle => 'Eliminar loja';
+
+  @override
+  String confirmDeleteStoreMessage(String name) {
+    return 'Tem a certeza de que deseja eliminar \"$name\"?';
+  }
+
+  @override
+  String get couldNotDeleteStore => 'Não foi possível eliminar a loja.';
+
+  @override
+  String get couldNotCreateStore => 'Não foi possível criar a loja.';
+
+  @override
+  String get couldNotRenameStore => 'Não foi possível renomear a loja.';
 }

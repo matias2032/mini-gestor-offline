@@ -10,6 +10,9 @@ import 'core/database/local_database.dart';
 import 'daos/user_dao.dart';
 import 'repositories/user_repository.dart';
 import 'providers/user_provider.dart';
+import 'daos/business_unit_dao.dart';
+import 'repositories/business_unit_repository.dart';
+import 'providers/business_unit_provider.dart';
 import 'daos/customer_dao.dart';
 import 'repositories/customer_repository.dart';
 import 'providers/customer_provider.dart';
@@ -22,8 +25,6 @@ import 'repositories/supplier_repository.dart';
 import 'providers/supplier_provider.dart';
 import 'screens/supplier/supplier_list_screen.dart';
 import 'daos/sale_dao.dart';
-import 'daos/sale_installment_dao.dart';
-import 'daos/sale_payment_dao.dart';
 import 'repositories/sale_repository.dart';
 import 'providers/sale_provider.dart';
 import 'daos/financial_statement_dao.dart';
@@ -44,12 +45,13 @@ import 'screens/sale/financial_statement_generate_screen.dart';
 import 'screens/sale/financial_statement_detail_screen.dart';
 import 'screens/user/edit_profile_screen.dart';
 import 'screens/user/change_password_screen.dart';
+import 'screens/business_unit/business_unit_management_screen.dart';
 import 'theme/app_theme.dart';
 import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
 import 'screens/splash/splash_screen.dart';
-import 'daos/expense_category_split_dao.dart';
+
 
 /// Debug switch: set to `true` to wipe the local database on every app
 /// start, simulating a fresh install (onboarding screen shows again
@@ -86,7 +88,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final localDatabase = LocalDatabase.instance;
     final userDao = UserDao(localDatabase);
-    final userRepository = UserRepository(localDatabase, userDao);
+
+    // Must come before userRepository below: UserRepository.createUser()
+    // needs it to create the first business_unit atomically with the user.
+    final businessUnitDao = BusinessUnitDao();
+    final businessUnitRepository = BusinessUnitRepository(dao: businessUnitDao);
+
+    final userRepository = UserRepository(localDatabase, userDao, businessUnitRepository);
 
     final customerDao = CustomerDao(localDatabase);
     final customerRepository = CustomerRepository(localDatabase, customerDao);
@@ -97,71 +105,107 @@ class MyApp extends StatelessWidget {
     final businessCategoryDao = BusinessCategoryDao(localDatabase);
     final businessCategoryRepository = BusinessCategoryRepository(businessCategoryDao);
 
-final expenseDao = ExpenseDao(localDatabase);
-    final expenseCategorySplitDao = ExpenseCategorySplitDao(localDatabase);
+    final expenseDao = ExpenseDao(localDatabase);
     final expenseRepository = ExpenseRepository(
       localDatabase,
       expenseDao,
-      expenseCategorySplitDao,
       businessCategoryDao,
     );
-
     final saleDao = SaleDao(localDatabase);
-    final saleInstallmentDao = SaleInstallmentDao(localDatabase);
-    final salePaymentDao = SalePaymentDao(localDatabase);
-    final saleRepository = SaleRepository(localDatabase, saleDao, saleInstallmentDao, salePaymentDao);
+    final saleRepository = SaleRepository(localDatabase, saleDao, businessCategoryDao);
 
     final financialStatementDao = FinancialStatementDao(localDatabase);
-    final financialStatementRepository =
-        FinancialStatementRepository(localDatabase, financialStatementDao);
+    final financialStatementRepository = FinancialStatementRepository(
+      localDatabase,
+      financialStatementDao,
+      businessUnitDao,
+    );
 
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider.value(value: localeProvider),
         ChangeNotifierProvider(create: (_) => UserProvider(userRepository)),
-        ChangeNotifierProvider(create: (_) => CustomerProvider(customerRepository)),
-        ChangeNotifierProvider(create: (_) => SupplierProvider(supplierRepository)),
+
+        // Must come before every ProxyProvider below that depends on it.
         ChangeNotifierProvider(
-          create: (_) => BusinessCategoryProvider(businessCategoryRepository),
+          create: (_) => BusinessUnitProvider(repository: businessUnitRepository)
+            ..loadUnits(),
         ),
-        ChangeNotifierProvider(create: (_) => ExpenseProvider(expenseRepository)),
-        ChangeNotifierProvider(create: (_) => SaleProvider(saleRepository)),
-        ChangeNotifierProvider(
-          create: (_) => FinancialStatementProvider(financialStatementRepository),
+
+        ChangeNotifierProxyProvider<BusinessUnitProvider, CustomerProvider>(
+          create: (context) => CustomerProvider(
+            customerRepository,
+            context.read<BusinessUnitProvider>(),
+          ),
+          update: (_, __, previous) => previous!,
+        ),
+        ChangeNotifierProxyProvider<BusinessUnitProvider, SupplierProvider>(
+          create: (context) => SupplierProvider(
+            supplierRepository,
+            context.read<BusinessUnitProvider>(),
+          ),
+          update: (_, __, previous) => previous!,
+        ),
+        ChangeNotifierProxyProvider<BusinessUnitProvider, BusinessCategoryProvider>(
+          create: (context) => BusinessCategoryProvider(
+            businessCategoryRepository,
+            context.read<BusinessUnitProvider>(),
+          ),
+          update: (_, __, previous) => previous!,
+        ),
+        ChangeNotifierProxyProvider<BusinessUnitProvider, ExpenseProvider>(
+          create: (context) => ExpenseProvider(
+            expenseRepository,
+            context.read<BusinessUnitProvider>(),
+          ),
+          update: (_, __, previous) => previous!,
+        ),
+        ChangeNotifierProxyProvider<BusinessUnitProvider, SaleProvider>(
+          create: (context) => SaleProvider(
+            saleRepository,
+            context.read<BusinessUnitProvider>(),
+          ),
+          update: (_, __, previous) => previous!,
+        ),
+        ChangeNotifierProxyProvider<BusinessUnitProvider, FinancialStatementProvider>(
+          create: (context) => FinancialStatementProvider(
+            financialStatementRepository,
+            context.read<BusinessUnitProvider>(),
+          ),
+          update: (_, __, previous) => previous!,
         ),
       ],
-child: Consumer2<ThemeProvider, LocaleProvider>(
-  builder: (context, themeProvider, localeProvider, _) => MaterialApp(
-    title: 'Mini',
-    debugShowCheckedModeBanner: false,
-    theme: AppTheme.light,
-    darkTheme: AppTheme.dark,
-    themeMode: themeProvider.themeMode,
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    locale: localeProvider.locale,
-    routes: {
-          '/onboarding': (_) => const OnboardingScreen(),
-          '/login': (_) => const LoginScreen(),
-          '/dashboard': (_) => const DashboardScreen(),
-          '/customer': (_) => const CustomerListScreen(),
-          '/supplier': (_) => const SupplierListScreen(),
-          '/expense': (_) => const ExpenseListScreen(),
-          '/sale': (_) => const SaleListScreen(),
-          '/credit-sale': (_) => const CreditSaleListScreen(),
-          '/category': (_) => const BusinessCategoryListScreen(),
-          '/sale/financial-statement': (_) => const FinancialStatementListScreen(),
-          '/sale/financial-statement/generate': (_) =>
-              const FinancialStatementGenerateScreen(),
-          '/edit-profile': (_) => const EditProfileScreen(),
-          '/change-password': (_) => const ChangePasswordScreen(),
-        },
-home: const SplashScreen(),
+      child: Consumer2<ThemeProvider, LocaleProvider>(
+        builder: (context, themeProvider, localeProvider, _) => MaterialApp(
+          title: 'Mini',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeProvider.themeMode,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: localeProvider.locale,
+          routes: {
+            '/onboarding': (_) => const OnboardingScreen(),
+            '/login': (_) => const LoginScreen(),
+            '/dashboard': (_) => const DashboardScreen(),
+            '/customer': (_) => const CustomerListScreen(),
+            '/supplier': (_) => const SupplierListScreen(),
+            '/expense': (_) => const ExpenseListScreen(),
+            '/sale': (_) => const SaleListScreen(),
+            '/credit-sale': (_) => const CreditSaleListScreen(),
+            '/category': (_) => const BusinessCategoryListScreen(),
+            '/sale/financial-statement': (_) => const FinancialStatementListScreen(),
+            '/sale/financial-statement/generate': (_) =>
+                const FinancialStatementGenerateScreen(),
+                        '/edit-profile': (_) => const EditProfileScreen(),
+            '/change-password': (_) => const ChangePasswordScreen(),
+            '/business-unit-management': (_) => const BusinessUnitManagementScreen(),
+          },
+          home: const SplashScreen(),
+        ),
       ),
-),
     );
   }
 }
-
-

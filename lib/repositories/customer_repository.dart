@@ -12,8 +12,14 @@ class CustomerRepository {
   final LocalDatabase _database;
   final CustomerDao _customerDao;
 
-  Future<List<CustomerModel>> getAllCustomers({bool includeDeleted = false}) {
-    return _customerDao.getAllCustomers(includeDeleted: includeDeleted);
+  Future<List<CustomerModel>> getAllCustomers({
+    int? activeUnitId,
+    bool includeDeleted = false,
+  }) {
+    return _customerDao.getAllCustomers(
+      activeUnitId: activeUnitId,
+      includeDeleted: includeDeleted,
+    );
   }
 
   Future<CustomerModel?> getCustomerById(int idCustomer) {
@@ -25,6 +31,7 @@ class CustomerRepository {
     String? lastName,
     String? phone,
     String? notes,
+    int? businessUnitId,
   }) async {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
@@ -38,6 +45,7 @@ class CustomerRepository {
         lastName: _cleanOrNull(lastName),
         phone: _cleanOrNull(phone),
         notes: _cleanOrNull(notes),
+        businessUnitId: businessUnitId,
         createdAt: DateTime.now(),
       );
 
@@ -48,6 +56,7 @@ class CustomerRepository {
             lastName: c.lastName,
             phone: c.phone,
             notes: c.notes,
+            businessUnitId: c.businessUnitId,
             deleted: c.deleted,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
