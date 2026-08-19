@@ -722,4 +722,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get perStoreBreakdownTitle => 'Breakdown by store';
+
+  @override
+  String get consolidatedStatementLabel =>
+      'Consolidated statement (all stores)';
+
+  @override
+  String get consolidatedStatementDescription =>
+      'Sums the data from every store for this period';
+
+  @override
+  String get archiveStoreTitle => 'Archive store';
+
+  @override
+  String confirmArchiveStoreMessage(Object name) {
+    return 'Are you sure you want to archive \"$name\"? This store\'s data (sales, customers, statements) is preserved, but it will no longer appear as an active store.';
+  }
+
+  @override
+  String get archiveLabel => 'Archive';
+
+  @override
+  String get couldNotArchiveStore => 'Could not archive the store.';
 }

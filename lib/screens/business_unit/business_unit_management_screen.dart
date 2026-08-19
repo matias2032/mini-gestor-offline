@@ -90,14 +90,14 @@ class BusinessUnitManagementScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context, BusinessUnitModel unit) async {
+  Future<void> _confirmArchive(BuildContext context, BusinessUnitModel unit) async {
     final loc = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: Text(loc.deleteStoreTitle),
-        content: Text(loc.confirmDeleteStoreMessage(unit.name)),
+        title: Text(loc.archiveStoreTitle),
+        content: Text(loc.confirmArchiveStoreMessage(unit.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -109,19 +109,24 @@ class BusinessUnitManagementScreen extends StatelessWidget {
               backgroundColor: Theme.of(context).colorScheme.error,
               foregroundColor: Theme.of(context).colorScheme.onError,
             ),
-            child: Text(loc.delete),
+            child: Text(loc.archiveLabel),
           ),
         ],
       ),
     );
     if (confirmed != true || !context.mounted) return;
 
-        try {
+    try {
       await context.read<BusinessUnitProvider>().deleteUnit(unit.idBusinessUnit!);
+    } on StateError catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(loc.couldNotDeleteStore)));
+            .showSnackBar(SnackBar(content: Text(loc.couldNotArchiveStore)));
       }
     }
   }
@@ -170,8 +175,8 @@ class BusinessUnitManagementScreen extends StatelessWidget {
                           case 'default':
                             context.read<BusinessUnitProvider>().setAsDefault(unit.idBusinessUnit!);
                             break;
-                          case 'delete':
-                            _confirmDelete(context, unit);
+                            case 'archive':
+                            _confirmArchive(context, unit);
                             break;
                         }
                       },
@@ -180,7 +185,7 @@ class BusinessUnitManagementScreen extends StatelessWidget {
                         if (!unit.isDefault)
                           PopupMenuItem(value: 'default', child: Text(loc.setAsDefault)),
                         if (provider.units.length > 1)
-                          PopupMenuItem(value: 'delete', child: Text(loc.delete)),
+                          PopupMenuItem(value: 'archive', child: Text(loc.archiveLabel)),
                       ],
                     ),
                   ),

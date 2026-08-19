@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../models/financial_statement_model.dart';
+import '../../providers/business_unit_provider.dart';
 import '../../providers/financial_statement_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
 
@@ -23,6 +23,7 @@ class _FinancialStatementGenerateScreenState
   StatementPeriodType _periodType = StatementPeriodType.oneMonth;
   DateTime? _customStartDate;
   DateTime? _customEndDate;
+  bool _consolidated = false;
 
   @override
   void dispose() {
@@ -76,6 +77,7 @@ class _FinancialStatementGenerateScreenState
       customStartDate: isCustom ? _customStartDate : null,
       customEndDate: isCustom ? _customEndDate : null,
       notes: _notesController.text,
+      consolidated: _consolidated,
     );
 
     if (statement != null && mounted) {
@@ -88,6 +90,7 @@ class _FinancialStatementGenerateScreenState
     final l10n = AppLocalizations.of(context)!;
     final errorMessage = context.watch<FinancialStatementProvider>().errorMessage;
     final isGenerating = context.watch<FinancialStatementProvider>().isGenerating;
+    final hasMultipleUnits = context.watch<BusinessUnitProvider>().hasMultipleUnits;
     final isCustom = _periodType == StatementPeriodType.custom;
 
     return Scaffold(
@@ -149,6 +152,16 @@ class _FinancialStatementGenerateScreenState
                         ),
                         onDeleted: () => setState(() => _customEndDate = null),
                       ),
+              ),
+            ],
+            if (hasMultipleUnits) ...[
+              const SizedBox(height: 16),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.consolidatedStatementLabel),
+                subtitle: Text(l10n.consolidatedStatementDescription),
+                value: _consolidated,
+                onChanged: (value) => setState(() => _consolidated = value),
               ),
             ],
             const SizedBox(height: 16),

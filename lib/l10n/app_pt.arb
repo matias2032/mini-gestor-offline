@@ -221,5 +221,11 @@
   "couldNotCreateStore": "Não foi possível criar a loja.",
   "couldNotRenameStore": "Não foi possível renomear a loja.","currentStoreLabel": "Loja atual",
   "allStoresLabel": "Todas as lojas",
-  "perStoreBreakdownTitle": "Resumo por loja"
+  "perStoreBreakdownTitle": "Resumo por loja",
+  "consolidatedStatementLabel": "Extracto consolidado (todas as lojas)",
+"consolidatedStatementDescription": "Soma os dados de todas as lojas neste período",
+"archiveStoreTitle": "Arquivar loja",
+"confirmArchiveStoreMessage": "Tem a certeza que quer arquivar \"{name}\"? Os dados desta loja (vendas, clientes, extractos) são preservados, mas deixa de aparecer como loja activa.",
+"archiveLabel": "Arquivar",
+"couldNotArchiveStore": "Não foi possível arquivar a loja."
 }

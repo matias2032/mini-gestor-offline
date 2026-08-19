@@ -732,4 +732,26 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get perStoreBreakdownTitle => 'Resumo por loja';
+
+  @override
+  String get consolidatedStatementLabel =>
+      'Extracto consolidado (todas as lojas)';
+
+  @override
+  String get consolidatedStatementDescription =>
+      'Soma os dados de todas as lojas neste período';
+
+  @override
+  String get archiveStoreTitle => 'Arquivar loja';
+
+  @override
+  String confirmArchiveStoreMessage(Object name) {
+    return 'Tem a certeza que quer arquivar \"$name\"? Os dados desta loja (vendas, clientes, extractos) são preservados, mas deixa de aparecer como loja activa.';
+  }
+
+  @override
+  String get archiveLabel => 'Arquivar';
+
+  @override
+  String get couldNotArchiveStore => 'Não foi possível arquivar a loja.';
 }

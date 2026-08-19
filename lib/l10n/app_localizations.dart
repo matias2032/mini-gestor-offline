@@ -1399,6 +1399,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Breakdown by store'**
   String get perStoreBreakdownTitle;
+
+  /// No description provided for @consolidatedStatementLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Consolidated statement (all stores)'**
+  String get consolidatedStatementLabel;
+
+  /// No description provided for @consolidatedStatementDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sums the data from every store for this period'**
+  String get consolidatedStatementDescription;
+
+  /// No description provided for @archiveStoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive store'**
+  String get archiveStoreTitle;
+
+  /// No description provided for @confirmArchiveStoreMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to archive \"{name}\"? This store\'s data (sales, customers, statements) is preserved, but it will no longer appear as an active store.'**
+  String confirmArchiveStoreMessage(Object name);
+
+  /// No description provided for @archiveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get archiveLabel;
+
+  /// No description provided for @couldNotArchiveStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not archive the store.'**
+  String get couldNotArchiveStore;
 }
 
 class _AppLocalizationsDelegate

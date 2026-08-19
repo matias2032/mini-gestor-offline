@@ -283,5 +283,11 @@
   "couldNotRenameStore": "Could not rename store.",
   "currentStoreLabel": "Current store",
   "allStoresLabel": "All stores",
-  "perStoreBreakdownTitle": "Breakdown by store"
+  "perStoreBreakdownTitle": "Breakdown by store", 
+"consolidatedStatementLabel": "Consolidated statement (all stores)",
+"consolidatedStatementDescription": "Sums the data from every store for this period",
+"archiveStoreTitle": "Archive store",
+"confirmArchiveStoreMessage": "Are you sure you want to archive \"{name}\"? This store's data (sales, customers, statements) is preserved, but it will no longer appear as an active store.",
+"archiveLabel": "Archive",
+"couldNotArchiveStore": "Could not archive the store."
 }
