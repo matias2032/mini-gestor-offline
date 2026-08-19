@@ -326,7 +326,7 @@ class _StatsGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
-      childAspectRatio: 2.6,
+      childAspectRatio: 2.3,
       children: cards
           .map((data) => _StatCard(icon: data.icon, label: data.label, value: data.value))
           .toList(),
