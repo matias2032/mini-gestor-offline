@@ -95,21 +95,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 12),
               ],
-              Align(
-                alignment: Alignment.centerLeft,
-                child: DropdownButton<DashboardPeriod>(
-                  value: dashboardProvider.period,
-                  onChanged: (value) {
-                    if (value != null) {
-                      context.read<DashboardProvider>().setPeriod(value);
-                    }
+                            SizedBox(
+                height: 40,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: DashboardPeriod.values.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final period = DashboardPeriod.values[index];
+                    final isSelected = dashboardProvider.period == period;
+                    return ChoiceChip(
+                      label: Text(period.label),
+                      selected: isSelected,
+                      showCheckmark: true,
+                      onSelected: (_) =>
+                          context.read<DashboardProvider>().setPeriod(period),
+                      selectedColor: Theme.of(context).colorScheme.primaryContainer,
+                      checkmarkColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                      labelStyle: TextStyle(
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.onPrimaryContainer
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                      side: BorderSide(
+                        color: isSelected
+                            ? Colors.transparent
+                            : Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                    );
                   },
-                  items: DashboardPeriod.values
-                      .map((period) => DropdownMenuItem(
-                            value: period,
-                            child: Text(period.label),
-                          ))
-                      .toList(),
                 ),
               ),
               const SizedBox(height: 16),
@@ -309,9 +324,9 @@ class _StatsGrid extends StatelessWidget {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.5,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 2.6,
       children: cards
           .map((data) => _StatCard(icon: data.icon, label: data.label, value: data.value))
           .toList(),
@@ -334,24 +349,40 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, size: 24, color: colorScheme.primary),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              overflow: TextOverflow.ellipsis,
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 16, color: colorScheme.onPrimaryContainer),
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
-              overflow: TextOverflow.ellipsis,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
