@@ -9,7 +9,8 @@ import 'business_unit_provider.dart';
 /// Zero business logic — only calls CustomerRepository and exposes
 /// loading/error/data state for the UI to react to. Listens to
 /// [BusinessUnitProvider] so switching the active store reloads the
-/// hybrid-filtered customer list automatically.
+/// customer list automatically. `businessUnitId` is strict scope
+/// (Schema v4), so every call requires an active store.
 class CustomerProvider extends ChangeNotifier {
   CustomerProvider(this._customerRepository, this._businessUnitProvider) {
     _businessUnitProvider.addListener(_onActiveUnitChanged);
@@ -34,10 +35,18 @@ class CustomerProvider extends ChangeNotifier {
 
   Future<void> loadCustomers({bool includeDeleted = false}) async {
     _lastIncludeDeleted = includeDeleted;
+
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _customers = [];
+      notifyListeners();
+      return;
+    }
+
     _setLoading(true);
     try {
       _customers = await _customerRepository.getAllCustomers(
-        activeUnitId: _activeUnitId,
+        businessUnitId: unitId,
         includeDeleted: includeDeleted,
       );
       _errorMessage = null;
@@ -54,14 +63,21 @@ class CustomerProvider extends ChangeNotifier {
     String? phone,
     String? notes,
   }) async {
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _errorMessage = 'No active business unit selected.';
+      notifyListeners();
+      return false;
+    }
+
     _setLoading(true);
     try {
       await _customerRepository.createCustomer(
         name: name,
+        businessUnitId: unitId,
         lastName: lastName,
         phone: phone,
         notes: notes,
-        businessUnitId: _activeUnitId,
       );
       _errorMessage = null;
       await loadCustomers(includeDeleted: _lastIncludeDeleted);

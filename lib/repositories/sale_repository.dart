@@ -1,35 +1,24 @@
-import 'package:sqflite/sqflite.dart';
-
 import '../core/database/local_database.dart';
-
-import '../daos/business_category_dao.dart';
+import '../daos/business_unit_dao.dart';
 import '../daos/sale_dao.dart';
 import '../models/sale_model.dart';
-
-
-
+import 'package:sqflite/sqflite.dart';
 /// All business logic for the `sale` module: sale, sale_installment and
 /// sale_payment. This is the only entry point the UI/providers should
 /// use — never SaleDao directly.
 class SaleRepository {
-  SaleRepository(this._database, this._saleDao, this._businessCategoryDao);
+  SaleRepository(this._database, this._saleDao, this._businessUnitDao);
 
   final LocalDatabase _database;
   final SaleDao _saleDao;
-
-  /// Used only to validate that a sale's category is visible to the loja
-  /// it's being posted to — see [createSale].
-  final BusinessCategoryDao _businessCategoryDao;
-
-
+  final BusinessUnitDao _businessUnitDao;
 
   // ---------------------------------------------------------------------
   // sale
   // ---------------------------------------------------------------------
 
-Future<SaleModel> createSale({
+  Future<SaleModel> createSale({
     required int businessUnitId,
-    required int saleCategoryId,
     required String description,
     required int totalAmountCents,
     String saleType = 'NORMAL',
@@ -77,17 +66,10 @@ Future<SaleModel> createSale({
     }
 
     return _database.runInTransaction((txn) async {
-      await _ensureCategoryBelongsToUnit(
-        idBusinessCategory: saleCategoryId,
-        businessUnitId: businessUnitId,
-        txn: txn,
-      );
-
       final reference = await _generateSaleReference(txn);
 
       final sale = SaleModel(
         reference: reference,
-        saleCategoryId: saleCategoryId,
         description: trimmedDescription,
         totalAmountCents: totalAmountCents,
         saleType: saleType,
@@ -158,7 +140,7 @@ Future<SaleModel> createSale({
     });
   }
 
-/// Registers a payment against a CREDIT sale. This is what the credit
+  /// Registers a payment against a CREDIT sale. This is what the credit
   /// sale detail screen calls every time the customer pays something —
   /// each call is itself the "automatic installment generation": it
   /// creates one new, already-PAID sale_installment row representing
@@ -264,9 +246,8 @@ Future<SaleModel> createSale({
     return _saleDao.getSaleById(idSale);
   }
 
-Future<List<SaleModel>> getAllSales({
+  Future<List<SaleModel>> getAllSales({
     required int businessUnitId,
-    int? saleCategoryId,
     int? customerId,
     String? saleType,
     String? saleStatus,
@@ -275,7 +256,6 @@ Future<List<SaleModel>> getAllSales({
   }) {
     return _saleDao.getAllSales(
       businessUnitId: businessUnitId,
-      saleCategoryId: saleCategoryId,
       customerId: customerId,
       saleType: saleType,
       saleStatus: saleStatus,
@@ -288,7 +268,6 @@ Future<List<SaleModel>> getAllSales({
   /// only once finalized (COMPLETED/CANCELLED).
   Future<List<SaleModel>> getSalesForSalesList({
     required int businessUnitId,
-    int? saleCategoryId,
     int? customerId,
     String? saleType,
     DateTime? startDate,
@@ -296,7 +275,6 @@ Future<List<SaleModel>> getAllSales({
   }) {
     return _saleDao.getSalesForSalesList(
       businessUnitId: businessUnitId,
-      saleCategoryId: saleCategoryId,
       customerId: customerId,
       saleType: saleType,
       startDate: startDate,
@@ -328,81 +306,139 @@ Future<List<SaleModel>> getAllSales({
   }
 
   // ---------------------------------------------------------------------
-  // dashboard / badge stats
+  // badge stats
   // ---------------------------------------------------------------------
 
-/// Number of credit sales still not finalized — backs the sidebar badge.
+  /// Number of credit sales still not finalized — backs the sidebar badge.
   Future<int> countOutstandingCreditSales({required int businessUnitId}) {
     return _saleDao.countOutstandingCreditSales(businessUnitId: businessUnitId);
   }
 
-  /// Aggregates finalized-sale numbers for the dashboard, for the given
-  /// date range, scoped to the active business unit. Pass null/null dates
-  /// for an all-time snapshot within that unit.
+
+  /// Aggregate dashboard stats for one store, over [period]. Backs the
+  /// Dashboard Individual (FASE 5). businessUnitId is strict scope —
+  /// callers use this for a single store; the Super Dashboard (also
+  /// FASE 5) iterates this per business_unit instead of calling it once
+  /// with a null id, since it stays consistent with
+  /// FinancialStatementRepository.generateStatement's own pattern.
   Future<DashboardStats> getDashboardStats({
     required int businessUnitId,
-    DateTime? startDate,
-    DateTime? endDate,
+    required DashboardPeriod period,
   }) async {
-    final finalizedCount = await _saleDao.countFinalizedSales(
+    final now = DateTime.now();
+    final startDate = period.startDateFrom(now);
+
+    final finalizedSalesCount = await _saleDao.countFinalizedSales(
       businessUnitId: businessUnitId,
       startDate: startDate,
-      endDate: endDate,
+      endDate: now,
     );
-    final totalAllCents = await _saleDao.sumFinalizedSalesCents(
+    final totalRevenueCents = await _saleDao.sumFinalizedSalesCents(
       businessUnitId: businessUnitId,
       startDate: startDate,
-      endDate: endDate,
+      endDate: now,
     );
-    final totalCreditCents = await _saleDao.sumFinalizedSalesCents(
+    final settledCreditSalesCount = await _saleDao.countFinalizedSales(
       businessUnitId: businessUnitId,
       saleType: 'CREDIT',
       startDate: startDate,
-      endDate: endDate,
+      endDate: now,
     );
-    final categoryRows = await _saleDao.sumFinalizedSalesByCategory(
+    final settledCreditRevenueCents = await _saleDao.sumFinalizedSalesCents(
       businessUnitId: businessUnitId,
+      saleType: 'CREDIT',
       startDate: startDate,
-      endDate: endDate,
+      endDate: now,
     );
 
     return DashboardStats(
-      finalizedSalesCount: finalizedCount,
-      totalAllSalesCents: totalAllCents,
-      totalCreditSalesCents: totalCreditCents,
-      categorySummaries: categoryRows
-          .map((row) => CategorySalesSummary(
-                idBusinessCategory: row['id_business_category'] as int,
-                name: row['name'] as String,
-                totalCents: row['total_cents'] as int,
-                saleCount: row['sale_count'] as int,
-              ))
-          .toList(),
+      businessUnitId: businessUnitId,
+      period: period,
+      startDate: startDate,
+      endDate: now,
+      finalizedSalesCount: finalizedSalesCount,
+      totalRevenueCents: totalRevenueCents,
+      settledCreditSalesCount: settledCreditSalesCount,
+      settledCreditRevenueCents: settledCreditRevenueCents,
     );
   }
+
+  /// Consolidated dashboard stats across every business unit (the "Super
+  /// Dashboard"). Loops every business_unit — same pattern
+  /// FinancialStatementRepository.generateStatement uses for
+  /// businessUnitId == null — and sums each store's [DashboardStats]
+  /// fields, keeping a per-store breakdown for the UI.
+  Future<ConsolidatedDashboardStats> getConsolidatedDashboardStats({
+    required DashboardPeriod period,
+  }) async {
+    final now = DateTime.now();
+    final startDate = period.startDateFrom(now);
+
+    final units = await _businessUnitDao.findAll();
+
+    var finalizedSalesCount = 0;
+    var totalRevenueCents = 0;
+    var settledCreditSalesCount = 0;
+    var settledCreditRevenueCents = 0;
+    final perStore = <DashboardStoreBreakdown>[];
+
+    for (final unit in units) {
+      final unitId = unit.idBusinessUnit!;
+
+      final unitSalesCount = await _saleDao.countFinalizedSales(
+        businessUnitId: unitId,
+        startDate: startDate,
+        endDate: now,
+      );
+      final unitRevenueCents = await _saleDao.sumFinalizedSalesCents(
+        businessUnitId: unitId,
+        startDate: startDate,
+        endDate: now,
+      );
+      final unitCreditCount = await _saleDao.countFinalizedSales(
+        businessUnitId: unitId,
+        saleType: 'CREDIT',
+        startDate: startDate,
+        endDate: now,
+      );
+      final unitCreditRevenueCents = await _saleDao.sumFinalizedSalesCents(
+        businessUnitId: unitId,
+        saleType: 'CREDIT',
+        startDate: startDate,
+        endDate: now,
+      );
+
+      finalizedSalesCount += unitSalesCount;
+      totalRevenueCents += unitRevenueCents;
+      settledCreditSalesCount += unitCreditCount;
+      settledCreditRevenueCents += unitCreditRevenueCents;
+
+      perStore.add(DashboardStoreBreakdown(
+        businessUnitId: unitId,
+        businessUnitName: unit.name,
+        finalizedSalesCount: unitSalesCount,
+        totalRevenueCents: unitRevenueCents,
+      ));
+    }
+
+    perStore.sort((a, b) => b.totalRevenueCents.compareTo(a.totalRevenueCents));
+
+    return ConsolidatedDashboardStats(
+      period: period,
+      startDate: startDate,
+      endDate: now,
+      finalizedSalesCount: finalizedSalesCount,
+      totalRevenueCents: totalRevenueCents,
+      settledCreditSalesCount: settledCreditSalesCount,
+      settledCreditRevenueCents: settledCreditRevenueCents,
+      perStore: perStore,
+    );
+  }
+
 
   // ---------------------------------------------------------------------
   // helpers
   // ---------------------------------------------------------------------
-
-  /// A sale's category must be either Global or belong to the same loja
-  /// the sale is being posted to — mirrors the same check added to
-  /// ExpenseRepository for expense_category_split.
-  Future<void> _ensureCategoryBelongsToUnit({
-    required int idBusinessCategory,
-    required int businessUnitId,
-    required Transaction txn,
-  }) async {
-    final category =
-        await _businessCategoryDao.getCategoryById(idBusinessCategory, txn: txn);
-    if (category == null || category.deleted) {
-      throw StateError('Selected category is not available.');
-    }
-    if (category.businessUnitId != null &&
-        category.businessUnitId != businessUnitId) {
-      throw StateError('Selected category does not belong to this store.');
-    }
-  }
 
   Future<String> _generateSaleReference(Transaction txn) async {
     final count = await _saleDao.countAll(txn: txn);

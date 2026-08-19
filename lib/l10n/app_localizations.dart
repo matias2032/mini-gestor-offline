@@ -458,17 +458,29 @@ abstract class AppLocalizations {
   /// **'Settled credit sales'**
   String get settledCreditSales;
 
-  /// No description provided for @salesByCategory.
+  /// No description provided for @dashboardComingSoonTitle.
   ///
   /// In en, this message translates to:
-  /// **'Sales by category'**
-  String get salesByCategory;
+  /// **'Dashboard coming soon'**
+  String get dashboardComingSoonTitle;
 
-  /// No description provided for @noCategoriesYet.
+  /// No description provided for @dashboardComingSoonMessage.
   ///
   /// In en, this message translates to:
-  /// **'No categories registered yet.'**
-  String get noCategoriesYet;
+  /// **'We\'re rebuilding your store dashboard for the new multi-store structure. Check back shortly.'**
+  String get dashboardComingSoonMessage;
+
+  /// No description provided for @settledCreditRevenueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled credit revenue'**
+  String get settledCreditRevenueLabel;
+
+  /// No description provided for @dashboardNoStoreSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a store to see its stats.'**
+  String get dashboardNoStoreSelected;
 
   /// No description provided for @saleCountLabel.
   ///
@@ -530,12 +542,6 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to delete \"{name}\"?'**
   String confirmDeleteSupplierMessage(String name);
 
-  /// No description provided for @newExpenseCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'New Category'**
-  String get newExpenseCategory;
-
   /// No description provided for @descriptionOptionalLabel.
   ///
   /// In en, this message translates to:
@@ -547,12 +553,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filter expenses'**
   String get filterExpensesTitle;
-
-  /// No description provided for @categoryLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Category'**
-  String get categoryLabel;
 
   /// No description provided for @allLabel.
   ///
@@ -644,12 +644,6 @@ abstract class AppLocalizations {
   /// **'None'**
   String get noneLabel;
 
-  /// No description provided for @pleaseSelectCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Please select a category.'**
-  String get pleaseSelectCategory;
-
   /// No description provided for @dateLabel.
   ///
   /// In en, this message translates to:
@@ -661,60 +655,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create expense'**
   String get createExpense;
-
-  /// No description provided for @noCategoriesAvailableYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No categories available yet.'**
-  String get noCategoriesAvailableYet;
-
-  /// No description provided for @addAtLeastOneCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Add at least one category.'**
-  String get addAtLeastOneCategory;
-
-  /// No description provided for @categoryAllocationsMismatch.
-  ///
-  /// In en, this message translates to:
-  /// **'Category allocations ({allocated}) must add up to the expense total ({total}).'**
-  String categoryAllocationsMismatch(String allocated, String total);
-
-  /// No description provided for @addCategoryButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Add category'**
-  String get addCategoryButton;
-
-  /// No description provided for @noCategoryAddedYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No category added yet.'**
-  String get noCategoryAddedYet;
-
-  /// No description provided for @allocatedAmountLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Allocated: {amount}'**
-  String allocatedAmountLabel(String amount);
-
-  /// No description provided for @totalAmountValueLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Total: {amount}'**
-  String totalAmountValueLabel(String amount);
-
-  /// No description provided for @categoryAllocationDialogTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Category allocation'**
-  String get categoryAllocationDialogTitle;
-
-  /// No description provided for @selectCategoryValidation.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a category'**
-  String get selectCategoryValidation;
 
   /// No description provided for @saveLabel.
   ///
@@ -1160,18 +1100,6 @@ abstract class AppLocalizations {
   /// **'Generated {date}'**
   String generatedOnPrefix(String date);
 
-  /// No description provided for @newCategoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'New Category'**
-  String get newCategoryTitle;
-
-  /// No description provided for @editCategoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit Category'**
-  String get editCategoryTitle;
-
   /// No description provided for @nameRequiredMessage.
   ///
   /// In en, this message translates to:
@@ -1183,36 +1111,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create'**
   String get createCategoryButton;
-
-  /// No description provided for @categoriesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Categories'**
-  String get categoriesTitle;
-
-  /// No description provided for @addCategoryTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Add category'**
-  String get addCategoryTooltip;
-
-  /// No description provided for @deleteCategoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete category'**
-  String get deleteCategoryTitle;
-
-  /// No description provided for @confirmDeleteCategoryMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete \"{name}\"?'**
-  String confirmDeleteCategoryMessage(String name);
-
-  /// No description provided for @couldNotDeleteCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not delete category.'**
-  String get couldNotDeleteCategory;
 
   /// No description provided for @newSaleTitle.
   ///
@@ -1243,12 +1141,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Initial payment cannot exceed the sale total.'**
   String get initialPaymentExceedsTotalMessage;
-
-  /// No description provided for @categoryRequiredMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Category is required'**
-  String get categoryRequiredMessage;
 
   /// No description provided for @descriptionRequiredMessage.
   ///
@@ -1412,24 +1304,6 @@ abstract class AppLocalizations {
   /// **'Preparing your experience...'**
   String get splashLoading;
 
-  /// No description provided for @categoryBreakdownSectionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'By category'**
-  String get categoryBreakdownSectionTitle;
-
-  /// No description provided for @noCategoryBreakdownInPeriod.
-  ///
-  /// In en, this message translates to:
-  /// **'No categorized activity in this period.'**
-  String get noCategoryBreakdownInPeriod;
-
-  /// No description provided for @noCategoryLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'No category'**
-  String get noCategoryLabel;
-
   /// No description provided for @switchStoreTooltip.
   ///
   /// In en, this message translates to:
@@ -1507,6 +1381,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not rename store.'**
   String get couldNotRenameStore;
+
+  /// No description provided for @currentStoreLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current store'**
+  String get currentStoreLabel;
+
+  /// No description provided for @allStoresLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All stores'**
+  String get allStoresLabel;
+
+  /// No description provided for @perStoreBreakdownTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakdown by store'**
+  String get perStoreBreakdownTitle;
 }
 
 class _AppLocalizationsDelegate

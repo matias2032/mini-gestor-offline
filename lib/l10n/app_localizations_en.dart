@@ -196,10 +196,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settledCreditSales => 'Settled credit sales';
 
   @override
-  String get salesByCategory => 'Sales by category';
+  String get dashboardComingSoonTitle => 'Dashboard coming soon';
 
   @override
-  String get noCategoriesYet => 'No categories registered yet.';
+  String get dashboardComingSoonMessage =>
+      'We\'re rebuilding your store dashboard for the new multi-store structure. Check back shortly.';
+
+  @override
+  String get settledCreditRevenueLabel => 'Settled credit revenue';
+
+  @override
+  String get dashboardNoStoreSelected => 'Select a store to see its stats.';
 
   @override
   String saleCountLabel(int count) {
@@ -244,16 +251,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get newExpenseCategory => 'New Category';
-
-  @override
   String get descriptionOptionalLabel => 'Description (optional)';
 
   @override
   String get filterExpensesTitle => 'Filter expenses';
-
-  @override
-  String get categoryLabel => 'Category';
 
   @override
   String get allLabel => 'All';
@@ -301,48 +302,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noneLabel => 'None';
 
   @override
-  String get pleaseSelectCategory => 'Please select a category.';
-
-  @override
   String dateLabel(String date) {
     return 'Date: $date';
   }
 
   @override
   String get createExpense => 'Create expense';
-
-  @override
-  String get noCategoriesAvailableYet => 'No categories available yet.';
-
-  @override
-  String get addAtLeastOneCategory => 'Add at least one category.';
-
-  @override
-  String categoryAllocationsMismatch(String allocated, String total) {
-    return 'Category allocations ($allocated) must add up to the expense total ($total).';
-  }
-
-  @override
-  String get addCategoryButton => 'Add category';
-
-  @override
-  String get noCategoryAddedYet => 'No category added yet.';
-
-  @override
-  String allocatedAmountLabel(String amount) {
-    return 'Allocated: $amount';
-  }
-
-  @override
-  String totalAmountValueLabel(String amount) {
-    return 'Total: $amount';
-  }
-
-  @override
-  String get categoryAllocationDialogTitle => 'Category allocation';
-
-  @override
-  String get selectCategoryValidation => 'Select a category';
 
   @override
   String get saveLabel => 'Save';
@@ -590,33 +555,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get newCategoryTitle => 'New Category';
-
-  @override
-  String get editCategoryTitle => 'Edit Category';
-
-  @override
   String get nameRequiredMessage => 'Name is required';
 
   @override
   String get createCategoryButton => 'Create';
-
-  @override
-  String get categoriesTitle => 'Categories';
-
-  @override
-  String get addCategoryTooltip => 'Add category';
-
-  @override
-  String get deleteCategoryTitle => 'Delete category';
-
-  @override
-  String confirmDeleteCategoryMessage(String name) {
-    return 'Are you sure you want to delete \"$name\"?';
-  }
-
-  @override
-  String get couldNotDeleteCategory => 'Could not delete category.';
 
   @override
   String get newSaleTitle => 'New Sale';
@@ -634,9 +576,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get initialPaymentExceedsTotalMessage =>
       'Initial payment cannot exceed the sale total.';
-
-  @override
-  String get categoryRequiredMessage => 'Category is required';
 
   @override
   String get descriptionRequiredMessage => 'Description is required';
@@ -735,16 +674,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get splashLoading => 'Preparing your experience...';
 
   @override
-  String get categoryBreakdownSectionTitle => 'By category';
-
-  @override
-  String get noCategoryBreakdownInPeriod =>
-      'No categorized activity in this period.';
-
-  @override
-  String get noCategoryLabel => 'No category';
-
-  @override
   String get switchStoreTooltip => 'Switch store';
 
   @override
@@ -784,4 +713,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get couldNotRenameStore => 'Could not rename store.';
+
+  @override
+  String get currentStoreLabel => 'Current store';
+
+  @override
+  String get allStoresLabel => 'All stores';
+
+  @override
+  String get perStoreBreakdownTitle => 'Breakdown by store';
 }

@@ -23,13 +23,20 @@ class SupplierProvider extends ChangeNotifier {
   int? get _activeUnitId => _businessUnitProvider.activeBusinessUnit?.idBusinessUnit;
 
   Future<void> loadSuppliers() async {
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _suppliers = [];
+      notifyListeners();
+      return;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       _suppliers = await _supplierRepository.getAllSuppliers(
-        activeUnitId: _activeUnitId,
+        businessUnitId: unitId,
       );
     } catch (e) {
       _errorMessage = e.toString();
@@ -44,6 +51,13 @@ class SupplierProvider extends ChangeNotifier {
     String? phone,
     String? address,
   }) async {
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _errorMessage = 'No active business unit selected.';
+      notifyListeners();
+      return false;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -51,9 +65,9 @@ class SupplierProvider extends ChangeNotifier {
     try {
       await _supplierRepository.createSupplier(
         name: name,
+        businessUnitId: unitId,
         phone: phone,
         address: address,
-        businessUnitId: _activeUnitId,
       );
       await loadSuppliers();
       return true;

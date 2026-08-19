@@ -148,47 +148,36 @@ class _FinancialStatementDetailScreenState
                 ],
               ),
             ),
-          const SizedBox(height: 24),
-          Text(l10n.categoryBreakdownSectionTitle, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          if (detail.categoryBreakdown.isEmpty)
-            Text(l10n.noCategoryBreakdownInPeriod)
-          else
-            for (final category in detail.categoryBreakdown)
-              Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        category.name.isEmpty ? l10n.noCategoryLabel : category.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+
+          if (detail.statement.isConsolidated && detail.storeBreakdown.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            Text(l10n.perStoreBreakdownTitle, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  for (final store in detail.storeBreakdown)
+                    ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.storefront_outlined),
+                      title: Text(store.businessUnitName),
+                      subtitle: Text(
+                        '${l10n.salesSectionTitle}: ${amountFormat.format(store.totalSalesCents / 100)} $currency  •  '
+                        '${l10n.expensesSectionTitle}: ${amountFormat.format(store.totalExpensesCents / 100)} $currency',
                       ),
-                      const SizedBox(height: 8),
-                      _SummaryRow(
-                        label: l10n.salesSectionTitle,
-                        value: '${amountFormat.format(category.totalSalesCents / 100)} $currency',
-                        valueColor: Colors.green,
+                      trailing: Text(
+                        '${amountFormat.format(store.balanceCents / 100)} $currency',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: store.balanceCents >= 0 ? Colors.green : Colors.red,
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      _SummaryRow(
-                        label: l10n.expensesSectionTitle,
-                        value: '${amountFormat.format(category.totalExpensesCents / 100)} $currency',
-                        valueColor: Colors.red,
-                      ),
-                      const SizedBox(height: 4),
-                      _SummaryRow(
-                        label: l10n.balanceLabel,
-                        value: '${amountFormat.format(category.balanceCents / 100)} $currency',
-                        valueColor: category.balanceCents >= 0 ? Colors.green : Colors.red,
-                        bold: true,
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                ],
               ),
+            ),
+          ],
         ],
       ),
     );

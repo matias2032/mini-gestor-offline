@@ -30,14 +30,10 @@ import 'providers/sale_provider.dart';
 import 'daos/financial_statement_dao.dart';
 import 'repositories/financial_statement_repository.dart';
 import 'providers/financial_statement_provider.dart';
-import 'daos/business_category_dao.dart';
-import 'repositories/business_category_repository.dart';
-import 'providers/business_category_provider.dart';
 import 'daos/expense_dao.dart';
 import 'repositories/expense_repository.dart';
 import 'providers/expense_provider.dart';
 import 'screens/expense/expense_list_screen.dart';
-import 'screens/category/business_category_list_screen.dart';
 import 'screens/sale/sale_list_screen.dart';
 import 'screens/sale/credit_sale_list_screen.dart';
 import 'screens/sale/financial_statement_list_screen.dart';
@@ -51,6 +47,7 @@ import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
 import 'screens/splash/splash_screen.dart';
+import 'providers/dashboard_provider.dart';
 
 
 /// Debug switch: set to `true` to wipe the local database on every app
@@ -102,17 +99,11 @@ class MyApp extends StatelessWidget {
     final supplierDao = SupplierDao(localDatabase);
     final supplierRepository = SupplierRepository(localDatabase, supplierDao);
 
-    final businessCategoryDao = BusinessCategoryDao(localDatabase);
-    final businessCategoryRepository = BusinessCategoryRepository(businessCategoryDao);
-
     final expenseDao = ExpenseDao(localDatabase);
-    final expenseRepository = ExpenseRepository(
-      localDatabase,
-      expenseDao,
-      businessCategoryDao,
-    );
+    final expenseRepository = ExpenseRepository(localDatabase, expenseDao);
+
     final saleDao = SaleDao(localDatabase);
-    final saleRepository = SaleRepository(localDatabase, saleDao, businessCategoryDao);
+    final saleRepository = SaleRepository(localDatabase, saleDao, businessUnitDao);
 
     final financialStatementDao = FinancialStatementDao(localDatabase);
     final financialStatementRepository = FinancialStatementRepository(
@@ -124,14 +115,27 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider.value(value: localeProvider),
-        ChangeNotifierProvider(create: (_) => UserProvider(userRepository)),
+ChangeNotifierProvider.value(value: localeProvider),
+ChangeNotifierProvider(create: (_) => UserProvider(userRepository)),
 
-        // Must come before every ProxyProvider below that depends on it.
-        ChangeNotifierProvider(
-          create: (_) => BusinessUnitProvider(repository: businessUnitRepository)
-            ..loadUnits(),
-        ),
+// Deve vir antes de todos os providers que dependem dele.
+ChangeNotifierProvider(
+  create: (_) => BusinessUnitProvider(
+    repository: businessUnitRepository,
+  )..loadUnits(),
+),
+
+ChangeNotifierProxyProvider<BusinessUnitProvider, DashboardProvider>(
+  create: (context) => DashboardProvider(
+    saleRepository,
+    context.read<BusinessUnitProvider>(),
+  ),
+  update: (context, businessUnitProvider, previous) =>
+      previous ?? DashboardProvider(
+        saleRepository,
+        businessUnitProvider,
+      ),
+),
 
         ChangeNotifierProxyProvider<BusinessUnitProvider, CustomerProvider>(
           create: (context) => CustomerProvider(
@@ -143,13 +147,6 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProxyProvider<BusinessUnitProvider, SupplierProvider>(
           create: (context) => SupplierProvider(
             supplierRepository,
-            context.read<BusinessUnitProvider>(),
-          ),
-          update: (_, __, previous) => previous!,
-        ),
-        ChangeNotifierProxyProvider<BusinessUnitProvider, BusinessCategoryProvider>(
-          create: (context) => BusinessCategoryProvider(
-            businessCategoryRepository,
             context.read<BusinessUnitProvider>(),
           ),
           update: (_, __, previous) => previous!,
@@ -195,11 +192,10 @@ class MyApp extends StatelessWidget {
             '/expense': (_) => const ExpenseListScreen(),
             '/sale': (_) => const SaleListScreen(),
             '/credit-sale': (_) => const CreditSaleListScreen(),
-            '/category': (_) => const BusinessCategoryListScreen(),
             '/sale/financial-statement': (_) => const FinancialStatementListScreen(),
             '/sale/financial-statement/generate': (_) =>
                 const FinancialStatementGenerateScreen(),
-                        '/edit-profile': (_) => const EditProfileScreen(),
+            '/edit-profile': (_) => const EditProfileScreen(),
             '/change-password': (_) => const ChangePasswordScreen(),
             '/business-unit-management': (_) => const BusinessUnitManagementScreen(),
           },

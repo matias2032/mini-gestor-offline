@@ -21,7 +21,16 @@ class LocalDatabase {
   // is now enforced by BusinessCategoryRepository, scoped per business
   // unit (a global name is still checked against every unit, since a
   // global category is visible everywhere). See _onUpgrade / _migrateToV3.
-  static const int _databaseVersion = 3;
+  // v4: full isolation per loja. `customer`/`supplier` lose the "Global"
+  // concept (business_unit_id NOT NULL, same strict scope as sale/expense).
+  // `business_category` — and every column/table that referenced it
+  // (sale.sale_category_id, expense_category_split,
+  // financial_statement_sale_item/expense_item's category columns) — is
+  // dropped entirely: categorizing sales/expenses was a workaround for
+  // not having proper business units, and no longer earns its place now
+  // that each loja is its own isolated flow. `financial_statement` keeps
+  // its hybrid scope (NULL = "extracto geral" summing every loja).
+  static const int _databaseVersion = 4;
 
   Database? _database;
 
@@ -63,6 +72,9 @@ class LocalDatabase {
     }
     if (oldVersion < 3) {
       await _migrateToV3(db);
+    }
+    if (oldVersion < 4) {
+      await _migrateToV4(db);
     }
   }
   /// Runs [action] inside a single SQLite transaction.
@@ -255,6 +267,10 @@ class LocalDatabase {
   // same name. SQLite can't drop an inline UNIQUE via ALTER TABLE, so the
   // table is rebuilt without it, keeping every other column/FK unchanged.
   // Uniqueness is now enforced by BusinessCategoryRepository instead.
+  //
+  // NOTE: business_category itself is dropped entirely in v4 — this
+  // migration is kept as-is for accounts upgrading v1 -> v4 in one go
+  // (they still pass through this step before v4 removes the table).
   // ============================================================
   Future<void> _migrateToV3(Database db) async {
     await db.execute('PRAGMA foreign_keys = OFF');
@@ -298,6 +314,203 @@ class LocalDatabase {
     await db.execute(_createBusinessCategoryUpdatedTrigger);
   }
 
+  // ============================================================
+  // MIGRATION v3 -> v4
+  //
+  // Full isolation per loja.
+  //
+  //  - `customer`/`supplier` lose the "Global" concept: business_unit_id
+  //    becomes NOT NULL, same strict scope as sale/expense. Rows still
+  //    NULL at this point (created before v2, or created Global on
+  //    purpose) are backfilled to the default business unit — same
+  //    fallback used for sale/expense in the v1->v2 migration.
+  //  - `business_category` is dropped entirely, along with everything
+  //    that referenced it: `sale.sale_category_id`,
+  //    `expense_category_split` (an expense's amount_cents is now its
+  //    whole value again, no per-category split), and the
+  //    business_category_id/business_category_name columns on both
+  //    financial_statement_*_item snapshot tables.
+  //  - `financial_statement` itself is untouched — it keeps its hybrid
+  //    scope (NULL = extracto geral, summed across every loja).
+  // ============================================================
+  Future<void> _migrateToV4(Database db) async {
+    await db.execute('PRAGMA foreign_keys = OFF');
+
+    final defaultUnitRows = await db.query(
+      'business_unit',
+      where: 'is_default = 1',
+      limit: 1,
+    );
+    final fallbackRows = defaultUnitRows.isNotEmpty
+        ? defaultUnitRows
+        : await db.query('business_unit', limit: 1);
+    final fallbackUnitId = fallbackRows.first['id_business_unit'] as int;
+
+    // Backfill any Global (NULL) rows before the columns become NOT NULL.
+    await db.update(
+      'customer',
+      {'business_unit_id': fallbackUnitId},
+      where: 'business_unit_id IS NULL',
+    );
+    await db.update(
+      'supplier',
+      {'business_unit_id': fallbackUnitId},
+      where: 'business_unit_id IS NULL',
+    );
+
+    await _rebuildCustomerTableV4(db);
+    await _rebuildSupplierTableV4(db);
+    await _rebuildSaleTableV4(db);
+    await _rebuildFinancialStatementSaleItemTableV4(db);
+    await _rebuildFinancialStatementExpenseItemTableV4(db);
+
+    await db.execute('DROP TABLE expense_category_split');
+    await db.execute('DROP TABLE business_category');
+
+    final fkViolations = await db.rawQuery('PRAGMA foreign_key_check');
+    if (fkViolations.isNotEmpty) {
+      throw StateError(
+        'Migração para v4 falhou na verificação de integridade '
+        'referencial: $fkViolations',
+      );
+    }
+
+    await db.execute('PRAGMA foreign_keys = ON');
+  }
+
+  Future<void> _rebuildCustomerTableV4(Database db) async {
+    await db.execute('ALTER TABLE customer RENAME TO customer_old');
+    await db.execute(_createCustomerTableV4);
+
+    await db.execute(
+      '''
+      INSERT INTO customer (
+        id_customer, name, last_name, phone, notes, business_unit_id,
+        deleted, created_at, updated_at
+      )
+      SELECT
+        id_customer, name, last_name, phone, notes, business_unit_id,
+        deleted, created_at, updated_at
+      FROM customer_old
+      ''',
+    );
+
+    await db.execute('DROP TABLE customer_old');
+    await db.execute('CREATE INDEX idx_customer_name ON customer(name)');
+    await db.execute(
+      'CREATE INDEX idx_customer_business_unit ON customer(business_unit_id)',
+    );
+  }
+
+  Future<void> _rebuildSupplierTableV4(Database db) async {
+    await db.execute('ALTER TABLE supplier RENAME TO supplier_old');
+    await db.execute(_createSupplierTableV4);
+
+    await db.execute(
+      '''
+      INSERT INTO supplier (
+        id_supplier, name, phone, address, business_unit_id,
+        deleted, created_at
+      )
+      SELECT
+        id_supplier, name, phone, address, business_unit_id,
+        deleted, created_at
+      FROM supplier_old
+      ''',
+    );
+
+    await db.execute('DROP TABLE supplier_old');
+    await db.execute(
+      'CREATE INDEX idx_supplier_business_unit ON supplier(business_unit_id)',
+    );
+  }
+
+  Future<void> _rebuildSaleTableV4(Database db) async {
+    await db.execute('ALTER TABLE sale RENAME TO sale_old');
+    await db.execute(_createSaleTableV4);
+
+    await db.execute(
+      '''
+      INSERT INTO sale (
+        id_sale, reference, description, total_amount_cents,
+        sale_type, credit_modality, sale_status, payment_status, paid_amount_cents,
+        customer_id, walk_in_customer_name, sale_date, credit_due_date, completed_at,
+        notes, cancellation_reason, deleted, created_at, updated_at, business_unit_id
+      )
+      SELECT
+        id_sale, reference, description, total_amount_cents,
+        sale_type, credit_modality, sale_status, payment_status, paid_amount_cents,
+        customer_id, walk_in_customer_name, sale_date, credit_due_date, completed_at,
+        notes, cancellation_reason, deleted, created_at, updated_at, business_unit_id
+      FROM sale_old
+      ''',
+    );
+
+    await db.execute('DROP TABLE sale_old');
+    await db.execute('CREATE INDEX idx_sale_status ON sale(sale_status)');
+    await db.execute('CREATE INDEX idx_sale_customer ON sale(customer_id)');
+    await db.execute('CREATE INDEX idx_sale_date ON sale(sale_date)');
+    await db.execute('CREATE INDEX idx_sale_type ON sale(sale_type)');
+    await db.execute(
+      'CREATE INDEX idx_sale_business_unit ON sale(business_unit_id)',
+    );
+    await db.execute(_createSaleUpdatedTrigger);
+  }
+
+  Future<void> _rebuildFinancialStatementSaleItemTableV4(Database db) async {
+    await db.execute(
+      'ALTER TABLE financial_statement_sale_item '
+      'RENAME TO financial_statement_sale_item_old',
+    );
+    await db.execute(_createFinancialStatementSaleItemTableV4);
+
+    await db.execute(
+      '''
+      INSERT INTO financial_statement_sale_item (
+        id_financial_statement_sale_item, financial_statement_id, sale_id,
+        sale_reference, sale_description, sale_date, amount_cents
+      )
+      SELECT
+        id_financial_statement_sale_item, financial_statement_id, sale_id,
+        sale_reference, sale_description, sale_date, amount_cents
+      FROM financial_statement_sale_item_old
+      ''',
+    );
+
+    await db.execute('DROP TABLE financial_statement_sale_item_old');
+    await db.execute(
+      'CREATE INDEX idx_statement_sale_item_statement '
+      'ON financial_statement_sale_item(financial_statement_id)',
+    );
+  }
+
+  Future<void> _rebuildFinancialStatementExpenseItemTableV4(Database db) async {
+    await db.execute(
+      'ALTER TABLE financial_statement_expense_item '
+      'RENAME TO financial_statement_expense_item_old',
+    );
+    await db.execute(_createFinancialStatementExpenseItemTableV4);
+
+    await db.execute(
+      '''
+      INSERT INTO financial_statement_expense_item (
+        id_financial_statement_expense_item, financial_statement_id, expense_id,
+        expense_description, expense_date, amount_cents
+      )
+      SELECT
+        id_financial_statement_expense_item, financial_statement_id, expense_id,
+        expense_description, expense_date, amount_cents
+      FROM financial_statement_expense_item_old
+      ''',
+    );
+
+    await db.execute('DROP TABLE financial_statement_expense_item_old');
+    await db.execute(
+      'CREATE INDEX idx_statement_expense_item_statement '
+      'ON financial_statement_expense_item(financial_statement_id)',
+    );
+  }
+
   // ---------- business_unit (shared by onCreate and the v1->v2 migration) ----------
   static const String _createBusinessUnitTable = '''
     CREATE TABLE business_unit (
@@ -319,7 +532,7 @@ class LocalDatabase {
     END
   ''';
 
-  // ---------- sale (v2 shape, with business_unit_id NOT NULL) ----------
+  // ---------- sale (v2 shape — used only by the v1->v2 migration path) ----------
   static const String _createSaleTableV2 = '''
     CREATE TABLE sale (
         id_sale                INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -373,7 +586,51 @@ class LocalDatabase {
     END
   ''';
 
-  // ---------- expense (v2 shape, with business_unit_id NOT NULL) ----------
+  // ---------- sale (v4 shape — final: no sale_category_id) ----------
+  static const String _createSaleTableV4 = '''
+    CREATE TABLE sale (
+        id_sale                INTEGER PRIMARY KEY AUTOINCREMENT,
+        reference               TEXT NOT NULL UNIQUE,
+        description              TEXT NOT NULL,
+        total_amount_cents        INTEGER NOT NULL CHECK (total_amount_cents >= 0),
+
+        sale_type                 TEXT NOT NULL DEFAULT 'NORMAL'
+            CHECK (sale_type IN ('NORMAL','CREDIT')),
+        credit_modality            TEXT
+            CHECK (credit_modality IN ('SINGLE_PAYMENT','INSTALLMENTS')),
+
+        sale_status                 TEXT NOT NULL DEFAULT 'COMPLETED'
+            CHECK (sale_status IN ('OPEN','OUTSTANDING','COMPLETED','CANCELLED')),
+        payment_status               TEXT NOT NULL DEFAULT 'PAID'
+            CHECK (payment_status IN ('PENDING','PARTIAL','PAID')),
+        paid_amount_cents             INTEGER NOT NULL DEFAULT 0,
+
+        customer_id                    INTEGER REFERENCES customer(id_customer),
+        walk_in_customer_name           TEXT,
+
+        sale_date                        TEXT NOT NULL DEFAULT (datetime('now')),
+        credit_due_date                   TEXT,
+        completed_at                        TEXT,
+
+        notes                                 TEXT,
+        cancellation_reason                    TEXT,
+
+        deleted                                 INTEGER NOT NULL DEFAULT 0,
+        created_at                                TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at                                 TEXT,
+
+        business_unit_id                            INTEGER NOT NULL
+            REFERENCES business_unit(id_business_unit),
+
+        CHECK (
+            sale_type != 'CREDIT'
+            OR customer_id IS NOT NULL
+            OR walk_in_customer_name IS NOT NULL
+        )
+    )
+  ''';
+
+  // ---------- expense (unchanged since v2 — no category link left to drop here) ----------
   static const String _createExpenseTableV2 = '''
     CREATE TABLE expense (
         id_expense             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -399,7 +656,7 @@ class LocalDatabase {
     END
   ''';
 
-  // ---------- business_category (v3 shape — name no longer globally UNIQUE) ----------
+  // ---------- business_category (v3 shape — used only by v1/v2->v3 migration path) ----------
   static const String _createBusinessCategoryTableV3 = '''
     CREATE TABLE business_category (
         id_business_category INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -422,10 +679,69 @@ class LocalDatabase {
     END
   ''';
 
+  // ---------- customer (v4 shape — business_unit_id NOT NULL) ----------
+  static const String _createCustomerTableV4 = '''
+    CREATE TABLE customer (
+        id_customer       INTEGER PRIMARY KEY AUTOINCREMENT,
+        name              TEXT NOT NULL,
+        last_name         TEXT,
+        phone             TEXT,
+        notes             TEXT,
+        business_unit_id  INTEGER NOT NULL
+            REFERENCES business_unit(id_business_unit),
+        deleted           INTEGER NOT NULL DEFAULT 0,
+        created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at        TEXT
+    )
+  ''';
+
+  // ---------- supplier (v4 shape — business_unit_id NOT NULL) ----------
+  static const String _createSupplierTableV4 = '''
+    CREATE TABLE supplier (
+        id_supplier       INTEGER PRIMARY KEY AUTOINCREMENT,
+        name              TEXT NOT NULL,
+        phone             TEXT,
+        address           TEXT,
+        business_unit_id  INTEGER NOT NULL
+            REFERENCES business_unit(id_business_unit),
+        deleted           INTEGER NOT NULL DEFAULT 0,
+        created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  ''';
+
+  // ---------- financial_statement_sale_item (v4 shape — no category columns) ----------
+  static const String _createFinancialStatementSaleItemTableV4 = '''
+    CREATE TABLE financial_statement_sale_item (
+        id_financial_statement_sale_item INTEGER PRIMARY KEY AUTOINCREMENT,
+        financial_statement_id            INTEGER NOT NULL
+            REFERENCES financial_statement(id_financial_statement) ON DELETE CASCADE,
+        sale_id                             INTEGER NOT NULL
+            REFERENCES sale(id_sale),
+        sale_reference                        TEXT NOT NULL,
+        sale_description                       TEXT NOT NULL,
+        sale_date                               TEXT NOT NULL,
+        amount_cents                             INTEGER NOT NULL CHECK (amount_cents >= 0)
+    )
+  ''';
+
+  // ---------- financial_statement_expense_item (v4 shape — no category columns) ----------
+  static const String _createFinancialStatementExpenseItemTableV4 = '''
+    CREATE TABLE financial_statement_expense_item (
+        id_financial_statement_expense_item INTEGER PRIMARY KEY AUTOINCREMENT,
+        financial_statement_id               INTEGER NOT NULL
+            REFERENCES financial_statement(id_financial_statement) ON DELETE CASCADE,
+        expense_id                             INTEGER NOT NULL
+            REFERENCES expense(id_expense),
+        expense_description                     TEXT NOT NULL,
+        expense_date                             TEXT NOT NULL,
+        amount_cents                              INTEGER NOT NULL CHECK (amount_cents >= 0)
+    )
+  ''';
+
   // ============================================================
   // SCHEMA (fresh installs) — kept as a plain list of statements executed
   // in order. Table order matters: a table must exist before another
-  // references it as a foreign key. This already reflects the v2 shape,
+  // references it as a foreign key. This already reflects the v4 shape,
   // since a brand-new install never goes through _onUpgrade.
   // ============================================================
   static final List<String> _schemaStatements = [
@@ -459,42 +775,15 @@ class LocalDatabase {
     _createBusinessUnitTable,
     _createBusinessUnitUpdatedTrigger,
 
-    // ---------- business_category ----------
-    // Unified category, shared by sales and expenses. Replaces the old
-    // independent sale_category / expense_category tables so that a
-    // "ramo de negócio" means the same thing on both sides, which is
-    // what makes it possible to break down a financial statement
-    // (extracto) by category and not just by grand total.
-    // business_unit_id NULL = Global (visible to every loja); otherwise the
-    // category belongs exclusively to that business unit.
-    _createBusinessCategoryTableV3,
-    'CREATE INDEX idx_business_category_business_unit '
-        'ON business_category(business_unit_id)',
-    _createBusinessCategoryUpdatedTrigger,
-
     // ---------- customer ----------
-    // business_unit_id NULL = Global; otherwise exclusive to that unit.
-    '''
-    CREATE TABLE customer (
-        id_customer       INTEGER PRIMARY KEY AUTOINCREMENT,
-        name              TEXT NOT NULL,
-        last_name         TEXT,
-        phone             TEXT,
-        notes             TEXT,
-        business_unit_id  INTEGER
-            REFERENCES business_unit(id_business_unit),
-        deleted           INTEGER NOT NULL DEFAULT 0,
-        created_at        TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at        TEXT
-    )
-    ''',
+    // business_unit_id NOT NULL — isolamento total, sem Global.
+    _createCustomerTableV4,
     'CREATE INDEX idx_customer_name ON customer(name)',
     'CREATE INDEX idx_customer_business_unit ON customer(business_unit_id)',
 
     // ---------- sale ----------
-    _createSaleTableV2,
+    _createSaleTableV4,
     'CREATE INDEX idx_sale_status ON sale(sale_status)',
-    'CREATE INDEX idx_sale_category ON sale(sale_category_id)',
     'CREATE INDEX idx_sale_customer ON sale(customer_id)',
     'CREATE INDEX idx_sale_date ON sale(sale_date)',
     'CREATE INDEX idx_sale_type ON sale(sale_type)',
@@ -540,19 +829,8 @@ class LocalDatabase {
     'CREATE INDEX idx_payment_sale ON sale_payment(sale_id)',
 
     // ---------- supplier ----------
-    // business_unit_id NULL = Global; otherwise exclusive to that unit.
-    '''
-    CREATE TABLE supplier (
-        id_supplier       INTEGER PRIMARY KEY AUTOINCREMENT,
-        name              TEXT NOT NULL,
-        phone             TEXT,
-        address           TEXT,
-        business_unit_id  INTEGER
-            REFERENCES business_unit(id_business_unit),
-        deleted           INTEGER NOT NULL DEFAULT 0,
-        created_at        TEXT NOT NULL DEFAULT (datetime('now'))
-    )
-    ''',
+    // business_unit_id NOT NULL — isolamento total, sem Global.
+    _createSupplierTableV4,
     'CREATE INDEX idx_supplier_business_unit ON supplier(business_unit_id)',
 
     // ---------- expense ----------
@@ -562,29 +840,6 @@ class LocalDatabase {
     'CREATE INDEX idx_expense_business_unit ON expense(business_unit_id)',
     _createExpenseUpdatedTrigger,
 
-    // ---------- expense_category_split ----------
-    // A single expense can be shared across more than one business_category
-    // (e.g. one internet bill funding both "digital marketing" and "web
-    // development"). Instead of duplicating the expense row per category
-    // (which would double-count it), the expense is recorded once and its
-    // amount_cents is allocated across categories here. The sum of a given
-    // expense's splits must always equal that expense's amount_cents — this
-    // is enforced by ExpenseRepository inside a transaction, not by SQLite,
-    // the same way paid_amount_cents vs sale_payment totals already are.
-    '''
-    CREATE TABLE expense_category_split (
-        id_expense_category_split INTEGER PRIMARY KEY AUTOINCREMENT,
-        expense_id                 INTEGER NOT NULL
-            REFERENCES expense(id_expense) ON DELETE CASCADE,
-        business_category_id        INTEGER NOT NULL
-            REFERENCES business_category(id_business_category),
-        amount_cents                  INTEGER NOT NULL CHECK (amount_cents > 0),
-        UNIQUE (expense_id, business_category_id)
-    )
-    ''',
-    'CREATE INDEX idx_expense_split_expense ON expense_category_split(expense_id)',
-    'CREATE INDEX idx_expense_split_category ON expense_category_split(business_category_id)',
-
     // ============================================================
     // FINANCIAL STATEMENT ("extracto")
     //
@@ -592,14 +847,8 @@ class LocalDatabase {
     // tables below, so a statement's numbers never change even if the
     // underlying sale/expense rows are later edited or cancelled.
     //
-    // Each item also snapshots the business_category (id + name), which
-    // is what allows the extracto to be broken down by category —
-    // grouping financial_statement_sale_item / financial_statement_expense_item
-    // by business_category_id gives ganho/gasto/saldo por ramo, in
-    // addition to the general totals on financial_statement itself.
-    //
-    // business_unit_id NULL = extracto consolidado da matriz/grupo;
-    // otherwise, extracto de uma loja específica.
+    // business_unit_id NULL = extracto geral, somando o fluxo de todas
+    // as lojas; otherwise, extracto de uma loja específica.
     // ============================================================
 
     // ---------- financial_statement ----------
@@ -642,46 +891,13 @@ class LocalDatabase {
     ''',
 
     // ---------- financial_statement_sale_item ----------
-    '''
-    CREATE TABLE financial_statement_sale_item (
-        id_financial_statement_sale_item INTEGER PRIMARY KEY AUTOINCREMENT,
-        financial_statement_id            INTEGER NOT NULL
-            REFERENCES financial_statement(id_financial_statement) ON DELETE CASCADE,
-        sale_id                             INTEGER NOT NULL
-            REFERENCES sale(id_sale),
-        sale_reference                        TEXT NOT NULL,
-        sale_description                       TEXT NOT NULL,
-        sale_date                               TEXT NOT NULL,
-        business_category_id                     INTEGER
-            REFERENCES business_category(id_business_category),
-        business_category_name                    TEXT NOT NULL DEFAULT '',
-        amount_cents                             INTEGER NOT NULL CHECK (amount_cents >= 0)
-    )
-    ''',
+    _createFinancialStatementSaleItemTableV4,
     'CREATE INDEX idx_statement_sale_item_statement '
         'ON financial_statement_sale_item(financial_statement_id)',
-    'CREATE INDEX idx_statement_sale_item_category '
-        'ON financial_statement_sale_item(business_category_id)',
 
     // ---------- financial_statement_expense_item ----------
-    '''
-    CREATE TABLE financial_statement_expense_item (
-        id_financial_statement_expense_item INTEGER PRIMARY KEY AUTOINCREMENT,
-        financial_statement_id               INTEGER NOT NULL
-            REFERENCES financial_statement(id_financial_statement) ON DELETE CASCADE,
-        expense_id                             INTEGER NOT NULL
-            REFERENCES expense(id_expense),
-        expense_description                     TEXT NOT NULL,
-        expense_date                             TEXT NOT NULL,
-        business_category_id                      INTEGER
-            REFERENCES business_category(id_business_category),
-        business_category_name                     TEXT NOT NULL DEFAULT '',
-        amount_cents                              INTEGER NOT NULL CHECK (amount_cents >= 0)
-    )
-    ''',
+    _createFinancialStatementExpenseItemTableV4,
     'CREATE INDEX idx_statement_expense_item_statement '
         'ON financial_statement_expense_item(financial_statement_id)',
-    'CREATE INDEX idx_statement_expense_item_category '
-        'ON financial_statement_expense_item(business_category_id)',
   ];
 }

@@ -5,6 +5,9 @@ import '../models/supplier_model.dart';
 /// All business logic for suppliers: validation, soft-delete enforcement,
 /// and update guards. Screens and providers must never talk to
 /// SupplierDao directly.
+///
+/// `businessUnitId` is strict scope (Schema v4) — every supplier belongs
+/// to exactly one loja, so it's now a required argument everywhere.
 class SupplierRepository {
   SupplierRepository(this._localDatabase, this._supplierDao);
 
@@ -12,11 +15,11 @@ class SupplierRepository {
   final SupplierDao _supplierDao;
 
   Future<List<SupplierModel>> getAllSuppliers({
-    int? activeUnitId,
+    required int businessUnitId,
     bool includeDeleted = false,
   }) {
     return _supplierDao.getAllSuppliers(
-      activeUnitId: activeUnitId,
+      businessUnitId: businessUnitId,
       includeDeleted: includeDeleted,
     );
   }
@@ -27,9 +30,9 @@ class SupplierRepository {
 
   Future<SupplierModel> createSupplier({
     required String name,
+    required int businessUnitId,
     String? phone,
     String? address,
-    int? businessUnitId,
   }) async {
     if (name.trim().isEmpty) {
       throw ArgumentError('Supplier name cannot be empty.');

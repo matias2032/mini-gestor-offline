@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/business_category_provider.dart';
 import '../../providers/expense_provider.dart';
 import '../../providers/supplier_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
@@ -14,7 +13,6 @@ class ExpenseFilterSheet extends StatefulWidget {
 }
 
 class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
-  int? _categoryId;
   int? _supplierId;
   DateTime? _startDate;
   DateTime? _endDate;
@@ -23,7 +21,6 @@ class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
   void initState() {
     super.initState();
     final expenseProvider = context.read<ExpenseProvider>();
-      _categoryId = expenseProvider.filterBusinessCategoryId;
     _supplierId = expenseProvider.filterSupplierId;
     _startDate = expenseProvider.filterStartDate;
     _endDate = expenseProvider.filterEndDate;
@@ -49,8 +46,6 @@ class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
 
   Future<void> _apply() async {
     await context.read<ExpenseProvider>().applyFilters(
-      businessCategoryId: _categoryId,
-      clearBusinessCategoryId: _categoryId == null,
       supplierId: _supplierId,
       clearSupplierId: _supplierId == null,
       startDate: _startDate,
@@ -63,7 +58,6 @@ class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
 
   Future<void> _clear() async {
     setState(() {
-      _categoryId = null;
       _supplierId = null;
       _startDate = null;
       _endDate = null;
@@ -74,7 +68,6 @@ class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = context.watch<BusinessCategoryProvider>().categories;
     final suppliers = context.watch<SupplierProvider>().suppliers;
     final l10n = AppLocalizations.of(context)!;
 
@@ -84,7 +77,7 @@ class _ExpenseFilterSheetState extends State<ExpenseFilterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-Text(
+          Text(
             l10n.filterExpensesTitle,
             style: TextStyle(
               fontSize: 18,
@@ -93,18 +86,6 @@ Text(
             ),
           ),
           const SizedBox(height: 16),
-          DropdownButtonFormField<int?>(
-            initialValue: _categoryId,
-            decoration: InputDecoration(labelText: l10n.categoryLabel),
-            items: [
-              DropdownMenuItem<int?>(value: null, child: Text(l10n.allLabel)),
-              ...categories.map(
-                (c) => DropdownMenuItem<int?>(value: c.idBusinessCategory, child: Text(c.name)),
-              ),
-            ],
-            onChanged: (value) => setState(() => _categoryId = value),
-          ),
-          const SizedBox(height: 12),
           DropdownButtonFormField<int?>(
             initialValue: _supplierId,
             decoration: InputDecoration(labelText: l10n.supplierLabel),

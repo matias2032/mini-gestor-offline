@@ -6,6 +6,9 @@ import '../models/customer_model.dart';
 ///
 /// Deletion is always soft (deleted = 1), never a physical DELETE, so
 /// that sale history referencing a customer stays intact.
+///
+/// `businessUnitId` is strict scope (Schema v4) — every customer belongs
+/// to exactly one loja, so it's now a required argument everywhere.
 class CustomerRepository {
   CustomerRepository(this._database, this._customerDao);
 
@@ -13,11 +16,11 @@ class CustomerRepository {
   final CustomerDao _customerDao;
 
   Future<List<CustomerModel>> getAllCustomers({
-    int? activeUnitId,
+    required int businessUnitId,
     bool includeDeleted = false,
   }) {
     return _customerDao.getAllCustomers(
-      activeUnitId: activeUnitId,
+      businessUnitId: businessUnitId,
       includeDeleted: includeDeleted,
     );
   }
@@ -28,10 +31,10 @@ class CustomerRepository {
 
   Future<CustomerModel> createCustomer({
     required String name,
+    required int businessUnitId,
     String? lastName,
     String? phone,
     String? notes,
-    int? businessUnitId,
   }) async {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
@@ -40,7 +43,7 @@ class CustomerRepository {
 
     return _database.runInTransaction((txn) async {
       final draft = CustomerModel(
-        idCustomer: 0, // placeholder — ignored by insertCustomer
+        idCustomer: 0, // placeholder — replaced below with the real id
         name: trimmedName,
         lastName: _cleanOrNull(lastName),
         phone: _cleanOrNull(phone),
@@ -50,17 +53,17 @@ class CustomerRepository {
       );
 
       final newId = await _customerDao.insertCustomer(draft, txn: txn);
-      return draft.copyWith().let((c) => CustomerModel(
-            idCustomer: newId,
-            name: c.name,
-            lastName: c.lastName,
-            phone: c.phone,
-            notes: c.notes,
-            businessUnitId: c.businessUnitId,
-            deleted: c.deleted,
-            createdAt: c.createdAt,
-            updatedAt: c.updatedAt,
-          ));
+      return CustomerModel(
+        idCustomer: newId,
+        name: draft.name,
+        lastName: draft.lastName,
+        phone: draft.phone,
+        notes: draft.notes,
+        businessUnitId: draft.businessUnitId,
+        deleted: draft.deleted,
+        createdAt: draft.createdAt,
+        updatedAt: draft.updatedAt,
+      );
     });
   }
 
@@ -121,8 +124,4 @@ class CustomerRepository {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
   }
-}
-
-extension _Let<T> on T {
-  R let<R>(R Function(T) block) => block(this);
 }

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../models/business_unit_model.dart';
 import '../../providers/business_unit_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
+import '../../widgets/app_sidebar.dart';
 
 /// Store management: create, rename, set as default, remove. Reachable
 /// from AppSidebar regardless of hasMultipleUnits — a single-store user
@@ -132,6 +133,7 @@ class BusinessUnitManagementScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(loc.storesTitle)),
+      drawer: const AppSidebar(currentRoute: '/business-unit-management'),
       floatingActionButton: FloatingActionButton(
         tooltip: loc.newStore,
         onPressed: () => _createStore(context),
@@ -164,10 +166,13 @@ class BusinessUnitManagementScreen extends StatelessWidget {
                         switch (action) {
                           case 'rename':
                             _renameStore(context, unit);
-                                                    case 'default':
+                            break;
+                          case 'default':
                             context.read<BusinessUnitProvider>().setAsDefault(unit.idBusinessUnit!);
+                            break;
                           case 'delete':
                             _confirmDelete(context, unit);
+                            break;
                         }
                       },
                       itemBuilder: (context) => [

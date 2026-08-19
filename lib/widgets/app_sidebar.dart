@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/business_unit_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
@@ -72,7 +73,6 @@ class _AppSidebarState extends State<AppSidebar>
   /// route. Kept separate from `_buildGroups` so it doesn't need a
   /// BuildContext/AppLocalizations.
   static const Map<String, List<String>> _groupRoutes = {
-    'category': ['/category'],
     'sales': ['/sale', '/credit-sale', '/sale/financial-statement'],
     'customers': ['/customer'],
     'suppliers': ['/supplier'],
@@ -80,18 +80,6 @@ class _AppSidebarState extends State<AppSidebar>
   };
 
   List<_MenuGroup> _buildGroups(AppLocalizations loc) => [
-        _MenuGroup(
-          icon: Icons.category_outlined,
-          title: loc.categoriesLabel,
-          groupKey: 'category',
-          items: [
-            _MenuItem(
-              icon: Icons.category_outlined,
-              title: loc.categoriesLabel,
-              route: '/category',
-            ),
-          ],
-        ),
         _MenuGroup(
           icon: Icons.point_of_sale_outlined,
           title: loc.salesGroupLabel,
@@ -200,13 +188,15 @@ class _AppSidebarState extends State<AppSidebar>
     final user = context.watch<UserProvider>().user;
     if (user == null) return const SizedBox.shrink();
 
+    final activeUnitName =
+        context.watch<BusinessUnitProvider>().activeBusinessUnit?.name;
     final colorScheme = Theme.of(context).colorScheme;
     final groups = _buildGroups(loc);
 
     return Drawer(
       child: Column(
         children: [
-          _buildHeader(context, colorScheme, user),
+          _buildHeader(context, colorScheme, user, activeUnitName),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -249,7 +239,12 @@ class _AppSidebarState extends State<AppSidebar>
   // Header
   // -------------------------------------------------------------------
 
-  Widget _buildHeader(BuildContext context, ColorScheme colorScheme, dynamic user) {
+  Widget _buildHeader(
+    BuildContext context,
+    ColorScheme colorScheme,
+    dynamic user,
+    String? activeUnitName,
+  ) {
     final initial = (user.name as String).isNotEmpty
         ? (user.name as String)[0].toUpperCase()
         : '?';
@@ -280,8 +275,8 @@ class _AppSidebarState extends State<AppSidebar>
           ),
           const SizedBox(height: 10),
           Text(
-            (user.businessName as String?)?.isNotEmpty == true
-                ? user.businessName as String
+            activeUnitName?.isNotEmpty == true
+                ? activeUnitName!
                 : user.name as String,
             style: TextStyle(
               color: colorScheme.onPrimary,

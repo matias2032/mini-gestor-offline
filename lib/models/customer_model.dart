@@ -1,15 +1,17 @@
+// customer_model.dart
+
 /// Pure data class representing a row in the `customer` table.
 ///
-/// `businessUnitId` is hybrid scope: `null` means the customer is Global
-/// (visible to every loja); a value means it belongs exclusively to that
-/// business unit.
+/// `businessUnitId` is now strict scope (Schema v4): every customer
+/// belongs to exactly one loja. The "Global" (shared-across-lojas)
+/// concept has been removed — see LocalDatabase._migrateToV4.
 class CustomerModel {
   final int idCustomer;
   final String name;
   final String? lastName;
   final String? phone;
   final String? notes;
-  final int? businessUnitId;
+  final int businessUnitId;
   final bool deleted;
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -20,13 +22,11 @@ class CustomerModel {
     this.lastName,
     this.phone,
     this.notes,
-    this.businessUnitId,
+    required this.businessUnitId,
     this.deleted = false,
     required this.createdAt,
     this.updatedAt,
   });
-
-  bool get isGlobal => businessUnitId == null;
 
   factory CustomerModel.fromMap(Map<String, dynamic> map) {
     return CustomerModel(
@@ -35,7 +35,7 @@ class CustomerModel {
       lastName: map['last_name'] as String?,
       phone: map['phone'] as String?,
       notes: map['notes'] as String?,
-      businessUnitId: map['business_unit_id'] as int?,
+      businessUnitId: map['business_unit_id'] as int,
       deleted: (map['deleted'] as int) == 1,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: map['updated_at'] != null
@@ -64,7 +64,6 @@ class CustomerModel {
     String? phone,
     String? notes,
     int? businessUnitId,
-    bool clearBusinessUnitId = false,
     bool? deleted,
     DateTime? updatedAt,
   }) {
@@ -74,8 +73,7 @@ class CustomerModel {
       lastName: lastName ?? this.lastName,
       phone: phone ?? this.phone,
       notes: notes ?? this.notes,
-      businessUnitId:
-          clearBusinessUnitId ? null : (businessUnitId ?? this.businessUnitId),
+      businessUnitId: businessUnitId ?? this.businessUnitId,
       deleted: deleted ?? this.deleted,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

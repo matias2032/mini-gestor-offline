@@ -167,6 +167,9 @@ class FinancialStatementDao {
 
   /// Finalized sales (sale_status = COMPLETED, not deleted) whose
   /// sale_date falls within [startDate, endDate] inclusive.
+  /// Finalized sales (sale_status = COMPLETED, not deleted) whose
+  /// sale_date falls within [startDate, endDate] inclusive. No category
+  /// columns — dropped in Schema v4.
   Future<List<Map<String, Object?>>> getFinalizedSalesInPeriod({
     required int businessUnitId,
     required DateTime startDate,
@@ -177,12 +180,8 @@ class FinancialStatementDao {
     return executor.rawQuery(
       '''
       SELECT s.id_sale, s.reference, s.description, s.sale_date,
-             s.total_amount_cents,
-             s.sale_category_id AS business_category_id,
-             bc.name AS business_category_name
+             s.total_amount_cents
       FROM sale s
-      LEFT JOIN business_category bc
-        ON bc.id_business_category = s.sale_category_id
       WHERE s.deleted = 0 AND s.sale_status = 'COMPLETED'
         AND s.business_unit_id = ?
         AND s.sale_date >= ? AND s.sale_date <= ?
@@ -192,6 +191,9 @@ class FinancialStatementDao {
     );
   }
 
+  /// Expenses within [startDate, endDate] inclusive. `expense_category_split`
+  /// no longer exists (Schema v4) — amount_cents is read straight off
+  /// `expense`, which is a flat row again.
   Future<List<Map<String, Object?>>> getExpensesInPeriod({
     required int businessUnitId,
     required DateTime startDate,
@@ -202,13 +204,8 @@ class FinancialStatementDao {
     return executor.rawQuery(
       '''
       SELECT e.id_expense, e.description, e.expense_date,
-             ecs.amount_cents,
-             ecs.business_category_id AS business_category_id,
-             bc.name AS business_category_name
+             e.amount_cents
       FROM expense e
-      JOIN expense_category_split ecs ON ecs.expense_id = e.id_expense
-      LEFT JOIN business_category bc
-        ON bc.id_business_category = ecs.business_category_id
       WHERE e.deleted = 0
         AND e.business_unit_id = ?
         AND e.expense_date >= ? AND e.expense_date <= ?
@@ -217,4 +214,43 @@ class FinancialStatementDao {
       [businessUnitId, startDate.toIso8601String(), endDate.toIso8601String()],
     );
   }
+
+    Future<List<Map<String, Object?>>> getSalesBreakdownByUnit(
+    int financialStatementId, {
+    Transaction? txn,
+  }) async {
+    final executor = txn ?? await _localDatabase.database;
+    return executor.rawQuery(
+      '''
+      SELECT s.business_unit_id AS business_unit_id,
+             COUNT(*) AS sales_count,
+             COALESCE(SUM(fsi.amount_cents), 0) AS total_cents
+      FROM financial_statement_sale_item fsi
+      JOIN sale s ON s.id_sale = fsi.sale_id
+      WHERE fsi.financial_statement_id = ?
+      GROUP BY s.business_unit_id
+      ''',
+      [financialStatementId],
+    );
+  }
+
+  Future<List<Map<String, Object?>>> getExpensesBreakdownByUnit(
+    int financialStatementId, {
+    Transaction? txn,
+  }) async {
+    final executor = txn ?? await _localDatabase.database;
+    return executor.rawQuery(
+      '''
+      SELECT e.business_unit_id AS business_unit_id,
+             COUNT(*) AS expenses_count,
+             COALESCE(SUM(fei.amount_cents), 0) AS total_cents
+      FROM financial_statement_expense_item fei
+      JOIN expense e ON e.id_expense = fei.expense_id
+      WHERE fei.financial_statement_id = ?
+      GROUP BY e.business_unit_id
+      ''',
+      [financialStatementId],
+    );
+  }
+
 }

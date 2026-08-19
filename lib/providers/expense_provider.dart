@@ -3,6 +3,11 @@ import '../models/expense_model.dart';
 import '../repositories/expense_repository.dart';
 import 'business_unit_provider.dart';
 
+/// Thin UI state holder for the expense list.
+///
+/// Zero business logic — only calls ExpenseRepository and exposes
+/// loading/error/data state for the UI. Listens to [BusinessUnitProvider]
+/// so switching the active store reloads the list automatically.
 class ExpenseProvider extends ChangeNotifier {
   ExpenseProvider(this._expenseRepository, this._businessUnitProvider) {
     _businessUnitProvider.addListener(_onActiveUnitChanged);
@@ -17,7 +22,6 @@ class ExpenseProvider extends ChangeNotifier {
   String? _errorMessage;
 
   // Active filters — null means "no filter" for that field.
-  int? _filterBusinessCategoryId;
   int? _filterSupplierId;
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
@@ -27,13 +31,11 @@ class ExpenseProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  int? get filterBusinessCategoryId => _filterBusinessCategoryId;
   int? get filterSupplierId => _filterSupplierId;
   DateTime? get filterStartDate => _filterStartDate;
   DateTime? get filterEndDate => _filterEndDate;
 
   bool get hasActiveFilters =>
-      _filterBusinessCategoryId != null ||
       _filterSupplierId != null ||
       _filterStartDate != null ||
       _filterEndDate != null;
@@ -58,7 +60,6 @@ class ExpenseProvider extends ChangeNotifier {
     try {
       _expenses = await _expenseRepository.getAllExpenses(
         businessUnitId: unitId,
-        businessCategoryId: _filterBusinessCategoryId,
         supplierId: _filterSupplierId,
         startDate: _filterStartDate,
         endDate: _filterEndDate,
@@ -75,8 +76,6 @@ class ExpenseProvider extends ChangeNotifier {
   /// on a field to explicitly reset it to "no filter" (since `null` here
   /// means "leave unchanged", not "clear").
   Future<void> applyFilters({
-    int? businessCategoryId,
-    bool clearBusinessCategoryId = false,
     int? supplierId,
     bool clearSupplierId = false,
     DateTime? startDate,
@@ -84,8 +83,6 @@ class ExpenseProvider extends ChangeNotifier {
     DateTime? endDate,
     bool clearEndDate = false,
   }) async {
-    _filterBusinessCategoryId =
-        clearBusinessCategoryId ? null : (businessCategoryId ?? _filterBusinessCategoryId);
     _filterSupplierId = clearSupplierId ? null : (supplierId ?? _filterSupplierId);
     _filterStartDate = clearStartDate ? null : (startDate ?? _filterStartDate);
     _filterEndDate = clearEndDate ? null : (endDate ?? _filterEndDate);
@@ -93,7 +90,6 @@ class ExpenseProvider extends ChangeNotifier {
   }
 
   Future<void> clearFilters() async {
-    _filterBusinessCategoryId = null;
     _filterSupplierId = null;
     _filterStartDate = null;
     _filterEndDate = null;
@@ -101,7 +97,6 @@ class ExpenseProvider extends ChangeNotifier {
   }
 
   Future<bool> createExpense({
-    required List<ExpenseCategoryAllocation> categoryAllocations,
     int? supplierId,
     required String description,
     required int amountCents,
@@ -121,7 +116,6 @@ class ExpenseProvider extends ChangeNotifier {
     try {
       await _expenseRepository.createExpense(
         businessUnitId: unitId,
-        categoryAllocations: categoryAllocations,
         supplierId: supplierId,
         description: description,
         amountCents: amountCents,
@@ -139,7 +133,6 @@ class ExpenseProvider extends ChangeNotifier {
 
   Future<bool> updateExpense({
     required int idExpense,
-    required List<ExpenseCategoryAllocation> categoryAllocations,
     int? supplierId,
     required String description,
     required int amountCents,
@@ -152,7 +145,6 @@ class ExpenseProvider extends ChangeNotifier {
     try {
       await _expenseRepository.updateExpense(
         idExpense: idExpense,
-        categoryAllocations: categoryAllocations,
         supplierId: supplierId,
         description: description,
         amountCents: amountCents,
@@ -183,12 +175,6 @@ class ExpenseProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-  }
-
-  /// Existing category splits for [idExpense] — used to pre-fill the
-  /// allocation UI when editing a shared expense.
-  Future<List<ExpenseCategorySplitModel>> getSplitsByExpense(int idExpense) {
-    return _expenseRepository.getSplitsByExpense(idExpense);
   }
 
   void _onActiveUnitChanged() {

@@ -83,7 +83,7 @@ class BusinessUnitProvider extends ChangeNotifier {
 
   Future<void> setAsDefault(int id) async {
     await _repository.setAsDefault(id);
-    await loadUnits(preferredActiveId: _activeUnit?.idBusinessUnit);
+    await loadUnits(preferredActiveId: id);
   }
 
   Future<void> deleteUnit(int id) async {

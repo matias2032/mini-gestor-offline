@@ -15,7 +15,6 @@ class SaleModel {
   const SaleModel({
     this.idSale,
     required this.reference,
-    required this.saleCategoryId,
     required this.description,
     required this.totalAmountCents,
     this.saleType = 'NORMAL',
@@ -38,7 +37,6 @@ class SaleModel {
 
   final int? idSale;
   final String reference;
-  final int saleCategoryId;
   final String description;
   final int totalAmountCents;
   final String saleType; // 'NORMAL' | 'CREDIT'
@@ -67,7 +65,6 @@ class SaleModel {
     return SaleModel(
       idSale: map['id_sale'] as int?,
       reference: map['reference'] as String,
-      saleCategoryId: map['sale_category_id'] as int,
       description: map['description'] as String,
       totalAmountCents: map['total_amount_cents'] as int,
       saleType: map['sale_type'] as String,
@@ -99,7 +96,6 @@ class SaleModel {
     return {
       if (idSale != null) 'id_sale': idSale,
       'reference': reference,
-      'sale_category_id': saleCategoryId,
       'description': description,
       'total_amount_cents': totalAmountCents,
       'sale_type': saleType,
@@ -124,7 +120,6 @@ class SaleModel {
   SaleModel copyWith({
     int? idSale,
     String? reference,
-    int? saleCategoryId,
     String? description,
     int? totalAmountCents,
     String? saleType,
@@ -152,7 +147,6 @@ class SaleModel {
     return SaleModel(
       idSale: idSale ?? this.idSale,
       reference: reference ?? this.reference,
-      saleCategoryId: saleCategoryId ?? this.saleCategoryId,
       description: description ?? this.description,
       totalAmountCents: totalAmountCents ?? this.totalAmountCents,
       saleType: saleType ?? this.saleType,
@@ -349,8 +343,91 @@ class SalePaymentModel {
 }
 
 // ============================================================
-// dashboard support types (backed by aggregate queries in SaleDao)
+// dashboard support types
+//
+// CategorySalesSummary foi REMOVIDO — dependia de business_category
+// (eliminada no Schema v4). DashboardStats foi reconstruído na FASE 5,
+// agregado por loja (businessUnitId) em vez de por categoria.
 // ============================================================
+
+/// Aggregate stats for one business unit's dashboard, over a given
+/// [DashboardPeriod]. Deliberately flat — no per-category breakdown,
+/// since business_category no longer exists.
+class DashboardStats {
+  const DashboardStats({
+    required this.businessUnitId,
+    required this.period,
+    required this.startDate,
+    required this.endDate,
+    required this.finalizedSalesCount,
+    required this.totalRevenueCents,
+    required this.settledCreditSalesCount,
+    required this.settledCreditRevenueCents,
+  });
+
+  final int businessUnitId;
+  final DashboardPeriod period;
+  final DateTime startDate;
+  final DateTime endDate;
+
+  /// Every COMPLETED sale (NORMAL + CREDIT) in the period.
+  final int finalizedSalesCount;
+
+  /// Sum of total_amount_cents for every COMPLETED sale in the period.
+  final int totalRevenueCents;
+
+  /// COMPLETED CREDIT sales only — i.e. credit sales fully paid off
+  /// within the period.
+  final int settledCreditSalesCount;
+
+  /// Sum of total_amount_cents for those settled CREDIT sales.
+  final int settledCreditRevenueCents;
+}
+
+/// One store's slice of a [ConsolidatedDashboardStats] — how much that
+/// loja contributed to the group total in the period.
+class DashboardStoreBreakdown {
+  const DashboardStoreBreakdown({
+    required this.businessUnitId,
+    required this.businessUnitName,
+    required this.finalizedSalesCount,
+    required this.totalRevenueCents,
+  });
+
+  final int businessUnitId;
+  final String businessUnitName;
+  final int finalizedSalesCount;
+  final int totalRevenueCents;
+}
+
+/// Consolidated ("Super Dashboard") stats across every business unit,
+/// for a given period. Same shape as [DashboardStats]' totals, plus a
+/// per-loja breakdown so the UI can show each store's contribution —
+/// mirrors the pattern FinancialStatementRepository.generateStatement
+/// already uses for businessUnitId == null (loop every unit, merge).
+class ConsolidatedDashboardStats {
+  const ConsolidatedDashboardStats({
+    required this.period,
+    required this.startDate,
+    required this.endDate,
+    required this.finalizedSalesCount,
+    required this.totalRevenueCents,
+    required this.settledCreditSalesCount,
+    required this.settledCreditRevenueCents,
+    required this.perStore,
+  });
+
+  final DashboardPeriod period;
+  final DateTime startDate;
+  final DateTime endDate;
+  final int finalizedSalesCount;
+  final int totalRevenueCents;
+  final int settledCreditSalesCount;
+  final int settledCreditRevenueCents;
+
+  /// Sorted by totalRevenueCents descending — biggest contributor first.
+  final List<DashboardStoreBreakdown> perStore;
+}
 
 /// Period filter for the dashboard's aggregate stats.
 enum DashboardPeriod { today, last24Hours, oneWeek, oneMonth, threeMonths, sixMonths, oneYear }
@@ -394,50 +471,4 @@ extension DashboardPeriodX on DashboardPeriod {
         return '1 year';
     }
   }
-}
-
-/// Aggregated totals for one business_category, used by the dashboard's
-/// per-category breakdown. Categories with zero finalized sales in the
-/// selected period still appear, with totalCents = 0.
-class CategorySalesSummary {
-  const CategorySalesSummary({
-    required this.idBusinessCategory,
-    required this.name,
-    required this.totalCents,
-    required this.saleCount,
-  });
-
-  final int idBusinessCategory;
-  final String name;
-  final int totalCents;
-  final int saleCount;
-}
-
-/// Snapshot of dashboard numbers for a given period. Only *finalized*
-/// sales count here (sale_status = COMPLETED) — a CREDIT sale that is
-/// still OPEN/OUTSTANDING contributes to none of these totals, matching
-/// the rule that credit revenue only counts once the debt is settled.
-///
-/// These aggregates are always scoped to the active business unit — see
-/// SaleDao/SaleProvider in FASE 3/5 for how businessUnitId is threaded
-/// through the query that produces this snapshot.
-class DashboardStats {
-  const DashboardStats({
-    required this.finalizedSalesCount,
-    required this.totalAllSalesCents,
-    required this.totalCreditSalesCents,
-    required this.categorySummaries,
-  });
-
-  final int finalizedSalesCount;
-  final int totalAllSalesCents;
-  final int totalCreditSalesCents;
-  final List<CategorySalesSummary> categorySummaries;
-
-  factory DashboardStats.empty() => const DashboardStats(
-        finalizedSalesCount: 0,
-        totalAllSalesCents: 0,
-        totalCreditSalesCents: 0,
-        categorySummaries: [],
-      );
 }

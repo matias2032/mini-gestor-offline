@@ -1,4 +1,5 @@
 // financial_statement_model.dart
+
 /// Period filter used when generating a statement — mirrors
 /// [DashboardPeriod] but includes a CUSTOM option for an explicit
 /// start/end date range.
@@ -93,8 +94,8 @@ extension StatementPeriodTypeX on StatementPeriodType {
 /// sets it automatically on UPDATE — same pattern as `sale`/`expense`.
 ///
 /// `businessUnitId` is hybrid scope: `null` means a consolidated
-/// (matriz/grupo) statement; a value means the statement is for that one
-/// loja.
+/// (matriz/grupo) statement — o "Super Extracto"; a value means the
+/// statement is for that one loja.
 class FinancialStatementModel {
   const FinancialStatementModel({
     this.idFinancialStatement,
@@ -223,8 +224,8 @@ class FinancialStatementModel {
 /// Snapshot row in `financial_statement_sale_item` — one finalized sale
 /// as it looked at the moment the statement was generated.
 ///
-/// No businessUnitId here — a statement's items already inherit their
-/// scope from the parent `financial_statement` row.
+/// Sem colunas de categoria (removidas no Schema v4) — nem
+/// businessUnitId, já que herda o scope do `financial_statement` pai.
 class FinancialStatementSaleItemModel {
   const FinancialStatementSaleItemModel({
     this.idFinancialStatementSaleItem,
@@ -233,8 +234,6 @@ class FinancialStatementSaleItemModel {
     required this.saleReference,
     required this.saleDescription,
     required this.saleDate,
-    this.businessCategoryId,
-    this.businessCategoryName = '',
     required this.amountCents,
   });
 
@@ -244,8 +243,6 @@ class FinancialStatementSaleItemModel {
   final String saleReference;
   final String saleDescription;
   final DateTime saleDate;
-  final int? businessCategoryId;
-  final String businessCategoryName;
   final int amountCents;
 
   factory FinancialStatementSaleItemModel.fromMap(Map<String, Object?> map) {
@@ -257,8 +254,6 @@ class FinancialStatementSaleItemModel {
       saleReference: map['sale_reference'] as String,
       saleDescription: map['sale_description'] as String,
       saleDate: DateTime.parse(map['sale_date'] as String),
-      businessCategoryId: map['business_category_id'] as int?,
-      businessCategoryName: map['business_category_name'] as String? ?? '',
       amountCents: map['amount_cents'] as int,
     );
   }
@@ -272,8 +267,6 @@ class FinancialStatementSaleItemModel {
       'sale_reference': saleReference,
       'sale_description': saleDescription,
       'sale_date': saleDate.toIso8601String(),
-      'business_category_id': businessCategoryId,
-      'business_category_name': businessCategoryName,
       'amount_cents': amountCents,
     };
   }
@@ -282,7 +275,7 @@ class FinancialStatementSaleItemModel {
 /// Snapshot row in `financial_statement_expense_item` — one expense as it
 /// looked at the moment the statement was generated.
 ///
-/// No businessUnitId here — same reasoning as
+/// Sem colunas de categoria (removidas no Schema v4) — mesma razão que
 /// [FinancialStatementSaleItemModel].
 class FinancialStatementExpenseItemModel {
   const FinancialStatementExpenseItemModel({
@@ -291,8 +284,6 @@ class FinancialStatementExpenseItemModel {
     required this.expenseId,
     required this.expenseDescription,
     required this.expenseDate,
-    this.businessCategoryId,
-    this.businessCategoryName = '',
     required this.amountCents,
   });
 
@@ -301,8 +292,6 @@ class FinancialStatementExpenseItemModel {
   final int expenseId;
   final String expenseDescription;
   final DateTime expenseDate;
-  final int? businessCategoryId;
-  final String businessCategoryName;
   final int amountCents;
 
   factory FinancialStatementExpenseItemModel.fromMap(Map<String, Object?> map) {
@@ -313,8 +302,6 @@ class FinancialStatementExpenseItemModel {
       expenseId: map['expense_id'] as int,
       expenseDescription: map['expense_description'] as String,
       expenseDate: DateTime.parse(map['expense_date'] as String),
-      businessCategoryId: map['business_category_id'] as int?,
-      businessCategoryName: map['business_category_name'] as String? ?? '',
       amountCents: map['amount_cents'] as int,
     );
   }
@@ -327,28 +314,36 @@ class FinancialStatementExpenseItemModel {
       'expense_id': expenseId,
       'expense_description': expenseDescription,
       'expense_date': expenseDate.toIso8601String(),
-      'business_category_id': businessCategoryId,
-      'business_category_name': businessCategoryName,
       'amount_cents': amountCents,
     };
   }
 }
 
-/// Aggregated per-category breakdown for a single financial statement —
-/// how much of that statement's sales and expenses each shared
-/// business_category accounts for. See [FinancialStatementDetail.categoryBreakdown].
-class CategoryStatementSummary {
-  const CategoryStatementSummary({
-    required this.businessCategoryId,
-    required this.name,
+/// One store's slice of a consolidated ("Super Extracto") statement —
+/// how much that loja contributed to the group total in the period.
+///
+/// Computed live by joining the frozen snapshot items
+/// (financial_statement_sale_item/expense_item) back to the live
+/// sale/expense rows — those snapshot tables never stored
+/// business_unit_id. This is safe because a sale/expense's
+/// business_unit_id is set once at creation and never changes; only the
+/// money figures needed freezing.
+class FinancialStatementStoreBreakdown {
+  const FinancialStatementStoreBreakdown({
+    required this.businessUnitId,
+    required this.businessUnitName,
     required this.totalSalesCents,
+    required this.salesCount,
     required this.totalExpensesCents,
+    required this.expensesCount,
   });
 
-  final int? businessCategoryId;
-  final String name;
+  final int businessUnitId;
+  final String businessUnitName;
   final int totalSalesCents;
+  final int salesCount;
   final int totalExpensesCents;
+  final int expensesCount;
 
   int get balanceCents => totalSalesCents - totalExpensesCents;
 }

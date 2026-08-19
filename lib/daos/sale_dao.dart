@@ -73,7 +73,6 @@ class SaleDao {
   /// (mandatory) — see FASE 3 handoff.
   Future<List<SaleModel>> getAllSales({
     required int businessUnitId,
-    int? saleCategoryId,
     int? customerId,
     String? saleType,
     String? saleStatus,
@@ -89,10 +88,6 @@ class SaleDao {
 
     if (!includeDeleted) {
       conditions.add('deleted = 0');
-    }
-    if (saleCategoryId != null) {
-      conditions.add('sale_category_id = ?');
-      args.add(saleCategoryId);
     }
     if (customerId != null) {
       conditions.add('customer_id = ?');
@@ -140,7 +135,6 @@ class SaleDao {
   /// until they're settled. `businessUnitId` is strict scope (mandatory).
   Future<List<SaleModel>> getSalesForSalesList({
     required int businessUnitId,
-    int? saleCategoryId,
     int? customerId,
     String? saleType,
     DateTime? startDate,
@@ -157,10 +151,6 @@ class SaleDao {
     final args = <Object?>[businessUnitId];
 
     if (!includeDeleted) conditions.add('deleted = 0');
-    if (saleCategoryId != null) {
-      conditions.add('sale_category_id = ?');
-      args.add(saleCategoryId);
-    }
     if (customerId != null) {
       conditions.add('customer_id = ?');
       args.add(customerId);
@@ -206,8 +196,13 @@ class SaleDao {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
+
+  /// Count of finalized (COMPLETED) sales. Pass [saleType] to restrict to
+  /// 'CREDIT' or 'NORMAL'; omit it to count both. Scoped to the active
+  /// business unit.
   Future<int> countFinalizedSales({
     required int businessUnitId,
+    String? saleType,
     DateTime? startDate,
     DateTime? endDate,
     Transaction? txn,
@@ -219,6 +214,10 @@ class SaleDao {
       "business_unit_id = ?",
     ];
     final args = <Object?>[businessUnitId];
+    if (saleType != null) {
+      conditions.add('sale_type = ?');
+      args.add(saleType);
+    }
     if (startDate != null) {
       conditions.add('sale_date >= ?');
       args.add(startDate.toIso8601String());
@@ -271,46 +270,6 @@ class SaleDao {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
-  /// One row per non-deleted business_category visible to the active unit
-  /// (global or belonging to it), with the sum/count of its finalized
-  /// sales in the period, scoped to the active unit. LEFT JOIN keeps
-  /// categories with zero sales in the result (as 0), instead of dropping
-  /// them.
-  Future<List<Map<String, Object?>>> sumFinalizedSalesByCategory({
-    required int businessUnitId,
-    DateTime? startDate,
-    DateTime? endDate,
-    Transaction? txn,
-  }) async {
-    final executor = txn ?? await _localDatabase.database;
-    final joinConditions = <String>[
-      's.sale_category_id = c.id_business_category',
-      's.deleted = 0',
-      "s.sale_status = 'COMPLETED'",
-      's.business_unit_id = ?',
-    ];
-    final args = <Object?>[businessUnitId];
-    if (startDate != null) {
-      joinConditions.add('s.sale_date >= ?');
-      args.add(startDate.toIso8601String());
-    }
-    if (endDate != null) {
-      joinConditions.add('s.sale_date <= ?');
-      args.add(endDate.toIso8601String());
-    }
-    return executor.rawQuery(
-      'SELECT c.id_business_category AS id_business_category, c.name AS name, '
-      'COALESCE(SUM(s.total_amount_cents), 0) AS total_cents, '
-      'COUNT(s.id_sale) AS sale_count '
-      'FROM business_category c '
-      'LEFT JOIN sale s ON ${joinConditions.join(' AND ')} '
-      'WHERE c.deleted = 0 '
-      'AND (c.business_unit_id IS NULL OR c.business_unit_id = ?) '
-      'GROUP BY c.id_business_category, c.name '
-      'ORDER BY total_cents DESC',
-      [...args, businessUnitId],
-    );
-  }
 
   /// Credit sales still awaiting payment — exactly the ones excluded from
   /// [getSalesForSalesList]. Backs the (upcoming) credit sales list

@@ -5,9 +5,9 @@ import '../models/sale_model.dart';
 import '../repositories/sale_repository.dart';
 import 'business_unit_provider.dart';
 
-/// Thin UI state holder for the sale module (sale, sale_category,
-/// sale_installment, sale_payment). Zero business logic — only calls
-/// SaleRepository and exposes loading/error/data for the UI. Listens to
+/// Thin UI state holder for the sale module (sale, sale_installment,
+/// sale_payment). Zero business logic — only calls SaleRepository and
+/// exposes loading/error/data for the UI. Listens to
 /// [BusinessUnitProvider] so switching the active store reloads every
 /// sale-scoped list/stat automatically.
 class SaleProvider extends ChangeNotifier {
@@ -30,7 +30,6 @@ class SaleProvider extends ChangeNotifier {
   // Remembers the last filters used in loadSales, so mutations (create,
   // cancel, payment) and store switches can refresh the list with the
   // same view active.
-  int? _lastSaleCategoryId;
   int? _lastCustomerId;
   String? _lastSaleType;
   DateTime? _lastStartDate;
@@ -53,9 +52,6 @@ class SaleProvider extends ChangeNotifier {
   // without paying for the full credit-sales list load.
   int _outstandingCreditCount = 0;
 
-  DashboardStats _dashboardStats = DashboardStats.empty();
-  DashboardPeriod _dashboardPeriod = DashboardPeriod.oneMonth;
-
   List<SaleModel> get sales => _sales;
   List<SaleModel> get creditSales => _creditSales;
   SaleModel? get currentSale => _currentSale;
@@ -64,8 +60,6 @@ class SaleProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   int get outstandingCreditCount => _outstandingCreditCount;
-  DashboardStats get dashboardStats => _dashboardStats;
-  DashboardPeriod get dashboardPeriod => _dashboardPeriod;
 
   int? get _activeUnitId => _businessUnitProvider.activeBusinessUnit?.idBusinessUnit;
 
@@ -77,13 +71,11 @@ class SaleProvider extends ChangeNotifier {
   /// once they're finalized (COMPLETED/CANCELLED). Active credit sales
   /// live in [loadCreditSales] instead.
   Future<void> loadSales({
-    int? saleCategoryId,
     int? customerId,
     String? saleType,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    _lastSaleCategoryId = saleCategoryId;
     _lastCustomerId = customerId;
     _lastSaleType = saleType;
     _lastStartDate = startDate;
@@ -100,7 +92,6 @@ class SaleProvider extends ChangeNotifier {
     try {
       _sales = await _saleRepository.getSalesForSalesList(
         businessUnitId: unitId,
-        saleCategoryId: saleCategoryId,
         customerId: customerId,
         saleType: saleType,
         startDate: startDate,
@@ -151,7 +142,6 @@ class SaleProvider extends ChangeNotifier {
   }
 
   Future<bool> createSale({
-    required int saleCategoryId,
     required String description,
     required int totalAmountCents,
     String saleType = 'NORMAL',
@@ -175,7 +165,6 @@ class SaleProvider extends ChangeNotifier {
     try {
       await _saleRepository.createSale(
         businessUnitId: unitId,
-        saleCategoryId: saleCategoryId,
         description: description,
         totalAmountCents: totalAmountCents,
         saleType: saleType,
@@ -288,34 +277,11 @@ class SaleProvider extends ChangeNotifier {
     }
   }
 
-  /// Loads dashboard stats for [period] (or the last one used, if
-  /// omitted). Called on dashboard init and whenever the user switches
-  /// the period filter.
-  Future<void> loadDashboardStats({DashboardPeriod? period}) async {
-    if (period != null) _dashboardPeriod = period;
-
-    final unitId = _activeUnitId;
-    if (unitId == null) {
-      _dashboardStats = DashboardStats.empty();
-      notifyListeners();
-      return;
-    }
-
-    _setLoading(true);
-    try {
-      final now = DateTime.now();
-      _dashboardStats = await _saleRepository.getDashboardStats(
-        businessUnitId: unitId,
-        startDate: _dashboardPeriod.startDateFrom(now),
-        endDate: now,
-      );
-      _errorMessage = null;
-    } catch (error) {
-      _errorMessage = error.toString();
-    } finally {
-      _setLoading(false);
-    }
-  }
+  // loadDashboardStats()/dashboardStats/dashboardPeriod foram REMOVIDOS
+  // daqui — dependiam de SaleRepository.getDashboardStats, eliminado na
+  // FASE 2 por depender de categorias. A FASE 5 introduz um
+  // DashboardProvider próprio (Individual + Super Dashboard), agregado
+  // por loja em vez de por categoria.
 
   Future<void> _refreshSales() async {
     final unitId = _activeUnitId;
@@ -325,7 +291,6 @@ class SaleProvider extends ChangeNotifier {
     }
     _sales = await _saleRepository.getSalesForSalesList(
       businessUnitId: unitId,
-      saleCategoryId: _lastSaleCategoryId,
       customerId: _lastCustomerId,
       saleType: _lastSaleType,
       startDate: _lastStartDate,
@@ -367,7 +332,6 @@ class SaleProvider extends ChangeNotifier {
   /// from the previous store shouldn't silently vanish under the user.
   void _onActiveUnitChanged() {
     loadSales(
-      saleCategoryId: _lastSaleCategoryId,
       customerId: _lastCustomerId,
       saleType: _lastSaleType,
       startDate: _lastStartDate,
@@ -381,7 +345,6 @@ class SaleProvider extends ChangeNotifier {
       );
     }
     loadOutstandingCreditCount();
-    loadDashboardStats();
   }
 
   void _setLoading(bool value) {

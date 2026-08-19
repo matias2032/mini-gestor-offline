@@ -48,16 +48,16 @@ class CustomerDao {
     return CustomerModel.fromMap(rows.first);
   }
 
+  /// `businessUnitId` is strict scope (Schema v4) — every customer
+  /// belongs to exactly one loja, so this filter is mandatory.
   Future<List<CustomerModel>> getAllCustomers({
-    int? activeUnitId,
+    required int businessUnitId,
     bool includeDeleted = false,
     Transaction? txn,
   }) async {
     final db = await _executor(txn);
-    final conditions = <String>[
-      '(business_unit_id IS NULL OR business_unit_id = ?)',
-    ];
-    final args = <Object?>[activeUnitId];
+    final conditions = <String>['business_unit_id = ?'];
+    final args = <Object?>[businessUnitId];
     if (!includeDeleted) {
       conditions.add('deleted = ?');
       args.add(0);

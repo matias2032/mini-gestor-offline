@@ -201,10 +201,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get settledCreditSales => 'Vendas a crédito liquidadas';
 
   @override
-  String get salesByCategory => 'Vendas por categoria';
+  String get dashboardComingSoonTitle => 'Painel a caminho';
 
   @override
-  String get noCategoriesYet => 'Ainda não há categorias registadas.';
+  String get dashboardComingSoonMessage =>
+      'Estamos a reconstruir o painel da sua loja para a nova estrutura multi-loja. Volte a verificar em breve.';
+
+  @override
+  String get settledCreditRevenueLabel => 'Receita de crédito liquidada';
+
+  @override
+  String get dashboardNoStoreSelected =>
+      'Selecione uma loja para ver as suas estatísticas.';
 
   @override
   String saleCountLabel(int count) {
@@ -249,16 +257,10 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get newExpenseCategory => 'New Category';
-
-  @override
   String get descriptionOptionalLabel => 'Descrição (opcional)';
 
   @override
   String get filterExpensesTitle => 'Filtrar despesas';
-
-  @override
-  String get categoryLabel => 'Categoria';
 
   @override
   String get allLabel => 'Todas';
@@ -306,49 +308,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get noneLabel => 'Nenhum';
 
   @override
-  String get pleaseSelectCategory => 'Selecione uma categoria.';
-
-  @override
   String dateLabel(String date) {
     return 'Data: $date';
   }
 
   @override
   String get createExpense => 'Criar despesa';
-
-  @override
-  String get noCategoriesAvailableYet => 'Ainda não há categorias disponíveis.';
-
-  @override
-  String get addAtLeastOneCategory => 'Adicione pelo menos uma categoria.';
-
-  @override
-  String categoryAllocationsMismatch(String allocated, String total) {
-    return 'As alocações por categoria ($allocated) devem somar o total da despesa ($total).';
-  }
-
-  @override
-  String get addCategoryButton => 'Adicionar categoria';
-
-  @override
-  String get noCategoryAddedYet =>
-      'Ainda não foi adicionada nenhuma categoria.';
-
-  @override
-  String allocatedAmountLabel(String amount) {
-    return 'Alocado: $amount';
-  }
-
-  @override
-  String totalAmountValueLabel(String amount) {
-    return 'Total: $amount';
-  }
-
-  @override
-  String get categoryAllocationDialogTitle => 'Alocação de categoria';
-
-  @override
-  String get selectCategoryValidation => 'Selecione uma categoria';
 
   @override
   String get saveLabel => 'Guardar';
@@ -599,33 +564,10 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get newCategoryTitle => 'Nova Categoria';
-
-  @override
-  String get editCategoryTitle => 'Editar Categoria';
-
-  @override
   String get nameRequiredMessage => 'O nome é obrigatório';
 
   @override
   String get createCategoryButton => 'Criar';
-
-  @override
-  String get categoriesTitle => 'Categorias';
-
-  @override
-  String get addCategoryTooltip => 'Adicionar categoria';
-
-  @override
-  String get deleteCategoryTitle => 'Eliminar categoria';
-
-  @override
-  String confirmDeleteCategoryMessage(String name) {
-    return 'Tem a certeza de que deseja eliminar \"$name\"?';
-  }
-
-  @override
-  String get couldNotDeleteCategory => 'Não foi possível eliminar a categoria.';
 
   @override
   String get newSaleTitle => 'Nova Venda';
@@ -643,9 +585,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get initialPaymentExceedsTotalMessage =>
       'A entrada não pode exceder o total da venda.';
-
-  @override
-  String get categoryRequiredMessage => 'A categoria é obrigatória';
 
   @override
   String get descriptionRequiredMessage => 'A descrição é obrigatória';
@@ -745,16 +684,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get splashLoading => 'A preparar a aplicação...';
 
   @override
-  String get categoryBreakdownSectionTitle => 'Por categoria';
-
-  @override
-  String get noCategoryBreakdownInPeriod =>
-      'Sem movimentos por categoria neste período.';
-
-  @override
-  String get noCategoryLabel => 'Sem categoria';
-
-  @override
   String get switchStoreTooltip => 'Mudar de loja';
 
   @override
@@ -794,4 +723,13 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get couldNotRenameStore => 'Não foi possível renomear a loja.';
+
+  @override
+  String get currentStoreLabel => 'Loja atual';
+
+  @override
+  String get allStoresLabel => 'Todas as lojas';
+
+  @override
+  String get perStoreBreakdownTitle => 'Resumo por loja';
 }

@@ -58,16 +58,16 @@ class SupplierDao {
     return SupplierModel.fromMap(rows.first);
   }
 
+  /// `businessUnitId` is strict scope (Schema v4) — every supplier
+  /// belongs to exactly one loja, so this filter is mandatory.
   Future<List<SupplierModel>> getAllSuppliers({
-    int? activeUnitId,
+    required int businessUnitId,
     bool includeDeleted = false,
     Transaction? txn,
   }) async {
     final executor = txn ?? await _localDatabase.database;
-    final conditions = <String>[
-      '(business_unit_id IS NULL OR business_unit_id = ?)',
-    ];
-    final args = <Object?>[activeUnitId];
+    final conditions = <String>['business_unit_id = ?'];
+    final args = <Object?>[businessUnitId];
     if (!includeDeleted) {
       conditions.add('deleted = 0');
     }
