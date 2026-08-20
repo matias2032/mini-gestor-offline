@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../core/database/backup_service.dart';
 import '../../core/database/local_database.dart';
 import 'package:mini/l10n/app_localizations.dart';
+import '/widgets/app_sidebar.dart';
 
 /// Tela de backup/restauro — acessível via sidebar. Não depende de
 /// nenhum Provider: o BackupService não tem estado entre chamadas, só
@@ -37,6 +38,7 @@ class _BackupScreenState extends State<BackupScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(loc.backupRestoreTitle)),
+            drawer: const AppSidebar(currentRoute: '/settings/backup'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

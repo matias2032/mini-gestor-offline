@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerador Preview Image Codester (1600x800)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: #121212;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        button {
+            background: #00b074;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #009663;
+        }
+        canvas {
+            border: 2px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Pré-visualização do Banner (1600 x 800 px)</h2>
+    <div class="controls">
+        <label>Carregar Ícone (icone2.png): <input type="file" id="iconInput" accept="image/*"></label>
+        <button onclick="downloadJPG()">Baixar JPG Otimizado (1600x800)</button>
+    </div>
+
+    <canvas id="banner" width="1600" height="800"></canvas>
+
+    <script>
+        const canvas = document.getElementById('banner');
+        const ctx = canvas.getContext('2d');
+        let uploadedIcon = null;
+
+        document.getElementById('iconInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        uploadedIcon = img;
+                        drawBanner();
+                    }
+                    img.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function drawBanner() {
+            // Fundo Gradiente Escuro Esmeralda
+            const bgGrad = ctx.createLinearGradient(0, 0, 1600, 800);
+            bgGrad.addColorStop(0, '#041613');
+            bgGrad.addColorStop(0.5, '#092923');
+            bgGrad.addColorStop(1, '#051814');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, 1600, 800);
+
+            // Círculos Decorativos de Brilho
+            const glow = ctx.createRadialGradient(280, 400, 50, 280, 400, 350);
+            glow.addColorStop(0, 'rgba(0, 176, 116, 0.25)');
+            glow.addColorStop(1, 'rgba(0, 176, 116, 0)');
+            ctx.fillStyle = glow;
+            ctx.fillRect(0, 0, 1600, 800);
+
+            // Ícone do App
+            if (uploadedIcon) {
+                ctx.drawImage(uploadedIcon, 120, 140, 150, 150);
+            } else {
+                // Placeholder se não tiver carregado o arquivo ainda
+                ctx.fillStyle = '#00b074';
+                ctx.beginPath();
+                ctx.roundRect(120, 140, 150, 150, 30);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 30px Segoe UI';
+                ctx.fillText('MINI', 155, 230);
+            }
+
+            // Título Principal
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 70px Segoe UI';
+            ctx.fillText('Mini POS', 300, 215);
+
+            // Subtítulo
+            ctx.fillStyle = '#7de8b8';
+            ctx.font = '500 28px Segoe UI';
+            ctx.fillText('100% Offline Multi-Store & Finance Manager', 300, 265);
+
+            // Linha divisória
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(120, 330);
+            ctx.lineTo(800, 330);
+            ctx.stroke();
+
+            // Badges / Tags de Destaque
+            const badges = [
+                'Flutter 3.x Ready',
+                '100% Offline (SQLite)',
+                'Multi-Store Segregation',
+                'Super Dashboard & Reports',
+                'Safe JSON Backup & Restore',
+                'Dark & Light Mode'
+            ];
+
+            let startX = 120;
+            let startY = 380;
+            ctx.font = 'bold 20px Segoe UI';
+
+            badges.forEach((text, i) => {
+                const x = startX + (i % 2) * 340;
+                const y = startY + Math.floor(i / 2) * 75;
+
+                // Caixa da badge
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+                ctx.strokeStyle = 'rgba(0, 176, 116, 0.4)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.roundRect(x, y, 320, 52, 10);
+                ctx.fill();
+                ctx.stroke();
+
+                // Ícone check
+                ctx.fillStyle = '#00d68f';
+                ctx.fillText('✔', x + 16, y + 33);
+
+                // Texto
+                ctx.fillStyle = '#e0e0e0';
+                ctx.fillText(text, x + 46, y + 33);
+            });
+
+            // Badge de Framework no Fundo
+            ctx.fillStyle = '#00b074';
+            ctx.beginPath();
+            ctx.roundRect(120, 640, 240, 42, 21);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px Segoe UI';
+            ctx.fillText('⚡ BUILT WITH FLUTTER', 145, 667);
+
+            // Mockup 1 (Direita - Dashboard Card)
+            drawMockupCard(900, 120, 300, 560, 'Super Dashboard', [
+                { label: 'Total Sales', val: '$4,850.00', color: '#00d68f' },
+                { label: 'Total Expenses', val: '$1,230.00', color: '#ff6b6b' },
+                { label: 'Net Profit', val: '$3,620.00', color: '#4dabf7' },
+                { label: 'Active Stores', val: '3 Units', color: '#fcc419' }
+            ]);
+
+            // Mockup 2 (Direita - Vendas / Operação Card)
+            drawMockupCard(1230, 180, 290, 500, 'Store: Central Branch', [
+                { label: 'New Sale (#1042)', val: 'Cash / Credit', color: '#00d68f' },
+                { label: 'Customer', val: 'Registered', color: '#adb5bd' },
+                { label: 'Backup Status', val: 'Synced Local', color: '#4dabf7' }
+            ]);
+        }
+
+        function drawMockupCard(x, y, w, h, headerText, stats) {
+            ctx.save();
+            // Sombra do Mockup
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+            ctx.shadowBlur = 30;
+            ctx.shadowOffsetY = 15;
+
+            // Fundo do Celular / Card
+            ctx.fillStyle = '#182422';
+            ctx.strokeStyle = '#29433e';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, 28);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // Notch / Barra Superior
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.roundRect(x + w/2 - 40, y + 12, 80, 8, 4);
+            ctx.fill();
+
+            // Título do Card
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px Segoe UI';
+            ctx.fillText(headerText, x + 24, y + 55);
+
+            // Linhas internas
+            let itemY = y + 85;
+            stats.forEach(item => {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+                ctx.beginPath();
+                ctx.roundRect(x + 16, itemY, w - 32, 68, 12);
+                ctx.fill();
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '13px Segoe UI';
+                ctx.fillText(item.label, x + 30, itemY + 28);
+
+                ctx.fillStyle = item.color;
+                ctx.font = 'bold 18px Segoe UI';
+                ctx.fillText(item.val, x + 30, itemY + 54);
+
+                itemY += 80;
+            });
+        }
+
+        function downloadJPG() {
+            // Exporta a 85% de qualidade para manter a nitidez e o ficheiro super leve (< 250KB)
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = 'preview_image_1600x800.jpg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        drawBanner();
+    </script>
+</body>
+</html>

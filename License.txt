@@ -1,0 +1,52 @@
+================================================================================
+MINI - SOFTWARE LICENSE AGREEMENT
+================================================================================
+
+Product Name: Mini - Offline Multi-Store POS & Finance Manager
+Author: Matias Alberto Matavel
+Release Version: 1.0.0
+Copyright (c) 2026 Matias Alberto Matavel. All rights reserved.
+
+--------------------------------------------------------------------------------
+1. GRANT OF LICENSE
+--------------------------------------------------------------------------------
+By purchasing or downloading this source code package, you are granted a 
+non-exclusive, non-transferable, revocable license to use, modify, customize, 
+and integrate the code into your personal or commercial applications, subject 
+to the terms outlined below.
+
+--------------------------------------------------------------------------------
+2. PERMITTED USES
+--------------------------------------------------------------------------------
+- You MAY modify, adapt, rebrand, translate, and customize the source code.
+- You MAY compile, build binaries (.apk, .aab, .exe), and publish the resulting 
+  end-product application on app distribution platforms (e.g., Google Play Store, 
+  Apple App Store, personal websites).
+- You MAY use this template to develop a finalized commercial application for 
+  yourself or on behalf of a single client.
+
+--------------------------------------------------------------------------------
+3. RESTRICTIONS (WHAT YOU CANNOT DO)
+--------------------------------------------------------------------------------
+- You CANNOT resell, redistribute, sub-license, rent, share, or lease the raw 
+  source code, database schemas, or documentation as a digital item, template, 
+  or code package on any marketplace, public repository, or file-sharing service.
+- You CANNOT extract UI components, assets, or architecture modules to create 
+  a competing marketplace source code product.
+- You CANNOT claim direct original ownership or authorship of the unmodified 
+  source code base.
+
+--------------------------------------------------------------------------------
+4. DISCLAIMER OF WARRANTY & LIMITATION OF LIABILITY
+--------------------------------------------------------------------------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. 
+
+IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, 
+DAMAGES, LOSS OF DATA, REVENUE LOSS, OR OTHER LIABILITY ARISING FROM, OUT OF, 
+OR IN CONNECTION WITH THE USE OR INABILITY TO USE THE SOFTWARE.
+
+================================================================================
+Thank you for supporting independent software development!
+================================================================================

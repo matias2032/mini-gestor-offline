@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gumroad Cover Mockup - 1920x1080</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* Canvas 1920x1080 */
+    .banner {
+      width: 1920px;
+      height: 1080px;
+      background: radial-gradient(circle at 75% 30%, #1e1b4b 0%, #0f172a 55%, #020617 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      padding: 90px 100px;
+    }
+
+    /* Ambient Background Glows */
+    .glow-1 {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(0,0,0,0) 70%);
+      top: 10%;
+      right: 15%;
+      border-radius: 50%;
+      filter: blur(40px);
+    }
+    .glow-2 {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, rgba(0,0,0,0) 70%);
+      bottom: 5%;
+      right: 5%;
+      border-radius: 50%;
+      filter: blur(50px);
+    }
+
+    /* Left Side: Headlines & Feature Highlights */
+    .left-content {
+      width: 48%;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .badge-wrapper {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(129, 140, 248, 0.3);
+      border-radius: 50px;
+      color: #a5b4fc;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .badge-green {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(52, 211, 153, 0.3);
+      color: #6ee7b7;
+    }
+
+    h1 {
+      font-size: 58px;
+      line-height: 1.1;
+      font-weight: 900;
+      color: #ffffff;
+      margin-bottom: 22px;
+      letter-spacing: -1px;
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      font-size: 22px;
+      line-height: 1.5;
+      color: #94a3b8;
+      margin-bottom: 40px;
+      max-width: 680px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      max-width: 650px;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      backdrop-filter: blur(10px);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(99, 102, 241, 0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .feature-text h4 {
+      color: #f8fafc;
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .feature-text p {
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    /* Right Side: 3D Smartphone Mockups */
+    .right-mockups {
+      width: 52%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Smartphone Frame */
+    .phone {
+      width: 320px;
+      height: 650px;
+      background: #020617;
+      border: 10px solid #1e293b;
+      border-radius: 46px;
+      position: absolute;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Phone Placements */
+    .phone-left {
+      left: 10px;
+      top: 190px;
+      transform: scale(0.88) rotate(-6deg);
+      z-index: 1;
+      opacity: 0.85;
+      filter: brightness(0.9);
+    }
+
+    .phone-center {
+      left: 165px;
+      top: 150px;
+      transform: scale(1.02);
+      z-index: 3;
+      border-color: #334155;
+      box-shadow: 0 35px 80px rgba(0, 0, 0, 0.9), 0 0 40px rgba(99, 102, 241, 0.25);
+    }
+
+    .phone-right {
+      right: 0px;
+      top: 190px;
+      transform: scale(0.88) rotate(6deg);
+      z-index: 2;
+      opacity: 0.85;
+      filter: brightness(0.9);
+    }
+
+    /* Top Notch & Camera */
+    .notch {
+      width: 120px;
+      height: 22px;
+      background: #1e293b;
+      margin: 0 auto;
+      border-radius: 0 0 14px 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+    }
+    .speaker { width: 35px; height: 4px; background: #334155; border-radius: 4px; }
+    .camera { width: 6px; height: 6px; background: #0f172a; border-radius: 50%; }
+
+    /* Screen UI Components */
+    .screen-body {
+      padding: 16px;
+      color: #fff;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #090d16;
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+    }
+    .app-header-title { font-size: 15px; font-weight: 700; color: #f8fafc; }
+    .store-badge { font-size: 10px; background: #312e81; color: #a5b4fc; padding: 3px 8px; border-radius: 12px; font-weight: 700; }
+
+    .balance-card {
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      border: 1px solid rgba(129, 140, 248, 0.3);
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .balance-title { font-size: 11px; color: #c7d2fe; text-transform: uppercase; font-weight: 600; }
+    .balance-value { font-size: 26px; font-weight: 800; color: #ffffff; margin: 4px 0 8px 0; }
+    .balance-stats { display: flex; justify-content: space-between; font-size: 11px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+
+    .item-list-title { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-top: 4px; }
+
+    .item-row {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .item-left { display: flex; flex-direction: column; gap: 2px; }
+    .item-name { font-size: 13px; font-weight: 600; color: #f3f4f6; }
+    .item-meta { font-size: 10px; color: #9ca3af; }
+    .item-amount { font-size: 13px; font-weight: 700; color: #10b981; }
+    .item-amount-credit { color: #f59e0b; }
+    .item-amount-expense { color: #ef4444; }
+
+    /* Central Screen Form */
+    .form-box {
+      background: #131b2e;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .form-label { font-size: 11px; color: #94a3b8; font-weight: 600; }
+    .form-input { background: #0b1120; border: 1px solid #334155; border-radius: 8px; padding: 8px 10px; font-size: 13px; color: #fff; font-weight: 600; }
+    
+    .pay-methods { display: flex; gap: 6px; margin-top: 4px; }
+    .pay-btn { flex: 1; padding: 8px 4px; border-radius: 8px; font-size: 10px; font-weight: 700; text-align: center; background: #1e293b; color: #94a3b8; }
+    .pay-btn.active { background: #10b981; color: #fff; }
+
+    .action-button {
+      background: #6366f1;
+      color: #fff;
+      text-align: center;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="banner">
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
+
+    <!-- LEFT SIDE: PROMOTIONAL COPY -->
+    <div class="left-content">
+      <div class="badge-wrapper">
+        <div class="badge">🚀 100% Offline</div>
+        <div class="badge badge-green">✓ Multi-Store & Credit</div>
+      </div>
+
+      <h1>Micro POS & <span>Business Manager</span></h1>
+      
+      <p class="subtitle">
+        Complete control over sales, installment credits, expenses, and store-isolated financial reports. Built for lightning-fast performance without internet.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🏪</div>
+          <div class="feature-text">
+            <h4>Multi-Store Units</h4>
+            <p>Full branch data isolation</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💳</div>
+          <div class="feature-text">
+            <h4>Credit & Installments</h4>
+            <p>Track balances and dues</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-text">
+            <h4>Flexible Payments</h4>
+            <p>Cash, Transfer & Mobile Money</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <div class="feature-text">
+            <h4>Financial Statements</h4>
+            <p>Snapshotted ledger reports</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE: 3 SMARTPHONE MOCKUPS -->
+    <div class="right-mockups">
+      
+      <!-- PHONE 1: LEFT (MULTI-STORE OVERVIEW) -->
+      <div class="phone phone-left">
+        <div class="notch"><div class="speaker"></div><div class="camera"></div></div>
+        <div class="screen-body">
+          <div class="app-header">
+            <span class="app-header-title">Overview Report</span>
+            <span class="store-badge">All Stores</span>
+          </div>
+          <div class="balance-card">
+            <div class="balance-title">Net Balance</div>
+            <div class="balance-value">$4,850.00</div>
+            <div class="balance-stats">
+              <span>Income: +$6,200.00</span>
+              <span>Expenses: -$1,350.00</span>
+            </div>
+          </div>
+          <div class="item-list-title">Business Units</div>
+          <div class="item-row">
+            <div class="item-left">
+              <span class="item-name">Main Store (HQ)</span>
+              <span class="item-meta">34 Sales today</span>
+            </div>
+            <span class="item-amount">+$3,200.00</span>
+          </div>
+          <div class="item-row">
+            <div class="item-left">
+              <span class="item-name">Downtown Branch</span>
+              <span class="item-meta">19 Sales today</span>
+            </div>
+            <span class="item-amount">+$1,650.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHONE 2: CENTER (SALE TERMINAL & CHECKOUT) -->
+      <div class="phone phone-center">
+        <div class="notch"><div class="speaker"></div><div class="camera"></div></div>
+        <div class="screen-body">
+          <div class="app-header">
+            <span class="app-header-title">New Sale</span>
+            <span class="store-badge">Main Store</span>
+          </div>
+
+          <div class="form-box">
+            <span class="form-label">Total Amount Due</span>
+            <input class="form-input" value="$185.00" readonly>
+            
+            <span class="form-label">Customer</span>
+            <input class="form-input" value="John Doe (Registered)" readonly>
+
+            <span class="form-label">Payment Method</span>
+            <div class="pay-methods">
+              <div class="pay-btn active">CASH</div>
+              <div class="pay-btn active">TRANSFER</div>
+              <div class="pay-btn">CREDIT</div>
+            </div>
+          </div>
+
+          <div class="item-list-title">Recent Transactions</div>
+          <div class="item-row">
+            <div class="item-left">
+              <span class="item-name">REF #SL-9402</span>
+              <span class="item-meta">Paid via Transfer</span>
+            </div>
+            <span class="item-amount">+$85.00</span>
+          </div>
+          <div class="item-row">
+            <div class="item-left">
+              <span class="item-name">REF #SL-9401</span>
+              <span class="item-meta">Paid via Cash</span>
+            </div>
+            <span class="item-amount">+$100.00</span>
+          </div>
+
+          <div class="action-button">✓ Complete Sale</div>
+        </div>
+      </div>
+
+      <!-- PHONE 3: RIGHT (RECEIVABLES & EXPENSES) -->
+      <div class="phone phone-right">
+        <div class="notch"><div class="speaker"></div><div class="camera"></div></div>
+        <div class="screen-body">
+          <div class="app-header">
+            <span class="app-header-title">Receivables</span>
+            <span class="store-badge">Installments</span>
+          </div>
+          
+          <div class="balance-card" style="background: linear-gradient(135deg, #78350f, #b45309); border-color: #f59e0b;">
+            <div class="balance-title">Outstanding Debt</div>
+            <div class="balance-value">$1,240.00</div>
+            <div class="balance-stats">
+              <span>8 Active Debtors</span>
+            </div>
+          </div>
+
+          <div class="item-list-title">Upcoming Dues</div>
+          <div class="item-row">
+            <div class="item-left">
+              <span class="item-name">David Miller</span>
+              <span class="item-meta">Inst. 2/3 • Due in 2 days</span>
+            </div>
+            <span class="item-amount-credit">$250.00</span>
+          </div>
+          <div class="item-row">
+            <div class="item-left">
+              <span class="item-name">Beverage Supplier</span>
+              <span class="item-meta">Operating Expense</span>
+            </div>
+            <span class="item-amount-expense">-$420.00</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

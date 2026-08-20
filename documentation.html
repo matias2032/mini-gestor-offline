@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini - Technical Documentation</title>
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-light: #eff6ff;
+            --accent: #2563eb;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+            --bg-code: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 1.2cm 1.4cm;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
+            line-height: 1.42;
+            font-size: 13px;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+        }
+
+        .page {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .page-break {
+            page-break-before: always;
+            break-before: page;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        .title-group h1 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--primary);
+            display: inline-block;
+        }
+
+        .badge {
+            background-color: var(--primary);
+            color: #ffffff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+
+        .subtitle {
+            margin: 2px 0 0 0;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .doc-tag {
+            text-align: right;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Sections */
+        h2 {
+            color: var(--primary);
+            font-size: 14px;
+            margin: 10px 0 6px 0;
+            padding-bottom: 3px;
+            border-bottom: 1px solid var(--border);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        h3 {
+            color: var(--text);
+            font-size: 13px;
+            margin: 8px 0 4px 0;
+        }
+
+        p {
+            margin: 0 0 6px 0;
+        }
+
+        ul, ol {
+            margin: 4px 0 8px 0;
+            padding-left: 18px;
+        }
+
+        li {
+            margin-bottom: 3px;
+        }
+
+        strong {
+            color: #0f172a;
+        }
+
+        /* Code & Callouts */
+        .code-block {
+            background-color: var(--bg-code);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            padding: 6px 10px;
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 11.5px;
+            border-radius: 3px;
+            margin: 5px 0 8px 0;
+            color: #0f172a;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .callout {
+            background-color: var(--primary-light);
+            border-left: 3px solid var(--primary);
+            padding: 6px 10px;
+            font-size: 11.5px;
+            border-radius: 3px;
+            margin: 6px 0;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+.footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border);
+            padding-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10.5px;
+            color: var(--text-muted);
+        }
+
+        .footer .author {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== PAGE 1 ==================== -->
+    <div class="page">
+        <div>
+            <div class="header">
+                <div class="title-group">
+                    <h1>Mini</h1>
+                    <span class="badge">v1.0.0</span>
+                    <p class="subtitle">Complete Technical & Customization Guide for Buyers</p>
+                </div>
+                <div class="doc-tag">
+                    <strong>Source Code Package</strong><br>Flutter & SQLite (100% Offline)
+                </div>
+            </div>
+
+            <h2>1. Product Overview & Core Architecture</h2>
+            <p><strong>Mini</strong> is an offline personal and business finance manager engineered for small entrepreneurs and informal micro-businesses. It runs completely standalone without remote server dependencies or recurring cloud costs.</p>
+            
+            <ul>
+                <li><strong>State Management:</strong> Clean layer separation with <code>provider</code> (Repository &rarr; Provider &rarr; Screen). UI widgets contain zero business or data logic.</li>
+                <li><strong>Local Engine:</strong> <code>sqflite</code> with automated multi-version migrations (v1 to v4) handled in <code>local_database.dart</code>. Fully cross-compatible (Android & Windows Desktop via <code>sqflite_common_ffi</code>).</li>
+                <li><strong>UI/UX:</strong> Material Design 3 implementation with dynamic Seed Color theming, full Light & Dark mode support, and responsive data visualization dashboards.</li>
+                <li><strong>Security & Authentication:</strong> Standalone local user authentication securing master actions with salted <code>bcrypt</code> password hashing.</li>
+                <li><strong>Localization (l10n):</strong> Dual-language architecture (English & Portuguese) powered by standard Flutter <code>.arb</code> translation files switchable at runtime.</li>
+            </ul>
+
+            <h2>2. Functional Capabilities</h2>
+            <div class="grid-2">
+                <div>
+                    <ul>
+                        <li><strong>Multi-Store / Business Units:</strong> Strict data segregation per store (Customers, Suppliers, Sales, and Expenses operate independently).</li>
+                        <li><strong>Consolidated Super Dashboard:</strong> Aggregated multi-store metrics and financial breakdowns alongside dedicated single-store stats.</li>
+                    </ul>
+                </div>
+                <div>
+                    <ul>
+                        <li><strong>Flexible Sales Engine:</strong> Instant cash sales & credit sales with automatic installment generation and sequential invoice referencing.</li>
+                        <li><strong>Snapshot Financial Statements:</strong> Point-in-time exportable statement snapshots per individual branch or consolidated.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>3. Quick Setup & Environment Requirements</h2>
+            <ul>
+                <li><strong>Flutter SDK:</strong> ^3.12.1 or newer (Stable channel)</li>
+                <li><strong>Target Android SDK:</strong> <code>compileSdk 36</code> (Tested and optimized on Android 12+)</li>
+            </ul>
+            <p>To run the project in development mode:</p>
+            <div class="code-block"># 1. Navigate to project root & fetch packages
+flutter pub get
+
+# 2. Run debug build on target device
+flutter run</div>
+
+            <h2>4. Backup & Data Restoration Pipeline</h2>
+            <p>The app executes full JSON database dumps to local storage and coordinates external transfers through <code>share_plus</code>. The restoration engine performs safe line-by-line entity merging based on <code>updated_at</code>/<code>created_at</code> timestamps—ensuring local records are never mistakenly wiped.</p>
+        </div>
+
+        <div class="footer">
+            <span>Mini POS — Developer Documentation</span>
+            <span>Page 1 of 2</span>
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 2 ==================== -->
+    <div class="page page-break">
+        <div>
+            <div class="header">
+                <div class="title-group">
+                    <h1>Mini</h1>
+                    <span class="badge">Deployment</span>
+                    <p class="subtitle">Customization, Android Permissions & Production Build</p>
+                </div>
+                <div class="doc-tag">
+                    <strong>Release Checklist</strong>
+                </div>
+            </div>
+
+            <h2>5. Branding & Customization Guide</h2>
+
+            <h3>A. Changing Application ID (Package Name)</h3>
+            <p>Open <code>android/app/build.gradle.kts</code> and update the identifiers from the default placeholder to your unique namespace:</p>
+            <div class="code-block">android {
+    namespace = "com.yourcompany.mini"
+    defaultConfig {
+        applicationId = "com.yourcompany.mini"
+        minSdk = 21
+        targetSdk = 36
+    }
+}</div>
+
+            <h3>B. Replacing App Icons</h3>
+            <p>The package uses <code>flutter_launcher_icons</code>. Replace <code>assets/icone.png</code> with your custom 512x512 PNG asset and run:</p>
+            <div class="code-block">dart run flutter_launcher_icons</div>
+
+            <h2>6. Android Storage Permissions & Store Compliance</h2>
+            <div class="callout">
+                <strong>Important Notice for Google Play Publishing:</strong><br>
+                The app declares <code>MANAGE_EXTERNAL_STORAGE</code> to manage backup files directly inside the public <code>Downloads/Mini Backups</code> directory.
+            </div>
+            <ul>
+                <li><strong>Publishing to Google Play:</strong> You must submit the declaration form justifying broad storage access for core backup functionality, or adapt file output to app-specific directories using <code>path_provider</code> and rely exclusively on system sharing via <code>share_plus</code>.</li>
+                <li><strong>Direct APK / Alternative Stores:</strong> Standard permission granting works out-of-the-box on Android 11+ via system prompts.</li>
+            </ul>
+
+            <h2>7. Production Signing & Keystore Configuration</h2>
+            <p>Before publishing or generating customer distribution builds, generate a production keystore:</p>
+            <div class="code-block">keytool -genkey -v -keystore release-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias mini_key</div>
+            <p>Reference your keystore in <code>android/key.properties</code> and adjust <code>android/app/build.gradle.kts</code> to sign with release credentials instead of debug defaults.</p>
+
+            <h2>8. Generating Production Releases</h2>
+            <p>Compile production binaries with tree-shaking and minification enabled:</p>
+            <div class="code-block"># Android App Bundle (For Google Play Store)
+flutter build appbundle --release --obfuscate --split-debug-info=build/app/outputs/symbols
+
+# Standalone APK (For Direct Distribution / Demo testing)
+flutter build apk --release</div>
+        </div>
+
+        <div class="footer">
+            <span>Mini POS • Offline Business & Finance Manager</span>
+            <span class="author">Created by Matias Alberto Matavel • Developed with Flutter</span>
+            <span>Page 2 of 2</span>
+        </div>
+
+        
+    </div>
+
+</body>
+</html>
