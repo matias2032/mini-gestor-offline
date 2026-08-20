@@ -754,4 +754,73 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get couldNotArchiveStore => 'Não foi possível arquivar a loja.';
+
+  @override
+  String get backupRestoreTitle => 'Cópia de Segurança';
+
+  @override
+  String get backupSectionTitle => 'Criar cópia de segurança';
+
+  @override
+  String get backupSectionDescription =>
+      'Gera um ficheiro com todos os seus dados e abre o menu de partilha para o guardar num local seguro (nuvem, email, USB...). Como a aplicação é totalmente offline, este ficheiro é a única forma de recuperar dados ou movê-los para outro dispositivo.';
+
+  @override
+  String get createBackupButton => 'Criar cópia de segurança';
+
+  @override
+  String backupCreatedMessage(String path) {
+    return 'Cópia de segurança guardada em: $path';
+  }
+
+  @override
+  String get backupFailedMessage =>
+      'Não foi possível criar a cópia de segurança.';
+
+  @override
+  String get restoreSectionTitle => 'Restaurar cópia de segurança';
+
+  @override
+  String get restoreSectionDescription =>
+      'Escolha um ficheiro de cópia de segurança criado anteriormente. Os dados já existentes neste dispositivo são mantidos — só os registos em falta ou desatualizados são substituídos pelos dados da cópia.';
+
+  @override
+  String get restoreBackupButton => 'Escolher ficheiro';
+
+  @override
+  String get restoreConfirmTitle => 'Restaurar cópia de segurança?';
+
+  @override
+  String get restoreConfirmMessage =>
+      'Isto funde a cópia de segurança com os seus dados atuais. Nada é apagado deste dispositivo: para cada registo, mantém-se a versão mais recente — a que já existe aqui ou a que vem da cópia.';
+
+  @override
+  String get restoreConfirmButton => 'Continuar';
+
+  @override
+  String restoreSuccessMessage(int inserted, int updated, int skipped) {
+    return 'Restauro concluído: $inserted novos, $updated atualizados, $skipped sem alteração.';
+  }
+
+  @override
+  String get restoreFailedMessage =>
+      'Não foi possível restaurar a cópia de segurança.';
+
+  @override
+  String get shareSectionTitle => 'Partilhar cópia de segurança';
+
+  @override
+  String get shareSectionDescriptionEmpty =>
+      'Crie primeiro uma cópia de segurança para depois poder partilhar exatamente esse ficheiro (email, nuvem, USB...), se quiser uma cópia extra fora deste dispositivo.';
+
+  @override
+  String shareSectionDescriptionReady(String fileName) {
+    return 'Pronto a partilhar: $fileName';
+  }
+
+  @override
+  String get shareBackupButton => 'Partilhar cópia de segurança';
+
+  @override
+  String get shareFailedMessage => 'Não foi possível abrir o menu de partilha.';
 }

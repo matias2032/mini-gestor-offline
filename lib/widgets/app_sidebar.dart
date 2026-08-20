@@ -222,6 +222,12 @@ class _AppSidebarState extends State<AppSidebar>
               title: loc.storesTitle,
               route: '/business-unit-management',
             ),
+            _buildSimpleItem(
+              colorScheme: colorScheme,
+              icon: Icons.backup_outlined,
+              title: loc.backupRestoreTitle,
+              route: '/settings/backup',
+            ),
             _buildThemeToggleRow(colorScheme, loc),
             _buildLanguageSelectorRow(colorScheme, loc),
               ],

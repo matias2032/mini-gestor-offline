@@ -289,5 +289,39 @@
 "archiveStoreTitle": "Archive store",
 "confirmArchiveStoreMessage": "Are you sure you want to archive \"{name}\"? This store's data (sales, customers, statements) is preserved, but it will no longer appear as an active store.",
 "archiveLabel": "Archive",
-"couldNotArchiveStore": "Could not archive the store."
+"couldNotArchiveStore": "Could not archive the store.",
+
+"backupRestoreTitle": "Backup & Restore",
+"backupSectionTitle": "Create backup",
+"backupSectionDescription": "Generates a file with all your data and opens the share menu so you can save it somewhere safe (cloud drive, email, USB...). Since the app is fully offline, this file is your only way to recover data or move it to another device.",
+"createBackupButton": "Create backup",
+"backupCreatedMessage": "Backup saved to: {path}",
+"@backupCreatedMessage": {
+  "placeholders": { "path": { "type": "String" } }
+},
+"backupFailedMessage": "Could not create the backup.",
+"restoreSectionTitle": "Restore backup",
+"restoreSectionDescription": "Choose a previously created backup file. Data already on this device is kept — only missing or older records are updated with the backup's data.",
+"restoreBackupButton": "Choose backup file",
+"restoreConfirmTitle": "Restore backup?",
+"restoreConfirmMessage": "This merges the backup into your current data. Nothing on this device is deleted: for each record, whichever version is more recent — the one already here or the one in the backup — is kept.",
+"restoreConfirmButton": "Continue",
+"restoreSuccessMessage": "Restore complete: {inserted} new, {updated} updated, {skipped} unchanged.",
+"@restoreSuccessMessage": {
+  "placeholders": {
+    "inserted": { "type": "int" },
+    "updated": { "type": "int" },
+    "skipped": { "type": "int" }
+  }
+},
+"restoreFailedMessage": "Could not restore the backup.",
+
+"shareSectionTitle": "Share backup",
+"shareSectionDescriptionEmpty": "Create a backup first, then you can share that exact file (email, cloud drive, USB...) if you want an extra copy off this device.",
+"shareSectionDescriptionReady": "Ready to share: {fileName}",
+"@shareSectionDescriptionReady": {
+  "placeholders": { "fileName": { "type": "String" } }
+},
+"shareBackupButton": "Share backup",
+"shareFailedMessage": "Could not open the share menu."
 }

@@ -34,6 +34,11 @@ class LocalDatabase {
 
   Database? _database;
 
+  /// Current schema version — exposed so other layers (e.g. the backup
+  /// service) can stamp exports with the schema they were generated
+  /// against, without needing to know internal migration details.
+  int get schemaVersion => _databaseVersion;
+
   /// Returns the open database, opening it on first access.
   Future<Database> get database async {
     _database ??= await _open();

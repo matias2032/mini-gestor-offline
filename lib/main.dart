@@ -42,6 +42,7 @@ import 'screens/sale/financial_statement_detail_screen.dart';
 import 'screens/user/edit_profile_screen.dart';
 import 'screens/user/change_password_screen.dart';
 import 'screens/business_unit/business_unit_management_screen.dart';
+import 'screens/settings/backup_screen.dart';
 import 'theme/app_theme.dart';
 import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
@@ -198,6 +199,7 @@ ChangeNotifierProxyProvider<BusinessUnitProvider, DashboardProvider>(
             '/edit-profile': (_) => const EditProfileScreen(),
             '/change-password': (_) => const ChangePasswordScreen(),
             '/business-unit-management': (_) => const BusinessUnitManagementScreen(),
+            '/settings/backup': (_) => const BackupScreen(),
           },
           home: const SplashScreen(),
         ),

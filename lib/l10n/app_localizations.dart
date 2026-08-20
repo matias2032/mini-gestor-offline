@@ -1435,6 +1435,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not archive the store.'**
   String get couldNotArchiveStore;
+
+  /// No description provided for @backupRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & Restore'**
+  String get backupRestoreTitle;
+
+  /// No description provided for @backupSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create backup'**
+  String get backupSectionTitle;
+
+  /// No description provided for @backupSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Generates a file with all your data and opens the share menu so you can save it somewhere safe (cloud drive, email, USB...). Since the app is fully offline, this file is your only way to recover data or move it to another device.'**
+  String get backupSectionDescription;
+
+  /// No description provided for @createBackupButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Create backup'**
+  String get createBackupButton;
+
+  /// No description provided for @backupCreatedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved to: {path}'**
+  String backupCreatedMessage(String path);
+
+  /// No description provided for @backupFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the backup.'**
+  String get backupFailedMessage;
+
+  /// No description provided for @restoreSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup'**
+  String get restoreSectionTitle;
+
+  /// No description provided for @restoreSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a previously created backup file. Data already on this device is kept — only missing or older records are updated with the backup\'s data.'**
+  String get restoreSectionDescription;
+
+  /// No description provided for @restoreBackupButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose backup file'**
+  String get restoreBackupButton;
+
+  /// No description provided for @restoreConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup?'**
+  String get restoreConfirmTitle;
+
+  /// No description provided for @restoreConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This merges the backup into your current data. Nothing on this device is deleted: for each record, whichever version is more recent — the one already here or the one in the backup — is kept.'**
+  String get restoreConfirmMessage;
+
+  /// No description provided for @restoreConfirmButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get restoreConfirmButton;
+
+  /// No description provided for @restoreSuccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore complete: {inserted} new, {updated} updated, {skipped} unchanged.'**
+  String restoreSuccessMessage(int inserted, int updated, int skipped);
+
+  /// No description provided for @restoreFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not restore the backup.'**
+  String get restoreFailedMessage;
+
+  /// No description provided for @shareSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share backup'**
+  String get shareSectionTitle;
+
+  /// No description provided for @shareSectionDescriptionEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a backup first, then you can share that exact file (email, cloud drive, USB...) if you want an extra copy off this device.'**
+  String get shareSectionDescriptionEmpty;
+
+  /// No description provided for @shareSectionDescriptionReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to share: {fileName}'**
+  String shareSectionDescriptionReady(String fileName);
+
+  /// No description provided for @shareBackupButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Share backup'**
+  String get shareBackupButton;
+
+  /// No description provided for @shareFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the share menu.'**
+  String get shareFailedMessage;
 }
 
 class _AppLocalizationsDelegate

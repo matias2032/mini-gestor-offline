@@ -744,4 +744,71 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get couldNotArchiveStore => 'Could not archive the store.';
+
+  @override
+  String get backupRestoreTitle => 'Backup & Restore';
+
+  @override
+  String get backupSectionTitle => 'Create backup';
+
+  @override
+  String get backupSectionDescription =>
+      'Generates a file with all your data and opens the share menu so you can save it somewhere safe (cloud drive, email, USB...). Since the app is fully offline, this file is your only way to recover data or move it to another device.';
+
+  @override
+  String get createBackupButton => 'Create backup';
+
+  @override
+  String backupCreatedMessage(String path) {
+    return 'Backup saved to: $path';
+  }
+
+  @override
+  String get backupFailedMessage => 'Could not create the backup.';
+
+  @override
+  String get restoreSectionTitle => 'Restore backup';
+
+  @override
+  String get restoreSectionDescription =>
+      'Choose a previously created backup file. Data already on this device is kept — only missing or older records are updated with the backup\'s data.';
+
+  @override
+  String get restoreBackupButton => 'Choose backup file';
+
+  @override
+  String get restoreConfirmTitle => 'Restore backup?';
+
+  @override
+  String get restoreConfirmMessage =>
+      'This merges the backup into your current data. Nothing on this device is deleted: for each record, whichever version is more recent — the one already here or the one in the backup — is kept.';
+
+  @override
+  String get restoreConfirmButton => 'Continue';
+
+  @override
+  String restoreSuccessMessage(int inserted, int updated, int skipped) {
+    return 'Restore complete: $inserted new, $updated updated, $skipped unchanged.';
+  }
+
+  @override
+  String get restoreFailedMessage => 'Could not restore the backup.';
+
+  @override
+  String get shareSectionTitle => 'Share backup';
+
+  @override
+  String get shareSectionDescriptionEmpty =>
+      'Create a backup first, then you can share that exact file (email, cloud drive, USB...) if you want an extra copy off this device.';
+
+  @override
+  String shareSectionDescriptionReady(String fileName) {
+    return 'Ready to share: $fileName';
+  }
+
+  @override
+  String get shareBackupButton => 'Share backup';
+
+  @override
+  String get shareFailedMessage => 'Could not open the share menu.';
 }
