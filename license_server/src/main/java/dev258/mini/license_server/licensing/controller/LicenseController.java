@@ -23,8 +23,6 @@ import dev258.mini.license_server.licensing.entity.LicenseStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor

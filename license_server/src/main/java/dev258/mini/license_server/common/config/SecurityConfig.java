@@ -80,6 +80,8 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/health/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/**").authenticated()
+                        .anyRequest().permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(entryPoint)
