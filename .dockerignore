@@ -1,0 +1,19 @@
+.git
+.gitignore
+
+# Segredos: nunca entram no contexto de build
+keys
+**/*.pem
+**/*.der
+**/*.b64
+license_server/src/main/resources/application-local.yaml
+
+# Flutter (nao faz parte desta imagem)
+app_mini
+
+# Artefactos e dependencias locais
+**/node_modules
+**/target
+admin_panel/dist
+**/.idea
+**/.vscode

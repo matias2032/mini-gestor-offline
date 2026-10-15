@@ -1,6 +1,9 @@
 import type { ApiErrorBody } from '../types/common'
 
-const BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
+// Vazio ou em falta: em dev aponta ao Spring local; em producao usa a mesma origem do painel
+const BASE_URL: string =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? 'http://localhost:8080' : window.location.origin)
 
 export class ApiError extends Error {
   status: number
@@ -60,7 +63,12 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   if (response.status === 204) return undefined as T
 
   const text = await response.text()
-  const data: unknown = text ? JSON.parse(text) : undefined
+  let data: unknown
+  try {
+    data = text ? JSON.parse(text) : undefined
+  } catch {
+    data = undefined
+  }
 
   if (!response.ok) {
     const body = (data ?? {}) as Partial<ApiErrorBody>
