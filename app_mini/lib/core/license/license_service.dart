@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:android_id/android_id.dart';
 import 'package:cryptography/cryptography.dart';
@@ -34,12 +35,12 @@ class LicenseService {
 
 
   // Raw 32-byte Ed25519 public key, base64 (see the openssl command).
-  static const String _publicKeyBase64 = 'H9/z3ApRN3rrDXJ7j1m/1vNE7fRq9IQJ8+kR3QtrOwU=';
+  static const String _publicKeyBase64 = '68UiI+YpuLiH7rNp8ojxbEfEVoCAdC/T5rI/U30jyj4=';
 
   static const String _storageKey = 'license_v1';
 
   // Debug builds skip the check unless this is switched on to test the flow.
-  static const bool _enforceInDebug = false;
+  static const bool _enforceInDebug = true;
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
@@ -141,6 +142,9 @@ class LicenseService {
   }
 
   Future<String> _deviceId() async {
+    // So para testes no desktop em debug: o ANDROID_ID nao existe fora do Android.
+    if (kDebugMode && !Platform.isAndroid) return 'DESKTOP-DEBUG-DEVICE';
+
     final id = await const AndroidId().getId();
     if (id == null || id.isEmpty) {
       throw const LicenseException(LicenseErrorCode.deviceUnavailable);
