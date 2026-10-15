@@ -81,8 +81,7 @@ public class SecurityConfig {
                                 "/actuator/health/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().permitAll())
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(entryPoint)
                         .accessDeniedHandler(deniedHandler))
