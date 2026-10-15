@@ -5,7 +5,7 @@ class ApiConfig {
   // Sem barra final. O valor por omissao serve so para desenvolvimento.
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8080',
+    defaultValue: 'https://mini-gestor-offline.onrender.com',
   );
 
   static const String _v1 = '/api/v1';
