@@ -1,3 +1,4 @@
+# aplication-dev.yaml
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5433/license_db

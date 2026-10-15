@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini - Technical Documentation & Developer Guide</title>
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-light: #eff6ff;
+            --accent: #2563eb;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+            --bg-code: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 1.0cm 1.2cm;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
+            line-height: 1.4;
+            font-size: 12px;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            page-break-after: always;
+            break-after: page;
+        }
+
+        .page:last-child {
+            page-break-after: auto;
+            break-after: auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+        }
+
+        .title-group h1 {
+            margin: 0;
+            font-size: 22px;
+            color: var(--primary);
+            display: inline-block;
+            font-weight: 800;
+        }
+
+        .badge {
+            background-color: var(--primary);
+            color: #ffffff;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+
+        .subtitle {
+            margin: 2px 0 0 0;
+            font-size: 11.5px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .doc-tag {
+            text-align: right;
+            font-size: 10.5px;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        /* Sections */
+        h2 {
+            color: var(--primary);
+            font-size: 13px;
+            margin: 8px 0 4px 0;
+            padding-bottom: 2px;
+            border-bottom: 1px solid var(--border);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        h3 {
+            color: var(--text);
+            font-size: 12px;
+            margin: 6px 0 3px 0;
+            font-weight: 700;
+        }
+
+        p {
+            margin: 0 0 5px 0;
+        }
+
+        ul, ol {
+            margin: 3px 0 6px 0;
+            padding-left: 16px;
+        }
+
+        li {
+            margin-bottom: 2px;
+        }
+
+        strong {
+            color: #0f172a;
+        }
+
+        code {
+            font-family: "Consolas", "Menlo", "Courier New", monospace;
+            background-color: #f1f5f9;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #094cbb;
+        }
+
+        /* Code & Callouts */
+        .code-block {
+            background-color: var(--bg-code);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            padding: 5px 8px;
+            font-family: "Consolas", "Menlo", monospace;
+            font-size: 10.5px;
+            border-radius: 3px;
+            margin: 4px 0 6px 0;
+            color: #0f172a;
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.35;
+        }
+
+        .callout {
+            background-color: var(--primary-light);
+            border-left: 3px solid var(--primary);
+            padding: 5px 8px;
+            font-size: 11px;
+            border-radius: 3px;
+            margin: 5px 0;
+            line-height: 1.35;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border);
+            padding-top: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .footer .author {
+            text-align: center;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== PAGE 1 ==================== -->
+    <div class="page">
+        <div>
+            <div class="header">
+                <div class="title-group">
+                    <h1>Mini POS</h1>
+                    <span class="badge">v1.0.0 Stable</span>
+                    <p class="subtitle">Architecture Specification & Commercial Setup Guide</p>
+                </div>
+                <div class="doc-tag">
+                    <strong>Production Package</strong><br>
+                    Flutter 3.x • SQLite Embedded • Offline-First
+                </div>
+            </div>
+
+            <h2>1. Architecture & Software Design Pattern</h2>
+            <p><strong>Mini POS</strong> is a standalone micro-enterprise management and point-of-sale system built on an <strong>Offline-First Layered Architecture</strong>. It operates without remote server dependencies, guaranteeing zero latency, zero cloud costs, and full operational capability in network-constrained environments.</p>
+            
+            <ul>
+                <li><strong>Presentation Layer (<code>lib/screens</code>, <code>lib/widgets</code>):</strong> Declarative Material 3 UI. Widgets remain decoupled from data operations, observing state streams provided by ChangeNotifier controllers.</li>
+                <li><strong>State & Controller Layer (<code>lib/providers</code>):</strong> Encapsulates screen-level logic, reactive UI updates, input validation, and transactional view-state management.</li>
+                <li><strong>Domain & Repository Layer (<code>lib/repositories</code>):</strong> Acts as a single source of truth for business operations, coordinating data access and entity transformations.</li>
+                <li><strong>Data Access Layer (<code>lib/daos</code>, <code>lib/core</code>):</strong> Direct parameterized SQLite operations utilizing ACID-compliant transactional execution via <code>sqflite</code> / <code>sqflite_common_ffi</code>.</li>
+                <li><strong>Internationalization (<code>lib/l10n</code>):</strong> Dynamic locale resolution supporting English (<code>app_en.arb</code>) and Portuguese (<code>app_pt.arb</code>) with compile-time type-safe string generation.</li>
+            </ul>
+
+            <h2>2. Database Schema & Migration Lifecycle</h2>
+            <p>The local SQLite database enforces relational integrity using foreign key constraints and indexed lookup queries. All schema evolutions (v1 through v4) are version-controlled inside <code>core/local_database.dart</code>:</p>
+            
+            <div class="code-block">// Database migration handler (core/local_database.dart)
+Future&lt;void&gt; _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  if (oldVersion &lt; 2) await _migrateToV2(db); // Multi-store tenant support
+  if (oldVersion &lt; 3) await _migrateToV3(db); // Split-payment & debt ledger
+  if (oldVersion &lt; 4) await _migrateToV4(db); // Statement snapshot indexing
+}</div>
+
+            <h2>3. Core Functional Capabilities</h2>
+            <div class="grid-2">
+                <div>
+                    <ul>
+                        <li><strong>Multi-Branch Isolation:</strong> Complete logical partition of customers, inventory, expenses, and transaction logs per business unit.</li>
+                        <li><strong>Credit & Debt Ledger:</strong> Tracks partial installments, calculates balances dynamically, and automatically transitions fully-settled accounts.</li>
+                    </ul>
+                </div>
+                <div>
+                    <ul>
+                        <li><strong>Analytical Reporting:</strong> Aggregated revenue metrics, store-by-store performance comparisons, and exportable financial summaries.</li>
+                        <li><strong>Tamper-Proof Backups:</strong> Comprehensive JSON state exports with conflict-free timestamp reconciliation on data import.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>4. Development Environment & Build Toolchain</h2>
+            <ul>
+                <li><strong>Flutter SDK:</strong> Version <code>>=3.19.0 &lt;4.0.0</code> (Stable Channel)</li>
+                <li><strong>Dart SDK:</strong> Version <code>>=3.3.0 &lt;4.0.0</code></li>
+                <li><strong>Java Development Kit (JDK):</strong> OpenJDK 17</li>
+                <li><strong>Android Target SDK:</strong> <code>compileSdk = 36</code>, <code>targetSdk = 36</code>, <code>minSdk = 21</code></li>
+            </ul>
+
+            <div class="code-block"># Resolve dependencies & generate localization files
+flutter pub get
+flutter gen-l10n
+
+# Launch application on connected emulator / hardware device
+flutter run</div>
+        </div>
+
+        <div class="footer">
+            <span>Mini POS — Developer Documentation</span>
+            <span class="author">Production Grade Codebase</span>
+            <span>Page 1 of 2</span>
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 2 ==================== -->
+    <div class="page">
+        <div>
+            <div class="header">
+                <div class="title-group">
+                    <h1>Mini POS</h1>
+                    <span class="badge">Deployment</span>
+                    <p class="subtitle">Customization, Android Security & Release Pipeline</p>
+                </div>
+                <div class="doc-tag">
+                    <strong>Distribution Guide</strong><br>
+                    Google Play & Standalone APK
+                </div>
+            </div>
+
+            <h2>5. Rebranding & Customization Blueprint</h2>
+
+            <h3>A. Application ID & Namespace Configuration</h3>
+            <p>Update the package namespace inside <code>android/app/build.gradle.kts</code> to your company's domain structure:</p>
+            <div class="code-block">android {
+    namespace = "com.yourcompany.minipos"
+    defaultConfig {
+        applicationId = "com.yourcompany.minipos"
+        minSdk = 21
+        targetSdk = 36
+        versionCode = 1
+        versionName = "1.0.0"
+    }
+}</div>
+
+            <h3>B. Theme Tokens & Brand Palette</h3>
+            <p>Modify primary accent colors and Material 3 seed palettes centrally in <code>lib/theme/app_theme.dart</code>:</p>
+            <div class="code-block">static const Color seedColor = Color(0xFF1E40AF); // Primary Brand Color
+static final ThemeData lightTheme = ThemeData(
+  useMaterial3: true,
+  colorScheme: ColorScheme.fromSeed(seedColor: seedColor, brightness: Brightness.light),
+);</div>
+
+            <h3>C. App Launcher Icons</h3>
+            <p>Place your 512x512 PNG asset at <code>assets/icon.png</code> and execute the automated icon generator:</p>
+            <div class="code-block">dart run flutter_launcher_icons</div>
+
+            <h2>6. Android Storage & Scoped Storage Compliance</h2>
+            <div class="callout">
+                <strong>Google Play Policy Compliance:</strong><br>
+                The project isolates local database files inside internal app storage (<code>getDatabasesPath()</code>). Exported backups and financial statements utilize <code>path_provider</code> sandbox storage and dispatch externally via Android's native <code>Intent.ACTION_SEND</code> through <code>share_plus</code>. This complies fully with Google Play's Scoped Storage policy without requiring dangerous broad-storage permissions.
+            </div>
+
+            <h2>7. Production Release Signing</h2>
+            <p>1. Generate an industry-standard RSA 2048-bit release keystore:</p>
+            <div class="code-block">keytool -genkey -v -keystore android/app/release-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias minipos_key</div>
+
+            <p>2. Configure <code>android/key.properties</code> with your credentials:</p>
+            <div class="code-block">storePassword=your_keystore_password
+keyPassword=your_key_password
+keyAlias=minipos_key
+storeFile=release-keystore.jks</div>
+
+            <h2>8. Compiling Optimized Production Binaries</h2>
+            <p>Build minified, tree-shaken release artifacts ready for distribution:</p>
+            <div class="code-block"># Android App Bundle (Production optimized for Google Play)
+flutter build appbundle --release --obfuscate --split-debug-info=build/app/outputs/symbols
+
+# Standalone Universal APK (For Direct Client Distribution / Gumroad)
+flutter build apk --release</div>
+        </div>
+
+        <div class="footer">
+            <span>Mini POS • Commercial Offline Solution</span>
+            <span class="author">Software Architecture Documentation</span>
+            <span>Page 2 of 2</span>
+        </div>
+    </div>
+
+</body>
+</html>

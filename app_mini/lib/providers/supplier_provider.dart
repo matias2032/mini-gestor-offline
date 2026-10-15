@@ -1,0 +1,138 @@
+import 'package:flutter/foundation.dart';
+
+import '../models/supplier_model.dart';
+import '../repositories/supplier_repository.dart';
+import 'business_unit_provider.dart';
+
+/* Manages supplier state scoped to the currently active business unit.
+
+Listens to BusinessUnitProvider to automatically reload suppliers whenever the active unit changes. */
+class SupplierProvider extends ChangeNotifier {
+  SupplierProvider(this._supplierRepository, this._businessUnitProvider) {
+    _businessUnitProvider.addListener(_onActiveUnitChanged);
+  }
+
+  final SupplierRepository _supplierRepository;
+  final BusinessUnitProvider _businessUnitProvider;
+
+  List<SupplierModel> _suppliers = [];
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  List<SupplierModel> get suppliers => _suppliers;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  int? get _activeUnitId => _businessUnitProvider.activeBusinessUnit?.idBusinessUnit;
+
+  Future<void> loadSuppliers() async {
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _suppliers = [];
+      notifyListeners();
+      return;
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _suppliers = await _supplierRepository.getAllSuppliers(
+        businessUnitId: unitId,
+      );
+    } catch (error) {
+      _errorMessage = error.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> createSupplier({
+    required String name,
+    String? phone,
+    String? address,
+  }) async {
+    final unitId = _activeUnitId;
+    if (unitId == null) {
+      _errorMessage = 'No active business unit selected.';
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _supplierRepository.createSupplier(
+        name: name,
+        businessUnitId: unitId,
+        phone: phone,
+        address: address,
+      );
+      await loadSuppliers();
+      return true;
+    } catch (error) {
+      _errorMessage = error.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateSupplier({
+    required int idSupplier,
+    required String name,
+    String? phone,
+    String? address,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _supplierRepository.updateSupplier(
+        idSupplier: idSupplier,
+        name: name,
+        phone: phone,
+        address: address,
+      );
+      await loadSuppliers();
+      return true;
+    } catch (error) {
+      _errorMessage = error.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteSupplier(int idSupplier) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _supplierRepository.deleteSupplier(idSupplier);
+      await loadSuppliers();
+      return true;
+    } catch (error) {
+      _errorMessage = error.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void _onActiveUnitChanged() {
+    loadSuppliers();
+  }
+
+  @override
+  void dispose() {
+    _businessUnitProvider.removeListener(_onActiveUnitChanged);
+    super.dispose();
+  }
+}

@@ -1,3 +1,4 @@
+# aplication.yaml
 spring:
   application:
     name: license_server

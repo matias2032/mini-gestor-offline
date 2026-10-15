@@ -1,0 +1,41 @@
+
+SOFTWARE LICENSE AGREEMENT: MINI
+
+Product Name:     Mini (Offline Multi-Store POS & Finance Manager)
+Author:           Matias Alberto Matavel
+Version:          1.0.0
+Copyright:        Copyright (c) 2026 Matias Alberto Matavel. All rights reserved.
+
+1. GRANT OF LICENSE
+By purchasing, downloading, or accessing this source code package, you are 
+granted a non-exclusive, non-transferable, revocable license to use, modify, 
+and integrate the code into your personal or commercial applications subject 
+to the terms outlined in this agreement.
+
+2. PERMITTED USES
+* You MAY modify, adapt, rebrand, translate, and customize the source code.
+* You MAY compile and build binaries (.apk, .aab, .ipa, .exe) to publish the 
+  end-product on app distribution platforms (e.g., Google Play Store, 
+  Apple App Store, personal websites).
+* You MAY use this source code to build a single client project or a customized 
+  commercial application for internal business use.
+
+3. RESTRICTIONS
+* You CANNOT resell, redistribute, sublicense, rent, lease, or share the raw 
+  source code, database schemas, or project documentation as a digital item, 
+  template, or package on any marketplace or public platform.
+* You CANNOT extract UI components, assets, or modular architecture to create 
+  a directly competing source code template or developer resource.
+* You CANNOT claim direct original ownership or authorship of the core source 
+  code base.
+
+4. DISCLAIMER OF WARRANTY & LIMITATION OF LIABILITY
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. 
+
+IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, 
+DAMAGES, LOSS OF DATA, REVENUE LOSS, OR OTHER LIABILITY ARISING FROM, OUT OF, 
+OR IN CONNECTION WITH THE USE OR INABILITY TO USE THE SOFTWARE.
+
+Thank you for supporting independent software development!

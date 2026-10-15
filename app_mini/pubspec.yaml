@@ -1,0 +1,56 @@
+name: mini
+description: "Offline personal/business finance manager for small informal entrepreneurs."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_localizations:
+    sdk: flutter
+
+  sqflite: ^2.4.1
+  path: ^1.9.0
+  provider: ^6.1.2
+  intl: ^0.20.2
+  bcrypt: ^1.1.3
+  sqflite_common_ffi: ^2.3.4+3
+  sqflite_common_ffi_web: ^0.4.5+2
+  shared_preferences: ^2.3.3
+  http: ^1.2.0
+  cryptography: ^2.7.0
+  flutter_secure_storage: ^9.2.2
+  android_id: ^0.4.0
+
+  path_provider: ^2.1.5
+  share_plus: ^10.1.4
+  file_picker: ^10.3.7
+  permission_handler: ^11.3.1
+  pdf: ^3.11.1
+  printing: ^5.13.1
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  # App icon asset registration for UI rendering
+  assets:
+    - assets/icone.png
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icone.png"
+  
