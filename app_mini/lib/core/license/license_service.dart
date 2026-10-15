@@ -35,7 +35,7 @@ class LicenseService {
 
 
   // Raw 32-byte Ed25519 public key, base64 (see the openssl command).
-  static const String _publicKeyBase64 = '68UiI+YpuLiH7rNp8ojxbEfEVoCAdC/T5rI/U30jyj4=';
+  static const String _publicKeyBase64 = '/ihbfSNx5rE65lp0T2iWpeKBRAXREonJZgaVkX9tU84=';
 
   static const String _storageKey = 'license_v1';
 
