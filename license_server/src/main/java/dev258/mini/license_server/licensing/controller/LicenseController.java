@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import dev258.mini.license_server.licensing.entity.LicenseStatus;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 
 import java.util.List;
 
@@ -50,8 +53,17 @@ public class LicenseController {
     }
 
     @GetMapping("/admin/licenses")
-    public List<LicenseResponse> list(@RequestParam(required = false) String buyer) {
-        return service.findByBuyer(buyer).stream().map(LicenseResponse::from).toList();
+    public PagedModel<LicenseResponse> list(@RequestParam(required = false) String buyer,
+                                            @RequestParam(required = false) LicenseStatus status,
+                                            @RequestParam(required = false) String channel,
+                                            Pageable pageable) {
+        return new PagedModel<>(service.search(buyer, status, channel, pageable)
+                .map(LicenseResponse::from));
+    }
+
+    @GetMapping("/admin/licenses/{id}")
+    public LicenseResponse get(@PathVariable Long id) {
+        return LicenseResponse.from(service.get(id));
     }
 
     @PostMapping("/admin/licenses/{id}/reset")

@@ -6,9 +6,10 @@ interface LicenseTableProps {
   pendingId: number | null // licenca com reset/revoke em curso
   onReset: (id: number) => void
   onRevoke: (id: number) => void
+  onSelect: (id: number) => void
 }
 
-export function LicenseTable({ licenses, pendingId, onReset, onRevoke }: LicenseTableProps) {
+export function LicenseTable({ licenses, pendingId, onReset, onRevoke, onSelect }: LicenseTableProps) {
   if (licenses.length === 0) return <p>Sem licencas.</p>
 
   function confirmReset(l: License) {
@@ -55,6 +56,9 @@ export function LicenseTable({ licenses, pendingId, onReset, onRevoke }: License
               <td>{l.activationCount}</td>
               <td>{formatDate(l.createdAt)}</td>
               <td>
+                <button type="button" onClick={() => onSelect(l.id)}>
+                  Detalhe
+                </button>{' '}
                 <button type="button" disabled={revoked || busy} onClick={() => confirmReset(l)}>
                   Reset
                 </button>{' '}

@@ -1,14 +1,21 @@
 import { request } from './http'
-import type { GenerateLicenseRequest, GeneratedLicense, License } from '../types/license'
+import type { PagedModel } from '../types/common'
+import type {
+  GenerateLicenseRequest,
+  GeneratedLicense,
+  License,
+  LicenseFilters,
+} from '../types/license'
 
 export const licenseApi = {
   generate: (data: GenerateLicenseRequest) =>
     request<GeneratedLicense>('/api/v1/admin/licenses', { method: 'POST', body: data }),
 
-  // Hoje o servidor devolve uma lista simples. Quando fizermos o passo 3
-  // (paginacao e filtros), este ficheiro e o tipo mudam para PagedModel<License>.
-  list: (buyer?: string) =>
-    request<License[]>('/api/v1/admin/licenses', { query: { buyer } }),
+  // Valores vazios sao omitidos pelo request(), por isso status '' = sem filtro
+  list: (filters: LicenseFilters = {}) =>
+    request<PagedModel<License>>('/api/v1/admin/licenses', { query: filters }),
+
+  get: (id: number) => request<License>(`/api/v1/admin/licenses/${id}`),
 
   reset: (id: number) =>
     request<void>(`/api/v1/admin/licenses/${id}/reset`, { method: 'POST' }),

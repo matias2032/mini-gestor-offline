@@ -16,6 +16,7 @@ const MESSAGES: Record<string, string> = {
   UNAUTHORIZED: 'Sessao invalida ou expirada.',
   FORBIDDEN: 'Sem permissao para esta accao.',
   NOT_FOUND: 'Recurso nao encontrado.',
+  BAD_REQUEST: 'Pedido invalido.',
   SERVER_ERROR: 'Erro interno do servidor.',
 }
 

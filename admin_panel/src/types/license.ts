@@ -24,3 +24,12 @@ export interface GeneratedLicense {
   channel: string
   buyerLabel: string | null
 }
+
+// "type" e nao "interface": so assim e atribuivel ao Record<string, ...> que o request() espera
+export type LicenseFilters = {
+  buyer?: string
+  status?: LicenseStatus | ''
+  channel?: string
+  page?: number
+  size?: number
+}

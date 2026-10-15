@@ -5,6 +5,10 @@ import dev258.mini.license_server.licensing.entity.LicenseStatus;
 import dev258.mini.license_server.licensing.exception.LicenseError;
 import dev258.mini.license_server.licensing.exception.LicenseException;
 import dev258.mini.license_server.licensing.repository.LicenseRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
@@ -107,12 +111,39 @@ public class LicenseService {
         find(id).setStatus(LicenseStatus.REVOKED);
     }
 
+    // Ordenacao fixa (mais recentes primeiro): ignoramos o "sort" que vier do cliente,
+    // porque um nome de campo invalido rebentava com 500
+    private static final Sort LIST_SORT = Sort.by(Sort.Direction.DESC, "createdAt", "idLicense");
+
     @Transactional(readOnly = true)
-    public List<License> findByBuyer(String buyer) {
-        if (buyer == null || buyer.isBlank()) {
-            return repository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+    public Page<License> search(String buyer, LicenseStatus status, String channel, Pageable pageable) {
+        Specification<License> spec = Specification.unrestricted();
+
+        if (buyer != null && !buyer.isBlank()) {
+            String pattern = "%" + escapeLike(buyer.trim().toLowerCase(Locale.ROOT)) + "%";
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("buyerLabel")), pattern, '\\'));
         }
-        return repository.findByBuyerLabelContainingIgnoreCase(buyer.trim());
+        if (status != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        }
+        if (channel != null && !channel.isBlank()) {
+            String ch = channel.trim().toLowerCase(Locale.ROOT);
+            spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("channel")), ch));
+        }
+
+        return repository.findAll(spec,
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), LIST_SORT));
+    }
+
+    @Transactional(readOnly = true)
+    public License get(Long id) {
+        return find(id);
+    }
+
+    // Os caracteres % e _ do que o admin escreve sao texto, nao curingas
+    private static String escapeLike(String s) {
+        return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     public SignedLicense sign(long licenseId, String deviceId, Instant issuedAt) {

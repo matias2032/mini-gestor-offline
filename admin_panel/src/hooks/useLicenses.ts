@@ -1,20 +1,36 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  skipToken,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { licenseApi } from '../api/licenseApi'
 import type { ApiError } from '../api/http'
-import type { GenerateLicenseRequest, GeneratedLicense } from '../types/license'
+import type { GenerateLicenseRequest, GeneratedLicense, LicenseFilters } from '../types/license'
 import { useAuth } from './useAuth'
 
 export const licenseKeys = {
   all: ['licenses'] as const,
-  list: (buyer?: string) => ['licenses', 'list', buyer ?? ''] as const,
+  list: (filters: LicenseFilters) => ['licenses', 'list', filters] as const,
+  detail: (id: number | null) => ['licenses', 'detail', id] as const,
 }
 
-export function useLicenses(buyer?: string) {
+export function useLicenses(filters: LicenseFilters) {
   const { isAuthenticated } = useAuth()
   return useQuery({
-    queryKey: licenseKeys.list(buyer),
-    queryFn: () => licenseApi.list(buyer),
+    queryKey: licenseKeys.list(filters),
+    queryFn: () => licenseApi.list(filters),
     enabled: isAuthenticated,
+    placeholderData: keepPreviousData, // evita piscar a tabela ao mudar de pagina ou filtro
+  })
+}
+
+export function useLicense(id: number | null) {
+  const { isAuthenticated } = useAuth()
+  return useQuery({
+    queryKey: licenseKeys.detail(id),
+    queryFn: isAuthenticated && id !== null ? () => licenseApi.get(id) : skipToken,
   })
 }
 
