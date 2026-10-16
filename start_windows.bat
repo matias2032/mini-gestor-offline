@@ -43,7 +43,7 @@ if "%LICENSE_PRIVATE_KEY%"=="" (
 echo [INFO] A iniciar backend ^(perfil dev, com chave de assinatura^)...
 REM A nova janela herda LICENSE_PRIVATE_KEY. O devtools nao e usado para recarregar a chave:
 REM se mudares a chave ou o pom.xml, fecha a janela do backend e corre este .bat de novo.
-start "Mini - Backend" /d "%SERVER_DIR%" cmd /k mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
+start "Mini - Backend" /d "%SERVER_DIR%" cmd /k mvn spring-boot:run "-Dspring-boot.run.profiles=dev"
 
 REM Limpa a chave desta janela: o Flutter nao precisa dela
 set "LICENSE_PRIVATE_KEY="

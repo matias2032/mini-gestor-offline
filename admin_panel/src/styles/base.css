@@ -1,0 +1,165 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--surface);
+  color: var(--on-surface);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem; /* headlineSmall do Flutter */
+  font-weight: 700;
+}
+
+h2 {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+p {
+  margin: 0 0 0.75rem;
+}
+
+a {
+  color: var(--primary);
+}
+
+section {
+  margin-bottom: 2rem;
+}
+
+/* ---------- formularios ---------- */
+
+input,
+select {
+  max-width: 100%;
+  padding: 0.75rem 1rem;
+  font: inherit;
+  color: inherit;
+  background: color-mix(in srgb, var(--surface-container-highest) 40%, transparent);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+input:focus-visible,
+select:focus-visible {
+  outline-offset: 0;
+  border-color: var(--primary);
+}
+
+form > div {
+  margin-bottom: 1rem;
+}
+
+form > div > input {
+  width: 100%;
+  max-width: 24rem;
+}
+
+div > label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--on-surface-variant);
+}
+
+/* Botoes sem classe (os das pages). Os da shell usam classes proprias. */
+button:not([class]) {
+  padding: 0.65rem 1.1rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--on-primary);
+  background: var(--primary);
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+button:not([class]):hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ---------- mensagens ---------- */
+
+[role='alert'],
+[role='status'] {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+}
+
+[role='alert'] {
+  color: var(--on-error-container);
+  background: var(--error-container);
+}
+
+[role='status'] {
+  color: var(--on-primary-container);
+  background: var(--primary-container);
+}
+
+[role='alert'] > :last-child,
+[role='status'] > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- tabelas e listas de detalhe ---------- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+th {
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  background: var(--surface-container);
+}
+
+tbody tr:hover {
+  background: var(--surface-container-low);
+}
+
+dt {
+  font-weight: 600;
+  color: var(--on-surface-variant);
+}
+
+dd {
+  margin: 0 0 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+  }
+}

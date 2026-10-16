@@ -1,0 +1,327 @@
+.shell {
+  display: flex;
+  min-height: 100dvh;
+}
+
+/* ---------- sidebar ---------- */
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 0 0 var(--sidebar-w);
+  width: var(--sidebar-w);
+  height: 100dvh;
+  padding: 1rem 0.75rem;
+  overflow-y: auto;
+  background: var(--surface-container-low);
+  border-right: 1px solid var(--outline-variant);
+  /* ao fechar, o visibility so muda no fim da animacao */
+  transition:
+    margin-left 0.2s ease,
+    transform 0.2s ease,
+    visibility 0s linear 0.2s;
+}
+
+.shell[data-open='false'] .sidebar {
+  margin-left: calc(var(--sidebar-w) * -1);
+  visibility: hidden;
+}
+
+.shell[data-open='true'] .sidebar {
+  transition:
+    margin-left 0.2s ease,
+    transform 0.2s ease,
+    visibility 0s;
+}
+
+.sidebar__brand {
+  padding: 0.5rem 0.75rem 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidebar__theme {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.sidebar__footer {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--outline-variant);
+}
+
+/* ---------- reset dos botoes da shell ---------- */
+
+.icon-button,
+.theme-toggle,
+.user-menu__trigger,
+.user-menu__item {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* ---------- links de navegacao (rota activa) ---------- */
+
+.nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.75rem;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  border-radius: var(--radius-pill);
+}
+
+.nav-link:hover,
+.icon-button:hover,
+.theme-toggle:hover,
+.user-menu__trigger:hover,
+.user-menu__item:hover {
+  background: color-mix(in srgb, var(--on-surface) 8%, transparent);
+}
+
+/* o NavLink poe aria-current="page" na rota activa */
+.nav-link[aria-current='page'] {
+  font-weight: 600;
+  color: var(--on-primary-container);
+  background: var(--primary-container);
+}
+
+.nav-link[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  left: -0.75rem;
+  width: 4px;
+  background: var(--primary);
+  border-radius: 0 4px 4px 0;
+}
+
+/* ---------- toggle do tema ---------- */
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-pill);
+}
+
+.theme-toggle__label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--on-surface-variant);
+}
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 2.5rem;
+  height: 1.5rem;
+  background: var(--surface-container-highest);
+  border: 2px solid var(--outline);
+  border-radius: var(--radius-pill);
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.switch__thumb {
+  position: absolute;
+  top: 50%;
+  left: 0.2rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  background: var(--outline);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  transition:
+    left 0.2s,
+    width 0.2s,
+    height 0.2s,
+    background 0.2s;
+}
+
+.theme-toggle[aria-checked='true'] .switch {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.theme-toggle[aria-checked='true'] .switch__thumb {
+  left: calc(100% - 1rem - 0.2rem);
+  width: 1rem;
+  height: 1rem;
+  background: var(--on-primary);
+}
+
+/* ---------- menu do utilizador (fundo da sidebar) ---------- */
+
+.user-menu {
+  position: relative;
+}
+
+.user-menu__trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-radius: var(--radius);
+}
+
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-weight: 700;
+  color: var(--on-primary);
+  background: var(--primary);
+  border-radius: 50%;
+}
+
+.user-menu__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* o menu abre para cima: seta para cima quando fechado, para baixo quando aberto */
+.user-menu__chevron {
+  flex: none;
+  transform: rotate(180deg);
+  transition: transform 0.2s;
+}
+
+.user-menu__trigger[aria-expanded='true'] .user-menu__chevron {
+  transform: none;
+}
+
+.user-menu__list {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem;
+  background: var(--surface-container-high);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.user-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  color: var(--on-surface);
+  text-align: left;
+  text-decoration: none;
+  border-radius: calc(var(--radius) - 4px);
+}
+
+.user-menu__item[aria-current='page'] {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* ---------- area principal ---------- */
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: var(--topbar-h);
+  padding: 0 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: 75rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  overflow-x: auto; /* tabelas largas rolam aqui em vez de partirem a pagina */
+}
+
+.backdrop {
+  display: none;
+}
+
+/* ---------- mobile: a sidebar passa a gaveta sobre o conteudo ---------- */
+
+@media (max-width: 899.98px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    flex-basis: auto;
+    width: min(var(--sidebar-w), 85vw);
+    box-shadow: var(--shadow);
+  }
+
+  .shell[data-open='false'] .sidebar {
+    margin-left: 0;
+    transform: translateX(-100%);
+  }
+
+  .shell[data-open='true'] .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: block;
+    background: rgb(0 0 0 / 0.45);
+  }
+}
