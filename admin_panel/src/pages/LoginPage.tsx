@@ -6,9 +6,11 @@ export function LoginPage() {
   const { isAuthenticated } = useAuth()
   if (isAuthenticated) return <Navigate to="/licencas" replace />
   return (
-    <main>
-      <h1>Painel de licencas</h1>
-      <LoginForm />
+    <main className="auth-page">
+      <div className="card">
+        <h1 className="auth-title">Painel de licencas</h1>
+        <LoginForm />
+      </div>
     </main>
   )
 }

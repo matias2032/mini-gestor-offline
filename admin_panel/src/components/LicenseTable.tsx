@@ -1,5 +1,6 @@
 import type { License } from '../types/license'
 import { formatDate } from '../utils/format'
+import { BlockIcon, EyeIcon, RestartIcon } from './icons'
 
 interface LicenseTableProps {
   licenses: License[]
@@ -56,15 +57,27 @@ export function LicenseTable({ licenses, pendingId, onReset, onRevoke, onSelect 
               <td>{l.activationCount}</td>
               <td>{formatDate(l.createdAt)}</td>
               <td>
-                <button type="button" onClick={() => onSelect(l.id)}>
-                  Detalhe
-                </button>{' '}
-                <button type="button" disabled={revoked || busy} onClick={() => confirmReset(l)}>
-                  Reset
-                </button>{' '}
-                <button type="button" disabled={revoked || busy} onClick={() => confirmRevoke(l)}>
-                  Revogar
-                </button>
+                <div className="actions">
+                  <button type="button" className="btn btn--sm btn--info" onClick={() => onSelect(l.id)}>
+                    <EyeIcon /> Detalhe
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--warning"
+                    disabled={revoked || busy}
+                    onClick={() => confirmReset(l)}
+                  >
+                    <RestartIcon /> Reset
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--danger"
+                    disabled={revoked || busy}
+                    onClick={() => confirmRevoke(l)}
+                  >
+                    <BlockIcon /> Revogar
+                  </button>
+                </div>
               </td>
             </tr>
           )

@@ -163,3 +163,56 @@ dd {
     transition: none !important;
   }
 }
+
+/* ---------- Botoes com variantes ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn svg { width: 1.15em; height: 1.15em; flex: none; }
+.btn:hover:not(:disabled) { filter: brightness(1.08); }
+.btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.btn--sm { padding: 0.3rem 0.65rem; font-size: 0.85rem; border-radius: 10px; }
+
+.btn--primary { --btn-bg: var(--primary); --btn-fg: var(--on-primary); }
+.btn--info    { --btn-bg: var(--tertiary-container); --btn-fg: var(--on-tertiary-container); }
+.btn--warning { --btn-bg: var(--warning-container);  --btn-fg: var(--on-warning-container); }
+.btn--danger  { --btn-bg: var(--error-container);    --btn-fg: var(--on-error-container); }
+.btn--outline { --btn-bg: transparent; --btn-fg: var(--on-surface-variant); border-color: var(--outline); }
+.btn--outline:hover:not(:disabled) { background: var(--surface-container-high); filter: none; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+/* ---------- Filtros ---------- */
+.filters { display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem; margin-bottom: 1rem; }
+.filters > div { flex: 1 1 12rem; max-width: 16rem; }
+
+/* ---------- Formularios centrados ---------- */
+.auth-page { min-height: 100dvh; display: grid; place-items: center; padding: 1rem; }
+.auth-title { text-align: center; margin: 0 0 1.25rem; }
+
+.card {
+  width: 100%;
+  max-width: 26rem;
+  padding: 1.5rem;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.card form input,
+.card form select { width: 100%; max-width: none; }
+.card form > div { margin-bottom: 1rem; }
+.card form > button { width: 100%; justify-content: center; }
+
+.page-narrow { max-width: 28rem; margin-inline: auto; }
+.page-narrow .card { max-width: none; margin-bottom: 1.5rem; }

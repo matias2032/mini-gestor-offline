@@ -6,6 +6,7 @@ import { LicenseTable } from '../components/LicenseTable'
 import { LicenseDetail } from '../components/LicenseDetail'
 import { Pagination } from '../components/Pagination'
 import { ErrorMessage } from '../components/ErrorMessage'
+import { ClearIcon, SearchIcon } from '../components/icons'
 
 const PAGE_SIZE = 20
 
@@ -52,34 +53,44 @@ export function LicensesPage() {
 
       <section>
         <h2>Lista</h2>
-        <form onSubmit={handleSearch}>
-          <label htmlFor="fBuyer">Comprador</label>{' '}
-          <input
-            id="fBuyer"
-            value={draft.buyer}
-            onChange={(e) => setDraft({ ...draft, buyer: e.target.value })}
-          />{' '}
-          <label htmlFor="fStatus">Estado</label>{' '}
-          <select
-            id="fStatus"
-            value={draft.status}
-            onChange={(e) => setDraft({ ...draft, status: e.target.value as LicenseStatus | '' })}
-          >
-            <option value="">Todos</option>
-            <option value="UNUSED">UNUSED</option>
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="REVOKED">REVOKED</option>
-          </select>{' '}
-          <label htmlFor="fChannel">Canal</label>{' '}
-          <input
-            id="fChannel"
-            value={draft.channel}
-            onChange={(e) => setDraft({ ...draft, channel: e.target.value })}
-          />{' '}
-          <button type="submit">Procurar</button>{' '}
-          <button type="button" onClick={handleClear}>
-            Limpar
-          </button>
+        <form className="filters" onSubmit={handleSearch}>
+          <div>
+            <label htmlFor="fBuyer">Comprador</label>
+            <input
+              id="fBuyer"
+              value={draft.buyer}
+              onChange={(e) => setDraft({ ...draft, buyer: e.target.value })}
+            />
+          </div>
+          <div>
+            <label htmlFor="fStatus">Estado</label>
+            <select
+              id="fStatus"
+              value={draft.status}
+              onChange={(e) => setDraft({ ...draft, status: e.target.value as LicenseStatus | '' })}
+            >
+              <option value="">Todos</option>
+              <option value="UNUSED">UNUSED</option>
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="REVOKED">REVOKED</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="fChannel">Canal</label>
+            <input
+              id="fChannel"
+              value={draft.channel}
+              onChange={(e) => setDraft({ ...draft, channel: e.target.value })}
+            />
+          </div>
+          <div className="actions">
+            <button type="submit" className="btn btn--primary">
+              <SearchIcon /> Procurar
+            </button>
+            <button type="button" className="btn btn--outline" onClick={handleClear}>
+              <ClearIcon /> Limpar
+            </button>
+          </div>
         </form>
 
         <ErrorMessage error={reset.error ?? revoke.error} />

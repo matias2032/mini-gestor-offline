@@ -3,13 +3,13 @@ import { ChangePasswordForm } from '../components/ChangePasswordForm'
 
 export function ProfilePage() {
   return (
-    <div>
+    <div className="page-narrow">
       <h1>Perfil</h1>
-      <section>
+      <section className="card">
         <h2>Dados da conta</h2>
         <ProfileForm />
       </section>
-      <section>
+      <section className="card">
         <h2>Alterar password</h2>
         <ChangePasswordForm />
       </section>
