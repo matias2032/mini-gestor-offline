@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:mini/l10n/app_localizations.dart';
-
+import '../../models/daily_revenue_point.dart';
 import '../../models/sale_model.dart';
 import '../../providers/business_unit_provider.dart';
 import '../../providers/dashboard_provider.dart';
@@ -144,6 +147,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               else if (isAllStores)
                 _ConsolidatedDashboardBody(
                   stats: dashboardProvider.consolidatedStats,
+                  dailyRevenue: dashboardProvider.dailyRevenue,
                   currency: currency,
                   amountFormat: amountFormat,
                   l10n: l10n,
@@ -151,6 +155,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               else
                 _CurrentStoreDashboardBody(
                   stats: dashboardProvider.stats,
+                  dailyRevenue: dashboardProvider.dailyRevenue,
                   currency: currency,
                   amountFormat: amountFormat,
                   l10n: l10n,
@@ -180,12 +185,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 class _CurrentStoreDashboardBody extends StatelessWidget {
   const _CurrentStoreDashboardBody({
     required this.stats,
+    required this.dailyRevenue,
     required this.currency,
     required this.amountFormat,
     required this.l10n,
   });
 
   final DashboardStats? stats;
+  final List<DailyRevenuePoint> dailyRevenue;
   final String currency;
   final NumberFormat amountFormat;
   final AppLocalizations l10n;
@@ -199,13 +206,16 @@ class _CurrentStoreDashboardBody extends StatelessWidget {
       );
     }
 
-    return _StatsGrid(
-      cards: [
-        _StatCardData(
-          icon: Icons.receipt_long_outlined,
-          label: l10n.finalizedSales,
-          value: '${stats!.finalizedSalesCount}',
-        ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _StatsGrid(
+          cards: [
+            _StatCardData(
+              icon: Icons.receipt_long_outlined,
+              label: l10n.finalizedSales,
+              value: '${stats!.finalizedSalesCount}',
+            ),
         _StatCardData(
           icon: Icons.payments_outlined,
           label: l10n.totalRevenue,
@@ -222,6 +232,23 @@ class _CurrentStoreDashboardBody extends StatelessWidget {
           value:
               '${amountFormat.format(stats!.settledCreditRevenueCents / 100)} $currency',
         ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _RevenueTrendCard(
+          points: dailyRevenue,
+          currency: currency,
+          amountFormat: amountFormat,
+          l10n: l10n,
+        ),
+        const SizedBox(height: 12),
+        _RevenueMixCard(
+          totalCents: stats!.totalRevenueCents,
+          creditCents: stats!.settledCreditRevenueCents,
+          currency: currency,
+          amountFormat: amountFormat,
+          l10n: l10n,
+        ),
       ],
     );
   }
@@ -230,12 +257,14 @@ class _CurrentStoreDashboardBody extends StatelessWidget {
 class _ConsolidatedDashboardBody extends StatelessWidget {
   const _ConsolidatedDashboardBody({
     required this.stats,
+    required this.dailyRevenue,
     required this.currency,
     required this.amountFormat,
     required this.l10n,
   });
 
   final ConsolidatedDashboardStats? stats;
+  final List<DailyRevenuePoint> dailyRevenue;
   final String currency;
   final NumberFormat amountFormat;
   final AppLocalizations l10n;
@@ -277,6 +306,21 @@ class _ConsolidatedDashboardBody extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        _RevenueTrendCard(
+          points: dailyRevenue,
+          currency: currency,
+          amountFormat: amountFormat,
+          l10n: l10n,
+        ),
+        const SizedBox(height: 12),
+        _RevenueMixCard(
+          totalCents: stats!.totalRevenueCents,
+          creditCents: stats!.settledCreditRevenueCents,
+          currency: currency,
+          amountFormat: amountFormat,
+          l10n: l10n,
+        ),
         if (stats!.perStore.isNotEmpty) ...[
           const SizedBox(height: 24),
           Text(l10n.perStoreBreakdownTitle, style: Theme.of(context).textTheme.titleMedium),
@@ -286,15 +330,29 @@ class _ConsolidatedDashboardBody extends StatelessWidget {
             child: Column(
               children: [
                 for (final store in stats!.perStore)
-                  ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.storefront_outlined),
-                    title: Text(store.businessUnitName),
-                    subtitle: Text(l10n.saleCountLabel(store.finalizedSalesCount)),
-                    trailing: Text(
-                      '${amountFormat.format(store.totalRevenueCents / 100)} $currency',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                  Column(
+                    children: [
+                      ListTile(
+                        dense: true,
+                        leading: const Icon(Icons.storefront_outlined),
+                        title: Text(store.businessUnitName),
+                        subtitle: Text(l10n.saleCountLabel(store.finalizedSalesCount)),
+                        trailing: Text(
+                          '${amountFormat.format(store.totalRevenueCents / 100)} $currency',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: LinearProgressIndicator(
+                          value: stats!.totalRevenueCents > 0
+                              ? store.totalRevenueCents / stats!.totalRevenueCents
+                              : 0,
+                          minHeight: 4,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ],
                   ),
               ],
             ),
@@ -387,4 +445,301 @@ class _StatCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RevenueMixCard extends StatelessWidget {
+  const _RevenueMixCard({
+    required this.totalCents,
+    required this.creditCents,
+    required this.currency,
+    required this.amountFormat,
+    required this.l10n,
+  });
+
+  final int totalCents;
+  final int creditCents;
+  final String currency;
+  final NumberFormat amountFormat;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    if (totalCents <= 0) return const SizedBox.shrink();
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final credit = creditCents.clamp(0, totalCents).toInt();
+    final immediate = totalCents - credit;
+    final fraction = credit / totalCents;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 76,
+              height: 76,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CustomPaint(
+                    size: const Size(76, 76),
+                    painter: _DonutPainter(
+                      fraction: fraction,
+                      baseColor: colorScheme.primary,
+                      highlightColor: colorScheme.tertiary,
+                    ),
+                  ),
+                  Text(
+                    '${(fraction * 100).round()}%',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.revenueMixTitle, style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 8),
+                  _LegendRow(
+                    color: colorScheme.primary,
+                    label: l10n.immediateRevenueLabel,
+                    value: '${amountFormat.format(immediate / 100)} $currency',
+                  ),
+                  const SizedBox(height: 4),
+                  _LegendRow(
+                    color: colorScheme.tertiary,
+                    label: l10n.settledCreditRevenueLabel,
+                    value: '${amountFormat.format(credit / 100)} $currency',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LegendRow extends StatelessWidget {
+  const _LegendRow({required this.color, required this.label, required this.value});
+  final Color color;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        Text(value, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+}
+
+class _DonutPainter extends CustomPainter {
+  _DonutPainter({
+    required this.fraction,
+    required this.baseColor,
+    required this.highlightColor,
+  });
+
+  final double fraction;
+  final Color baseColor;
+  final Color highlightColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const stroke = 10.0;
+    final rect = (Offset.zero & size).deflate(stroke / 2);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke;
+
+    canvas.drawArc(rect, 0, 2 * math.pi, false, paint..color = baseColor);
+    if (fraction > 0) {
+      canvas.drawArc(
+        rect,
+        -math.pi / 2,
+        2 * math.pi * fraction,
+        false,
+        paint..color = highlightColor,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DonutPainter old) =>
+      old.fraction != fraction ||
+      old.baseColor != baseColor ||
+      old.highlightColor != highlightColor;
+}
+
+class _RevenueTrendCard extends StatelessWidget {
+  const _RevenueTrendCard({
+    required this.points,
+    required this.currency,
+    required this.amountFormat,
+    required this.l10n,
+  });
+
+  final List<DailyRevenuePoint> points;
+  final String currency;
+  final NumberFormat amountFormat;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasData = points.length >= 3 && points.any((p) => p.revenueCents > 0);
+    if (!hasData) return const SizedBox.shrink();
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final locale = Localizations.localeOf(context).toString();
+    final dateFormat = DateFormat('d MMM', locale);
+    final peak = points.map((p) => p.revenueCents).reduce(math.max);
+    final labelStyle = TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.revenueTrendTitle,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                Text(
+                  '${l10n.peakLabel}: ${amountFormat.format(peak / 100)} $currency',
+                  style: labelStyle,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 90,
+              width: double.infinity,
+              child: CustomPaint(
+                painter: _LineChartPainter(
+                  values: points.map((p) => p.revenueCents.toDouble()).toList(),
+                  lineColor: colorScheme.primary,
+                  gridColor: colorScheme.outlineVariant,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(dateFormat.format(points.first.day), style: labelStyle),
+                Text(dateFormat.format(points.last.day), style: labelStyle),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LineChartPainter extends CustomPainter {
+  _LineChartPainter({
+    required this.values,
+    required this.lineColor,
+    required this.gridColor,
+  });
+
+  final List<double> values;
+  final Color lineColor;
+  final Color gridColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2) return;
+
+    const pad = 4.0;
+    final maxValue = values.reduce(math.max);
+    final top = maxValue <= 0 ? 1.0 : maxValue;
+    final dx = size.width / (values.length - 1);
+    final usableHeight = size.height - pad * 2;
+
+    final offsets = [
+      for (var i = 0; i < values.length; i++)
+        Offset(i * dx, size.height - pad - (values[i] / top) * usableHeight),
+    ];
+
+    // Baseline
+    canvas.drawLine(
+      Offset(0, size.height - 0.5),
+      Offset(size.width, size.height - 0.5),
+      Paint()
+        ..color = gridColor
+        ..strokeWidth = 1,
+    );
+
+    final line = Path()..moveTo(offsets.first.dx, offsets.first.dy);
+    for (final o in offsets.skip(1)) {
+      line.lineTo(o.dx, o.dy);
+    }
+
+    // Soft fill under the line
+    final fill = Path.from(line)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(
+      fill,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [lineColor.withValues(alpha: 0.25), lineColor.withValues(alpha: 0.0)],
+        ).createShader(Offset.zero & size),
+    );
+
+    canvas.drawPath(
+      line,
+      Paint()
+        ..color = lineColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..strokeJoin = StrokeJoin.round
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Dot on the most recent day
+    canvas.drawCircle(offsets.last, 3.5, Paint()..color = lineColor);
+  }
+
+  @override
+  bool shouldRepaint(_LineChartPainter old) =>
+      !listEquals(old.values, values) ||
+      old.lineColor != lineColor ||
+      old.gridColor != gridColor;
 }

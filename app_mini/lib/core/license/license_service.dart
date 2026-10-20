@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 
 import 'package:android_id/android_id.dart';
 import 'package:cryptography/cryptography.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -141,16 +142,27 @@ class LicenseService {
     return claims['deviceId'] == deviceId;
   }
 
-  Future<String> _deviceId() async {
-    // So para testes no desktop em debug: o ANDROID_ID nao existe fora do Android.
-    if (kDebugMode && !Platform.isAndroid) return 'DESKTOP-DEBUG-DEVICE';
+Future<String> _deviceId() async {
+  String? id;
 
-    final id = await const AndroidId().getId();
-    if (id == null || id.isEmpty) {
-      throw const LicenseException(LicenseErrorCode.deviceUnavailable);
+  try {
+    if (Platform.isAndroid) {
+      id = await const AndroidId().getId();
+    } else if (Platform.isWindows) {
+      final info = await DeviceInfoPlugin().windowsInfo;
+      id = info.deviceId; // MachineGuid do Windows
     }
-    return id;
+  } catch (_) {
+    id = null;
   }
+
+  if (id == null || id.isEmpty) {
+    throw const LicenseException(LicenseErrorCode.deviceUnavailable);
+  }
+
+  // Prefixo por plataforma: evita colisão entre IDs de sistemas diferentes.
+  return Platform.isWindows ? 'WIN-$id' : id;
+}
 
   List<int> _decodeBase64Url(String value) =>
       base64Url.decode(base64Url.normalize(value));

@@ -1957,6 +1957,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Activation failed. Please try again.'**
   String get activationErrorGeneric;
+
+  /// No description provided for @revenueMixTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue mix'**
+  String get revenueMixTitle;
+
+  /// No description provided for @immediateRevenueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Immediate revenue'**
+  String get immediateRevenueLabel;
+
+  /// No description provided for @revenueTrendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue over time'**
+  String get revenueTrendTitle;
+
+  /// No description provided for @peakLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Peak'**
+  String get peakLabel;
 }
 
 class _AppLocalizationsDelegate

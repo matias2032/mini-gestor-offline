@@ -1061,4 +1061,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get activationErrorGeneric => 'A ativação falhou. Tente novamente.';
+
+  @override
+  String get revenueMixTitle => 'Composição da receita';
+
+  @override
+  String get immediateRevenueLabel => 'Receita imediata';
+
+  @override
+  String get revenueTrendTitle => 'Evolução da receita';
+
+  @override
+  String get peakLabel => 'Pico';
 }

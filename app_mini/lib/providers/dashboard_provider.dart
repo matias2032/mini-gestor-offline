@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/sale_model.dart';
 import '../repositories/sale_repository.dart';
 import 'business_unit_provider.dart';
+import '../models/daily_revenue_point.dart';
 
 /* Identifies the data aggregation scope for dashboard statistics. */
 enum DashboardScope { currentStore, allStores }
@@ -24,6 +25,7 @@ class DashboardProvider extends ChangeNotifier {
 
   DashboardStats? _stats;
   ConsolidatedDashboardStats? _consolidatedStats;
+  List<DailyRevenuePoint> _dailyRevenue = const [];
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -36,6 +38,9 @@ class DashboardProvider extends ChangeNotifier {
 
 // Populated only while scope == allStores.
   ConsolidatedDashboardStats? get consolidatedStats => _consolidatedStats;
+
+// Daily revenue for the active scope and period.
+  List<DailyRevenuePoint> get dailyRevenue => _dailyRevenue;
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -55,6 +60,7 @@ class DashboardProvider extends ChangeNotifier {
     final unitId = _activeUnitId;
     if (unitId == null) {
       _stats = null;
+      _dailyRevenue = const [];
       notifyListeners();
       return;
     }
@@ -64,10 +70,12 @@ class DashboardProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _stats = await _saleRepository.getDashboardStats(
-        businessUnitId: unitId,
-        period: _period,
-      );
+      final results = await Future.wait([
+        _saleRepository.getDashboardStats(businessUnitId: unitId, period: _period),
+        _saleRepository.getDailyRevenue(businessUnitId: unitId, period: _period),
+      ]);
+      _stats = results[0] as DashboardStats;
+      _dailyRevenue = results[1] as List<DailyRevenuePoint>;
     } catch (error) {
       _errorMessage = error.toString();
     } finally {
@@ -82,9 +90,12 @@ class DashboardProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _consolidatedStats = await _saleRepository.getConsolidatedDashboardStats(
-        period: _period,
-      );
+      final results = await Future.wait([
+        _saleRepository.getConsolidatedDashboardStats(period: _period),
+        _saleRepository.getDailyRevenue(period: _period),
+      ]);
+      _consolidatedStats = results[0] as ConsolidatedDashboardStats;
+      _dailyRevenue = results[1] as List<DailyRevenuePoint>;
     } catch (error) {
       _errorMessage = error.toString();
     } finally {

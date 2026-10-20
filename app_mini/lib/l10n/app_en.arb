@@ -405,5 +405,9 @@
   "activationErrorRateLimited": "Too many attempts. Wait a few minutes and try again.",
   "activationErrorNetwork": "Could not reach the activation server. Check your internet connection and try again.",
   "activationErrorDevice": "Could not identify this device.",
-  "activationErrorGeneric": "Activation failed. Please try again."
+  "activationErrorGeneric": "Activation failed. Please try again.",
+  "revenueMixTitle": "Revenue mix",
+  "immediateRevenueLabel": "Immediate revenue",
+  "revenueTrendTitle": "Revenue over time",
+  "peakLabel": "Peak"
 }

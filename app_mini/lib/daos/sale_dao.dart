@@ -171,6 +171,8 @@ class SaleDao {
     return rows.map(SaleModel.fromMap).toList();
   }
 
+  
+
   /* Count of active (unfinalized) credit sales — powers the sidebar badge. A sale counts here from creation until it's COMPLETED or
   CANCELLED, exactly mirroring getOutstandingCreditSales's filter. Scoped to the active business unit. */
   Future<int> countOutstandingCreditSales({
@@ -423,5 +425,46 @@ class SaleDao {
     final result =
         await executor.rawQuery('SELECT COUNT(*) AS total FROM sale_payment');
     return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+    /* Same filters as sumFinalizedSalesCents, but grouped by calendar day of
+     sale_date. Returns { 'yyyy-MM-dd': cents }. Days without sales are
+     absent from the map (the repository fills them with 0). */
+  Future<Map<String, int>> sumFinalizedSalesCentsByDay({
+    required int businessUnitId,
+    String? saleType,
+    DateTime? startDate,
+    DateTime? endDate,
+    Transaction? txn,
+  }) async {
+    final executor = txn ?? await _localDatabase.database;
+    final conditions = <String>[
+      "deleted = 0",
+      "sale_status = 'COMPLETED'",
+      "business_unit_id = ?",
+    ];
+    final args = <Object?>[businessUnitId];
+    if (saleType != null) {
+      conditions.add('sale_type = ?');
+      args.add(saleType);
+    }
+    if (startDate != null) {
+      conditions.add('sale_date >= ?');
+      args.add(startDate.toIso8601String());
+    }
+    if (endDate != null) {
+      conditions.add('sale_date <= ?');
+      args.add(endDate.toIso8601String());
+    }
+    final rows = await executor.rawQuery(
+      'SELECT substr(sale_date, 1, 10) AS day, '
+      'COALESCE(SUM(total_amount_cents), 0) AS cents '
+      'FROM sale WHERE ${conditions.join(' AND ')} '
+      'GROUP BY day ORDER BY day',
+      args,
+    );
+    return {
+      for (final r in rows) r['day'] as String: (r['cents'] as num).toInt(),
+    };
   }
 }

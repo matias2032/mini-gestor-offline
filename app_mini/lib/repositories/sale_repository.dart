@@ -4,6 +4,7 @@ import '../core/database/local_database.dart';
 import '../daos/business_unit_dao.dart';
 import '../daos/sale_dao.dart';
 import '../models/sale_model.dart';
+import '../models/daily_revenue_point.dart';
 
 /* Business logic for the `sale` module: sale, sale_installment and sale_payment. This is the only entry point the UI/providers should
 use — never SaleDao directly.*/
@@ -422,10 +423,59 @@ class SaleRepository {
     );
   }
 
+  /* Revenue grouped by day for the period. Pass null businessUnitId
+   for the consolidated (all stores) view. */
+  /* Revenue grouped by day for the period. A null businessUnitId sums every
+     store (consolidated view), following the same per-unit loop used by
+     getConsolidatedDashboardStats. */
+  Future<List<DailyRevenuePoint>> getDailyRevenue({
+    int? businessUnitId,
+    required DashboardPeriod period,
+  }) async {
+    final now = DateTime.now();
+    final startDate = period.startDateFrom(now);
+
+    final unitIds = businessUnitId != null
+        ? [businessUnitId]
+        : (await _businessUnitDao.findAll())
+            .map((unit) => unit.idBusinessUnit!)
+            .toList();
+
+    final byDay = <String, int>{};
+    for (final unitId in unitIds) {
+      final unitDays = await _saleDao.sumFinalizedSalesCentsByDay(
+        businessUnitId: unitId,
+        startDate: startDate,
+        endDate: now,
+      );
+      unitDays.forEach((day, cents) {
+        byDay[day] = (byDay[day] ?? 0) + cents;
+      });
+    }
+
+    // Fill days without sales with 0 so the line is continuous.
+    final points = <DailyRevenuePoint>[];
+    var cursor = DateTime(startDate.year, startDate.month, startDate.day);
+    final last = DateTime(now.year, now.month, now.day);
+    while (!cursor.isAfter(last)) {
+      points.add(DailyRevenuePoint(
+        day: cursor,
+        revenueCents: byDay[_dayKey(cursor)] ?? 0,
+      ));
+      cursor = DateTime(cursor.year, cursor.month, cursor.day + 1);
+    }
+    return points;
+  }
+
 
   // ---------------------------------------------------------------------
   // helpers
   // ---------------------------------------------------------------------
+
+    String _dayKey(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
 
   Future<String> _generateSaleReference(Transaction txn) async {
     final count = await _saleDao.countAll(txn: txn);
@@ -443,3 +493,4 @@ class SaleRepository {
     return trimmed.isEmpty ? null : trimmed;
   }
 }
+

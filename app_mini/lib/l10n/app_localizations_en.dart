@@ -1044,4 +1044,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activationErrorGeneric => 'Activation failed. Please try again.';
+
+  @override
+  String get revenueMixTitle => 'Revenue mix';
+
+  @override
+  String get immediateRevenueLabel => 'Immediate revenue';
+
+  @override
+  String get revenueTrendTitle => 'Revenue over time';
+
+  @override
+  String get peakLabel => 'Peak';
 }

@@ -321,5 +321,9 @@
   "activationErrorRateLimited": "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.",
   "activationErrorNetwork": "Não foi possível contactar o servidor de ativação. Verifique a ligação à internet e tente novamente.",
   "activationErrorDevice": "Não foi possível identificar este dispositivo.",
-  "activationErrorGeneric": "A ativação falhou. Tente novamente."
+  "activationErrorGeneric": "A ativação falhou. Tente novamente.",
+  "revenueMixTitle": "Composição da receita",
+  "immediateRevenueLabel": "Receita imediata",
+  "revenueTrendTitle": "Evolução da receita",
+  "peakLabel": "Pico"
 }
