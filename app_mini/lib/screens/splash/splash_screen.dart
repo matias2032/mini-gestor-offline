@@ -1,3 +1,4 @@
+//lib/screens/splash/splash_screen.dart
 import 'dart:async';
 import 'dart:math';
 

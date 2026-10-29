@@ -1,3 +1,4 @@
+//core/license/license_service.dart
 import 'dart:convert';
 import 'dart:io' show Platform;
 
