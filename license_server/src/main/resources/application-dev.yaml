@@ -1,0 +1,36 @@
+# aplication-dev.yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/license_db
+    username: mtblack
+    password: Hx.1232
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate   # o Flyway cria as tabelas; o Hibernate só confere
+
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+license:
+  private-key: ${LICENSE_PRIVATE_KEY:}
+
+admin:
+  bootstrap:
+    username: admin
+    password: dev-admin-password-trocar
+  jwt:
+    secret: dev-only-jwt-secret-change-me-0123456789
+    ttl-minutes: 30
+  cors:
+    allowed-origins: http://localhost:5173

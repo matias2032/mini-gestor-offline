@@ -1,0 +1,40 @@
+# aplication-prod.yaml
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: native
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+license:
+  private-key: ${LICENSE_PRIVATE_KEY}
+
+admin:
+  bootstrap:
+    username: ${ADMIN_USERNAME:}
+    password: ${ADMIN_PASSWORD:}
+  jwt:
+    secret: ${ADMIN_JWT_SECRET}
+    ttl-minutes: 30
+  cors:
+    allowed-origins: ${ADMIN_PANEL_ORIGIN}

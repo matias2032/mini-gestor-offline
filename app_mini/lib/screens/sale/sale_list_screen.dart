@@ -1,0 +1,287 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../models/sale_model.dart';
+import '../../providers/customer_provider.dart';
+import '../../providers/sale_provider.dart';
+import '../../providers/user_provider.dart';
+import '/widgets/app_sidebar.dart';
+import 'package:mini/l10n/app_localizations.dart';
+
+/*Lists finished sales only: every NORMAL sale (always COMPLETED), plus CREDIT sales once they're settled (COMPLETED or CANCELLED). 
+Active credit sales live in CreditSaleListScreen instead.*/
+class SaleListScreen extends StatefulWidget {
+  const SaleListScreen({super.key});
+
+  @override
+  State<SaleListScreen> createState() => _SaleListScreenState();
+}
+
+class _SaleListScreenState extends State<SaleListScreen> {
+  String? _saleTypeFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CustomerProvider>().loadCustomers();
+      context.read<SaleProvider>().loadOutstandingCreditCount();
+      _applyFilters();
+    });
+  }
+
+  void _applyFilters() {
+    context.read<SaleProvider>().loadSales(
+          saleType: _saleTypeFilter,
+        );
+  }
+
+  Future<void> _confirmCancel(SaleModel sale) async {
+    final l10n = AppLocalizations.of(context)!;
+    final reasonController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.cancelSaleTitle),
+        content: TextField(
+          controller: reasonController,
+          decoration: InputDecoration(labelText: l10n.cancellationReasonLabel),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.backLabel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.cancelSaleButton),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final success = await context.read<SaleProvider>().cancelSale(
+            saleId: sale.idSale!,
+            cancellationReason: reasonController.text,
+          );
+      if (!success && mounted) {
+        final error = context.read<SaleProvider>().errorMessage;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error ?? l10n.couldNotCancelSale)),
+        );
+      }
+    }
+    reasonController.dispose();
+  }
+
+
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'COMPLETED':
+        return Colors.green;
+      case 'OUTSTANDING':
+        return Colors.orange;
+      case 'CANCELLED':
+        return Colors.red;
+      default:
+        return Theme.of(context).colorScheme.onSurfaceVariant;
+    }
+  }
+
+  String _customerName(SaleModel sale) {
+    final l10n = AppLocalizations.of(context)!;
+    if (sale.walkInCustomerName != null) return sale.walkInCustomerName!;
+    if (sale.customerId == null) return l10n.noCustomerLabel;
+    final customers = context.read<CustomerProvider>().customers;
+    for (final customer in customers) {
+      if (customer.idCustomer == sale.customerId) return customer.name;
+    }
+    return l10n.customerNumberLabel(sale.customerId!);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final sales = context.watch<SaleProvider>().sales;
+    final isLoading = context.watch<SaleProvider>().isLoading;
+    final currency = context.watch<UserProvider>().user?.currency ?? 'MZN';
+    final amountFormat = NumberFormat('#,##0.00');
+
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.finishedSalesTitle)),
+drawer: AppSidebar(
+        currentRoute: '/sale',
+        creditSalesBadgeCount: context.watch<SaleProvider>().outstandingCreditCount,
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: DropdownButtonFormField<String>(
+              value: _saleTypeFilter,
+              decoration: InputDecoration(labelText: l10n.typeLabel),
+              items: [
+                DropdownMenuItem(value: null, child: Text(l10n.allLabel)),
+                DropdownMenuItem(value: 'NORMAL', child: Text(l10n.normalLabel)),
+                DropdownMenuItem(value: 'CREDIT', child: Text(l10n.creditLabel)),
+              ],
+              onChanged: (value) {
+                setState(() => _saleTypeFilter = value);
+                _applyFilters();
+              },
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async => _applyFilters(),
+              child: isLoading && sales.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : sales.isEmpty
+                      ? ListView(
+                          children: [
+                            const SizedBox(height: 120),
+                            Center(child: Text(l10n.noFinishedSalesYet)),
+                            const SizedBox(height: 16),
+                            // Discoverability shortcut only; the list itself stays read-only.
+                            Center(
+                              child: FilledButton.icon(
+                                onPressed: () => Navigator.of(context)
+                                    .pushReplacementNamed('/sale/new'),
+                                icon: const Icon(Icons.add),
+                                label: Text(l10n.createSaleButton),
+                              ),
+                            ),
+                          ],
+                        )
+                      : ListView.separated(
+                          itemCount: sales.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final sale = sales[index];
+                            return _SaleListItem(
+                              sale: sale,
+                              customerName: _customerName(sale),
+                              currency: currency,
+                              amountFormat: amountFormat,
+                              statusColor: _statusColor(sale.saleStatus),
+                              onCancel: sale.saleStatus != 'CANCELLED' &&
+                                      sale.saleStatus != 'COMPLETED'
+                                  ? () => _confirmCancel(sale)
+                                  : null,
+                            );
+                          },
+                        ),
+            ),
+          ),
+        ],
+      ),
+
+    );
+  }
+}
+
+/* One row in the finished sales list. NORMAL sales render as a plain ListTile.
+ CREDIT sales render as an ExpansionTile so they can show how many installments settled the debt, 
+ and what each one was (loaded lazily on first expand).*/
+class _SaleListItem extends StatelessWidget {
+  const _SaleListItem({
+    required this.sale,
+    required this.customerName,
+    required this.currency,
+    required this.amountFormat,
+    required this.statusColor,
+    required this.onCancel,
+  });
+
+  final SaleModel sale;
+  final String customerName;
+  final String currency;
+  final NumberFormat amountFormat;
+  final Color statusColor;
+  final VoidCallback? onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final title = Text('${sale.reference} — ${sale.description}');
+    final subtitle = Text(
+      '$customerName • ${sale.isCredit ? l10n.creditLabel : l10n.immediateLabel}\n'
+      '${amountFormat.format(sale.totalAmountCents / 100)} $currency',
+    );
+    final trailing = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Chip(
+          label: Text(sale.saleStatus),
+          backgroundColor: statusColor.withOpacity(0.15),
+          labelStyle: TextStyle(color: statusColor),
+        ),
+        if (onCancel != null)
+          IconButton(
+            icon: const Icon(Icons.cancel_outlined),
+            onPressed: onCancel,
+          ),
+      ],
+    );
+
+    if (!sale.isCredit) {
+      return ListTile(
+        title: title,
+        subtitle: subtitle,
+        isThreeLine: true,
+        trailing: trailing,
+      );
+    }
+
+    return ExpansionTile(
+      title: title,
+      subtitle: subtitle,
+      trailing: trailing,
+      children: [
+        FutureBuilder<List<SaleInstallmentModel>>(
+          future: context.read<SaleProvider>().installmentsForSale(sale.idSale!),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final installments = snapshot.data ?? [];
+            if (installments.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Text(l10n.noInstallmentsRegistered),
+              );
+            }
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.paidInInstallmentsMessage(installments.length),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  for (final installment in installments)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Text(
+                        '#${installment.installmentNumber} — '
+                        '${amountFormat.format(installment.paidAmountCents / 100)} $currency'
+                        '${installment.paidAt != null ? ' • ${DateFormat('dd/MM/yyyy').format(installment.paidAt!.toLocal())}' : ''}',
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}

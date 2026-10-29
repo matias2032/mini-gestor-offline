@@ -1,0 +1,218 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--surface);
+  color: var(--on-surface);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem; /* headlineSmall do Flutter */
+  font-weight: 700;
+}
+
+h2 {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+p {
+  margin: 0 0 0.75rem;
+}
+
+a {
+  color: var(--primary);
+}
+
+section {
+  margin-bottom: 2rem;
+}
+
+/* ---------- formularios ---------- */
+
+input,
+select {
+  max-width: 100%;
+  padding: 0.75rem 1rem;
+  font: inherit;
+  color: inherit;
+  background: color-mix(in srgb, var(--surface-container-highest) 40%, transparent);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+input:focus-visible,
+select:focus-visible {
+  outline-offset: 0;
+  border-color: var(--primary);
+}
+
+form > div {
+  margin-bottom: 1rem;
+}
+
+form > div > input {
+  width: 100%;
+  max-width: 24rem;
+}
+
+div > label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--on-surface-variant);
+}
+
+/* Botoes sem classe (os das pages). Os da shell usam classes proprias. */
+button:not([class]) {
+  padding: 0.65rem 1.1rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--on-primary);
+  background: var(--primary);
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+button:not([class]):hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ---------- mensagens ---------- */
+
+[role='alert'],
+[role='status'] {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+}
+
+[role='alert'] {
+  color: var(--on-error-container);
+  background: var(--error-container);
+}
+
+[role='status'] {
+  color: var(--on-primary-container);
+  background: var(--primary-container);
+}
+
+[role='alert'] > :last-child,
+[role='status'] > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- tabelas e listas de detalhe ---------- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+th {
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  background: var(--surface-container);
+}
+
+tbody tr:hover {
+  background: var(--surface-container-low);
+}
+
+dt {
+  font-weight: 600;
+  color: var(--on-surface-variant);
+}
+
+dd {
+  margin: 0 0 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+  }
+}
+
+/* ---------- Botoes com variantes ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn svg { width: 1.15em; height: 1.15em; flex: none; }
+.btn:hover:not(:disabled) { filter: brightness(1.08); }
+.btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.btn--sm { padding: 0.3rem 0.65rem; font-size: 0.85rem; border-radius: 10px; }
+
+.btn--primary { --btn-bg: var(--primary); --btn-fg: var(--on-primary); }
+.btn--info    { --btn-bg: var(--tertiary-container); --btn-fg: var(--on-tertiary-container); }
+.btn--warning { --btn-bg: var(--warning-container);  --btn-fg: var(--on-warning-container); }
+.btn--danger  { --btn-bg: var(--error-container);    --btn-fg: var(--on-error-container); }
+.btn--outline { --btn-bg: transparent; --btn-fg: var(--on-surface-variant); border-color: var(--outline); }
+.btn--outline:hover:not(:disabled) { background: var(--surface-container-high); filter: none; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+/* ---------- Filtros ---------- */
+.filters { display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem; margin-bottom: 1rem; }
+.filters > div { flex: 1 1 12rem; max-width: 16rem; }
+
+/* ---------- Formularios centrados ---------- */
+.auth-page { min-height: 100dvh; display: grid; place-items: center; padding: 1rem; }
+.auth-title { text-align: center; margin: 0 0 1.25rem; }
+
+.card {
+  width: 100%;
+  max-width: 26rem;
+  padding: 1.5rem;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.card form input,
+.card form select { width: 100%; max-width: none; }
+.card form > div { margin-bottom: 1rem; }
+.card form > button { width: 100%; justify-content: center; }
+
+.page-narrow { max-width: 28rem; margin-inline: auto; }
+.page-narrow .card { max-width: none; margin-bottom: 1.5rem; }

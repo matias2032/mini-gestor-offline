@@ -1,0 +1,11 @@
+# aplication.yaml
+spring:
+  application:
+    name: license_server
+  profiles:
+    default: dev
+  data:
+    web:
+      pageable:
+        max-page-size: 100
+        default-page-size: 20
